@@ -16,7 +16,9 @@ from bot.config import Settings
 from bot.db.models import Base
 from bot.db.session import create_engine, create_session_factory
 from bot.handlers.errors import handle_error
+from bot.handlers.group_setup import create_router as create_group_router
 from bot.handlers.private import create_router
+from bot.handlers.settings import create_router as create_settings_router
 from bot.services.runtime import ScaleMiddleware, ScaleRuntime
 from bot.services.sender import Sender
 from bot.services.webhook import serve_webhook
@@ -29,6 +31,8 @@ ALLOWED_UPDATES = ["message", "callback_query", "my_chat_member", "chat_member",
 def create_dispatcher() -> Dispatcher:
     dispatcher = Dispatcher()
     dispatcher.include_router(create_router())
+    dispatcher.include_router(create_group_router())
+    dispatcher.include_router(create_settings_router())
     dispatcher.errors.register(handle_error)
     return dispatcher
 
@@ -40,7 +44,13 @@ async def register_commands(bot: Bot, sender: Sender) -> None:
     ]
     for commands, scope in (
         (private, BotCommandScopeAllPrivateChats()),
-        ([], BotCommandScopeAllGroupChats()),
+        (
+            [
+                BotCommand(command=command, description=description)
+                for command, description in texts.GROUP_COMMANDS.items()
+            ],
+            BotCommandScopeAllGroupChats(),
+        ),
     ):
         result = await sender.send(
             None, lambda commands=commands, scope=scope: bot.set_my_commands(commands, scope=scope)

@@ -3,7 +3,8 @@
 **Guruhda oqibat bo‘lsin.** Telegram group engagement bot for Uzbekistan.
 Python 3.12, aiogram 3, SQLAlchemy 2 async, Alembic. Phase 0 implements the foundation
 and private `/start` and `/help`. Phase 0.5 adds shared scale services; product behavior for
-group onboarding, scheduled posts and games remains in later phases.
+scheduled posts and games remains in later phases. Phase 1 implements group onboarding,
+member consent and admin settings.
 
 ## Windows PowerShell setup
 
@@ -79,17 +80,32 @@ it sends no daily posts, assigns no challenges and applies no penalties.
 3. `/help` yuboring. Yordam va shu tugma chiqishi kerak.
 4. “Botni guruhingizga qo‘shing” tugmasini bosing. Telegram guruh tanlash va
    administrator huquqlarini berish oynasini ochishi kerak.
-5. Hozir guruhda o‘yin va qo‘shilish tugmalari yo‘q; ular keyingi bosqichda qo‘shiladi.
+5. Botni administrator qiling. Guruhdagi “O‘yinga qo‘shilish” tugmasini bosing.
+   `/chiqish` bilan chiqishingiz, `/qoshilish` bilan qayta qo‘shilishingiz mumkin.
+   Admin bo‘lsangiz, `/sozlamalar` menyusini tekshiring. O‘yinlar keyingi bosqichlarda qo‘shiladi.
 6. Botni to‘xtatish uchun PowerShell oynasida **Ctrl+C** bosing.
 
-Only implemented private commands are registered. The group command scope is
-explicitly registered as empty until group commands are implemented. Polling requests
+Only implemented commands are registered. The group scope currently includes `/help`,
+`/qoshilish`, `/chiqish` and `/sozlamalar`. Polling requests
 `message`, `callback_query`, `my_chat_member`, `chat_member` and `poll_answer` updates;
-group updates have no product handlers yet. Incoming activity and private reachability
+group updates track onboarding and membership. Incoming activity and private reachability
 are buffered without opting anyone into a group. The activity middleware also refreshes
 the admin cache on membership updates.
 
 ## Scale services and rules for later phases
+
+Group setup is automatic when Telegram sends `my_chat_member`: the bot explains missing
+admin rights, welcomes the group when promoted, and marks the chat inactive when removed.
+Only opted-in, active members will be eligible for later random tasks. Leaving the group
+clears consent; rejoining requires opting in again. `/chiqish` also cancels that member's
+pending challenges without applying a penalty.
+
+Admins use `/sozlamalar` to edit timezone, daily toggle/time, challenge count/duration,
+penalty mode, mute duration, missed-task threshold, and quiet hours. Buttons edit one menu
+message. Timezone, time and threshold inputs use a reply prompt tied to that admin/chat
+for five minutes; changing admins invalidates the permission cache. Numeric thresholds
+are limited to 1–100 as a small input bound. Chat activity, bot-admin status, title, IDs
+and timestamps are system metadata and are updated from Telegram rather than edited here.
 
 Run exactly **one bot process** for this deployment. Its shared outbound queue, caches
 and chat locks are process-local. Multiple workers would require shared coordination.

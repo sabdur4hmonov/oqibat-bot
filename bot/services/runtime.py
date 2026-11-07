@@ -7,6 +7,7 @@ from aiogram import BaseMiddleware
 
 from bot.db.repo.challenges import ChallengeRepository
 from bot.db.repo.games import GameSessionRepository
+from bot.db.repo.groups import GroupRepository
 from bot.services.activity import ActivityBuffer
 from bot.services.admin_cache import AdminCache
 from bot.services.locks import ChatLocks
@@ -14,6 +15,7 @@ from bot.services.metrics import Metrics
 from bot.services.pending import PendingChallenges
 from bot.services.scheduler import Scheduler
 from bot.services.sender import Sender
+from bot.services.settings import SettingPrompts
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,8 @@ class ScaleRuntime:
         self.sender = Sender(sessions, on_forbidden=self.activity.mark_forbidden)
         self.challenges = ChallengeRepository(sessions, self.pending, self.locks)
         self.games = GameSessionRepository(sessions, self.locks)
+        self.groups = GroupRepository(sessions, self.locks, self.pending)
+        self.setting_prompts = SettingPrompts()
         self.sessions = sessions
         self.tasks = []
 
@@ -62,6 +66,8 @@ class ScaleRuntime:
             "chat_locks": self.locks,
             "game_sessions": self.games,
             "challenges": self.challenges,
+            "groups": self.groups,
+            "setting_prompts": self.setting_prompts,
         }
 
 
