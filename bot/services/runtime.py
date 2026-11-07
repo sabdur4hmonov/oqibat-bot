@@ -10,9 +10,13 @@ from bot.db.repo.games import GameSessionRepository
 from bot.db.repo.groups import GroupRepository
 from bot.services.activity import ActivityBuffer
 from bot.services.admin_cache import AdminCache
+from bot.services.content import ContentLibrary
+from bot.services.daily import DailyService
 from bot.services.locks import ChatLocks
 from bot.services.metrics import Metrics
+from bot.services.participation import Participants
 from bot.services.pending import PendingChallenges
+from bot.services.points import CheckinBuffer
 from bot.services.scheduler import Scheduler
 from bot.services.sender import Sender
 from bot.services.settings import SettingPrompts
@@ -24,6 +28,8 @@ class ScaleRuntime:
     def __init__(self, sessions, bot) -> None:
         self.activity = ActivityBuffer(sessions)
         self.pending = PendingChallenges()
+        self.participants = Participants()
+        self.checkins = CheckinBuffer(sessions)
         self.locks = ChatLocks()
         self.admins = AdminCache(bot)
         self.metrics = Metrics()
@@ -31,16 +37,24 @@ class ScaleRuntime:
         self.sender = Sender(sessions, on_forbidden=self.activity.mark_forbidden)
         self.challenges = ChallengeRepository(sessions, self.pending, self.locks)
         self.games = GameSessionRepository(sessions, self.locks)
-        self.groups = GroupRepository(sessions, self.locks, self.pending)
+        self.groups = GroupRepository(sessions, self.locks, self.pending, self.participants)
         self.setting_prompts = SettingPrompts()
+        self.content = ContentLibrary()
+        self.daily = DailyService(
+            sessions, bot, self.sender, self.content, self.participants, self.checkins
+        )
+        self.scheduler.hooks["daily"] = self.daily.post
         self.sessions = sessions
         self.tasks = []
 
     async def __aenter__(self):
         await self.pending.load(self.sessions)
+        await self.participants.load(self.sessions)
+        await self.daily.load()
         self.tasks = [
             asyncio.create_task(self.activity.run(), name="activity-flush"),
             asyncio.create_task(self.scheduler.run(), name="scheduler-tick"),
+            asyncio.create_task(self.checkins.run(), name="checkin-flush"),
             asyncio.create_task(
                 self.metrics.run(self.sender, self.scheduler), name="scale-metrics"
             ),
@@ -54,6 +68,7 @@ class ScaleRuntime:
         await self.sender.close()
         try:
             await self.activity.flush()
+            await self.checkins.flush()
         except Exception:
             logger.exception("Shutdown activity flush failed")
 
@@ -68,6 +83,8 @@ class ScaleRuntime:
             "challenges": self.challenges,
             "groups": self.groups,
             "setting_prompts": self.setting_prompts,
+            "participants": self.participants,
+            "checkins": self.checkins,
         }
 
 
@@ -83,6 +100,7 @@ class ScaleMiddleware(BaseMiddleware):
             user = message.from_user
             self.runtime.activity.observe(message.chat.id, user.id, user.first_name, user.username)
             data["has_pending_challenge"] = self.runtime.pending.contains(message.chat.id, user.id)
+            self.runtime.daily.observe(message)
         membership = event.chat_member or event.my_chat_member
         if membership:
             try:

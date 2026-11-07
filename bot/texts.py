@@ -91,6 +91,10 @@ def group_help() -> str:
     )
 
 
+def daily_post(template: str, group: str) -> str:
+    return escape(template).replace("{group}", escape(group))
+
+
 def start_text(first_name: str, instagram_handle: str) -> str:
     return (
         f"Salom, {escape(first_name)}! 👋\n\n"

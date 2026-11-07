@@ -40,7 +40,7 @@ class Scheduler:
         self._lock = asyncio.Lock()
         self._workers = {kind: asyncio.Semaphore(25) for kind in (*CHAT_JOBS, "expire", "game")}
 
-    async def _process(self, kind: str, row, now: datetime) -> bool:
+    async def _process(self, kind: str, row, now: datetime) -> bool | datetime:
         try:
             async with self._workers[kind]:
                 return await self.hooks[kind](row, now)
@@ -56,7 +56,10 @@ class Scheduler:
         async def process(chat):
             try:
                 next_time = next_for_chat(kind, chat, now)
-                if next_time is None or await self._process(kind, chat, now):
+                outcome = True if next_time is None else await self._process(kind, chat, now)
+                if outcome:
+                    if isinstance(outcome, datetime):
+                        next_time = outcome
                     return {
                         "chat_key": chat.id,
                         "expected": getattr(chat, column.key),

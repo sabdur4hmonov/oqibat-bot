@@ -68,11 +68,16 @@ async def run(settings: Settings, *, check_only: bool = False) -> None:
             tables = await connection.run_sync(lambda conn: set(inspect(conn).get_table_names()))
             if not set(Base.metadata.tables).issubset(tables):
                 raise RuntimeError("Database schema missing; run alembic upgrade head")
-            columns = await connection.run_sync(
-                lambda conn: {column["name"] for column in inspect(conn).get_columns("chats")}
+            complete = await connection.run_sync(
+                lambda conn: all(
+                    set(table.columns.keys()).issubset(
+                        {column["name"] for column in inspect(conn).get_columns(table.name)}
+                    )
+                    for table in Base.metadata.tables.values()
+                )
             )
-            if not {"next_daily_at", "next_challenge_at", "next_weekly_at"}.issubset(columns):
-                raise RuntimeError("Scale migration missing; run alembic upgrade head")
+            if not complete:
+                raise RuntimeError("Migration missing; run alembic upgrade head")
         if check_only:
             print(texts.CHECK_OK)
             return

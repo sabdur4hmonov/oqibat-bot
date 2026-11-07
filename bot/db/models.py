@@ -110,6 +110,9 @@ class Membership(Base):
 
 class PointEvent(Base):
     __tablename__ = "point_events"
+    __table_args__ = (
+        Index("uq_point_events_reference", "chat_id", "user_id", "reason", "ref_id", unique=True),
+    )
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"), index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
@@ -151,6 +154,10 @@ class ScheduledPost(Base):
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"), primary_key=True)
     kind: Mapped[str] = mapped_column(String(10), primary_key=True)
     local_date: Mapped[date] = mapped_column(Date, primary_key=True)
+    status: Mapped[str] = mapped_column(String(12), default="reserved", server_default="reserved")
+    message_id: Mapped[int | None] = mapped_column(BigInteger)
+    posted_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
+    content_key: Mapped[str | None] = mapped_column(String(128))
 
 
 class GameSession(Timestamps, Base):

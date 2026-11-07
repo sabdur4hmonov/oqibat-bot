@@ -9,8 +9,9 @@ from bot.utils.time import utc_now
 
 
 class GroupRepository:
-    def __init__(self, sessions, locks, pending) -> None:
+    def __init__(self, sessions, locks, pending, participants=None) -> None:
         self.sessions, self.locks, self.pending = sessions, locks, pending
+        self.participants = participants
 
     async def get(self, chat_id: int) -> Chat | None:
         async with self.sessions() as session:
@@ -79,6 +80,8 @@ class GroupRepository:
                         removed.append(challenge.id)
             for challenge_id in removed:
                 self.pending.remove(challenge_id)
+            if self.participants is not None:
+                self.participants.set(chat_id, tg_user.id, member.opted_in and member.is_active)
         return True
 
     async def change_setting(self, chat_id: int, field: str, value) -> Chat | None:

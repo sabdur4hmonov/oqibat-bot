@@ -3,8 +3,9 @@
 **Guruhda oqibat bo‘lsin.** Telegram group engagement bot for Uzbekistan.
 Python 3.12, aiogram 3, SQLAlchemy 2 async, Alembic. Phase 0 implements the foundation
 and private `/start` and `/help`. Phase 0.5 adds shared scale services; product behavior for
-scheduled posts and games remains in later phases. Phase 1 implements group onboarding,
-member consent and admin settings.
+challenges and games remains in later phases. Phase 1 implements group onboarding,
+member consent and admin settings; Phase 2 adds daily posts, content rotation, quiet hours
+and daily check-in points.
 
 ## Windows PowerShell setup
 
@@ -55,7 +56,7 @@ python -m bot --check
 python -m bot
 ```
 
-`--check` validates configuration, initial tables and scale columns; it does
+`--check` validates configuration and all modeled tables/columns; it does
 not contact Telegram or authenticate the token. `python -m bot` registers commands
 and runs long polling until Ctrl+C. Migrations read only `DATABASE_URL`, so they
 work before Telegram credentials are set. Startup never creates tables implicitly.
@@ -69,8 +70,10 @@ the production choice for 10,000 groups. Live PostgreSQL verification still requ
 a PostgreSQL server. All stored timestamps are timezone-aware UTC at the ORM
 boundary. SQLite values are reattached to UTC when loaded; naive input is rejected.
 Chat-local clock settings default to Asia/Tashkent (daily 09:00, quiet 23:00–08:00).
-The scheduler runs every 30 seconds, but Phase 0.5 registers no product job hooks:
-it sends no daily posts, assigns no challenges and applies no penalties.
+The scheduler runs every 30 seconds and currently posts daily messages. Challenges,
+penalties and games arrive in later phases. Daily timing includes the stable 0–15 minute
+offset, so a time set two minutes ahead can post two to seventeen minutes later, plus
+up to one scheduler interval. Quiet hours defer daily delivery until quiet end.
 
 ## Telegram checks
 
@@ -148,17 +151,39 @@ overhead and does not prove end-to-end Telegram or production server capacity.
 - `Scheduler` selects only indexed due rows, ordered by due time, at most 500 per kind.
   Job kinds progress concurrently, with up to 25 callbacks per kind; bulk callbacks
   cannot occupy all game callback slots. The sender still enforces one global limit.
-  Register hooks for `daily`, `challenge`, `weekly`, `expire`, `game` in their product
+  The `daily` hook is registered. Register `challenge`, `weekly`, `expire`, `game` in their product
   phases. A chat hook returns `True` only after success; its next UTC timestamp is then
   recomputed with a conditional bulk update. Missing/failed hooks keep due work intact.
   Expiry/game hooks must persist their own status/deadline transition before returning
   success. Keep the scheduled-post idempotency ledger for daily/weekly sends.
+  A chat hook can return an aware UTC datetime to defer its due time, for example until
+  quiet end, instead of losing the job or repeatedly querying it during quiet hours.
 - Daily offsets are stable BLAKE2 hash values, 0–900 seconds after the configured local
   daily time. Sunday summaries use 0–3599 seconds after local 20:00. Local recurrence
   is recomputed before converting to UTC, including across daylight-saving changes.
 - Every five minutes an INFO log reports `queue_length`, `updates_per_minute` (rolling
   last minute) and `last_tick_duration_ms`. Monitor these before expanding workload.
   Queued sends and caches are memory-only; they are not a durable message broker.
+
+## Daily delivery and check-ins
+
+Daily delivery reserves a unique `(chat_id, kind, local_date)` row before sending and
+records `sent`/`failed`, Telegram message ID, post time and content key afterward.
+Restarting never automatically replays a reserved/failed row: Telegram has no send
+idempotency key, so a lost response cannot establish whether delivery happened. This
+chooses duplicate prevention over retrying an ambiguous delivery. Review reserved/failed
+rows and logs manually; a crash between reservation and send can leave that day's post
+undelivered. Content is not repeated in a group until all current items have been used;
+then the oldest-used item is eligible again. Empty banks skip cleanly. Restart to reload
+edited UTF-8 JSON banks.
+
+An opted-in active member's first message after the daily post earns +1 for that local
+date. Normal messages check cached post/consent data only; rewards are coalesced and
+flushed to the point ledger every 60 seconds and on clean shutdown. A unique event
+reference prevents a duplicate award after restart. A crash can lose an unflushed
+check-in; the member's next message that day can qualify again. Future stats commands
+flush queued check-ins before reading totals. Replying in the same second as the post
+counts when the message ID is later.
 
 ## Optional production webhook
 
