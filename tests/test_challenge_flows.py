@@ -73,6 +73,7 @@ async def test_expiry_penalty_and_daily_debtor_announcement(
     assert not await runtime.challenge_service.expire(
         challenge, challenge.deadline_at + timedelta(seconds=2)
     )
+    await runtime.effects.drain()
     assert (await runtime.points.stats(-1, 1))[0] == expected
     chat = await runtime.groups.get(-1)
     await runtime.daily.post(chat, utc_now())

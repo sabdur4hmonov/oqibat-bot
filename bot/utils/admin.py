@@ -13,3 +13,7 @@ def member_is_admin(member) -> bool:
 
 async def is_admin(admins, chat_id: int, user_id: int) -> bool:
     return user_id in await admins.get(chat_id)
+
+
+def is_anonymous_admin(message) -> bool:
+    return message.sender_chat is not None and message.sender_chat.id == message.chat.id

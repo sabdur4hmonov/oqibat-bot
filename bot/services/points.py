@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from bot.db.models import Challenge, PointEvent, User
+from bot.services.locks import ChatLocks
 
 DAILY_CHECKIN = 1
 CHALLENGE_DONE = {"video_note": 15, "voice": 10, "photo": 10, "text": 5}
@@ -45,14 +46,17 @@ async def record_event(
 
 
 class Points:
-    def __init__(self, sessions) -> None:
+    def __init__(self, sessions, locks=None) -> None:
         self.sessions = sessions
+        self.locks = locks or ChatLocks()
 
     async def award(self, chat_id, user_id, delta, reason, ref_id) -> bool:
-        async with self.sessions.begin() as session:
-            return await record_event(session, chat_id, user_id, delta, reason, ref_id)
+        async with self.locks.hold(chat_id) as chat_id:
+            async with self.sessions.begin() as session:
+                return await record_event(session, chat_id, user_id, delta, reason, ref_id)
 
     async def stats(self, chat_id: int, user_id: int) -> tuple[int, int, int]:
+        chat_id = self.locks.resolve(chat_id)
         async with self.sessions() as session:
             points = await session.scalar(
                 select(func.coalesce(func.sum(PointEvent.delta), 0)).where(
@@ -75,6 +79,7 @@ class Points:
             return points, counts.get("done", 0), counts.get("missed", 0)
 
     async def top(self, chat_id: int, since=None):
+        chat_id = self.locks.resolve(chat_id)
         query = (
             select(User.id, User.first_name, func.sum(PointEvent.delta).label("points"))
             .join(PointEvent, PointEvent.user_id == User.id)

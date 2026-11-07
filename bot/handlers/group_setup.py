@@ -33,6 +33,13 @@ async def member_update(event: ChatMemberUpdated, groups) -> None:
     )
 
 
+async def migrate_chat(message: Message, migrations) -> None:
+    if message.migrate_to_chat_id:
+        await migrations.migrate(message.chat.id, message.migrate_to_chat_id)
+    elif message.migrate_from_chat_id:
+        await migrations.migrate(message.migrate_from_chat_id, message.chat.id)
+
+
 async def join(message: Message, bot: Bot, sender, groups) -> None:
     if message.from_user is None or message.from_user.is_bot:
         return
@@ -41,9 +48,12 @@ async def join(message: Message, bot: Bot, sender, groups) -> None:
         permitted = member_is_active(member)
     except Exception:
         permitted = False
-    success = permitted and await groups.membership(
-        message.chat.id, message.from_user, opted_in=True
-    )
+    if not permitted:
+        await sender.send(
+            message.chat.id, lambda: bot.send_message(message.chat.id, texts.MEMBER_CHECK_FAILED)
+        )
+        return
+    success = await groups.membership(message.chat.id, message.from_user, opted_in=True)
     await sender.send(
         message.chat.id,
         lambda: bot.send_message(
@@ -61,9 +71,12 @@ async def join_button(query: CallbackQuery, bot: Bot, sender, groups) -> None:
         permitted = member_is_active(member) and not query.from_user.is_bot
     except Exception:
         permitted = False
-    success = permitted and await groups.membership(
-        query.message.chat.id, query.from_user, opted_in=True
-    )
+    if not permitted:
+        await sender.answer_callback_query(
+            bot, query.id, text=texts.MEMBER_CHECK_FAILED, show_alert=True
+        )
+        return
+    success = await groups.membership(query.message.chat.id, query.from_user, opted_in=True)
     await sender.answer_callback_query(
         bot, query.id, text=texts.JOINED if success else texts.NEED_ADMIN, show_alert=True
     )
@@ -88,6 +101,7 @@ def create_router() -> Router:
     router.message.filter(F.chat.type.in_({"group", "supergroup"}))
     router.my_chat_member.register(bot_membership)
     router.chat_member.register(member_update)
+    router.message.register(migrate_chat, F.migrate_to_chat_id | F.migrate_from_chat_id)
     router.message.register(join, Command("qoshilish"))
     router.message.register(leave, Command("chiqish"))
     router.message.register(help_group, Command("help"))

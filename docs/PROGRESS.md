@@ -8,6 +8,13 @@
 <!-- Sardorbek pastes Claude's review notes here. Codex: apply all unchecked items before the next phase,
      then tick them [x] and say how each was handled in your phase entry. -->
 
+- [x] Handle group→supergroup migration atomically across chats/memberships/point_events/challenges/content_usage/scheduled_posts/game_sessions; leave the old chat inactive. Catch and handle TelegramMigrateToChat in Sender. Add tests.
+- [x] Run game + expire deadlines in their own loop and separate lock, independent of bulk batches and outbound pauses. Test a slow daily batch against a game deadline.
+- [x] Treat `sender_chat.id == chat.id` anonymous-admin messages as admin for `/sozlamalar` and admin-only commands.
+- [x] Back off failing scheduled chats to `next_*_at = now + 10 min`, log it, and test it.
+- [x] Use an accurate member-check-failed message for `/qoshilish`, not NEED_ADMIN.
+- [x] Later note only: Sender._take_ready rescans chat-limited heaps; optimize if metrics show queue > 1000. No change requested now.
+
 ## Phase entries
 <!-- Codex: add one entry per phase, newest at the bottom, using this template. -->
 
@@ -186,3 +193,21 @@
   4. `/sozlamalar` da jazo turini `points` qiling. Sinov vazifasini muddatigacha bajarmang: −5 va keyingi kunlik xabarda qarzdor eslatmasi chiqishi kerak. `off` da ball ayirilmasligi kerak.
   5. Faqat rozilik bergan oddiy sinov a'zosi bilan `mute` yoki `kick` ni tekshiring. Administrator va egaga bu choralar qo‘llanmasligi kerak. `kick` dan keyin havola orqali qaytish mumkin bo‘lishi kerak.
   6. Tinch vaqt ichida `/vazifa` yuboring: yangi vazifa berilmasligi kerak. Muddati tinch vaqtga tushgan vazifa tinch vaqt tugaguncha uzaytiriladi.
+
+
+### Pre-Phase 4 — Claude review fixes — 2026-11-07
+- Status: done for implementation/local verification; all six review notes above are acknowledged and ticked.
+- Commit(s): this entry accompanies `review: migrate supergroups and isolate deadline progression`.
+- What was built: atomic movement of all seven requested tables, persistent inactive source aliases, synchronized memory caches and outbound destination rewriting; explicit Sender TelegramMigrateToChat retry; independent one-second game/expiry loop with a separate lock and tracked outbound effects; anonymous-admin authorization for own-group messages; ten-minute failed-hook backoff with logs; accurate membership-check failure text. The heap optimization is recorded for later only and was not implemented.
+- Files added/changed: migration repositories/services and new Alembic revision `7d9a7f721c61`, shared locks/sender/runtime/scheduler, daily/challenge/point paths, group/settings handlers, texts, README and review tests.
+- Tests: `pytest -q`: **184 passed**; `ruff check .`: **all checks passed**. Offline startup/migration consistency checks remain covered by the suite. New tests cover every moved table, rollback, duplicate updates, destination stub collisions, opt-out preservation, point deduplication, cache rekeying, low new-group message IDs, Sender migration retry, both migration service updates, slow bulk work, globally paused notifications, all three failed-hook kinds, anonymous admin commands/replies and join-check errors.
+- Acceptance criteria: ✅ all actionable Claude notes implemented and tested; ✅ deferred queue note recorded without speculative optimization. ❌ Real Telegram supergroup conversion has not been exercised without bot credentials.
+- Deviations from PLAN.md and why: added persistent migration aliases and message-origin IDs in a new migration so restarts and changed message-number scopes remain safe. If both IDs already contain data, opt-out wins, duplicate identical point references are merged, conflicting point amounts abort atomically, and duplicate active tasks/main games are cancelled without a penalty. Deadline state commits before asynchronous notification/moderation; Telegram pauses may delay delivery but not deadline resolution. Missing hooks remain untouched; failed hooks back off ten minutes.
+- Open questions / decisions needed: none blocking. Sender heap optimization remains conditional on measured queue growth over 1,000.
+- Known issues / TODO: queued notifications are process-local and may be lost on a crash; audit/point/deadline state is durable. Live migration and moderation checks remain pending credentials.
+- Manual test steps (Uzbek, simple):
+  1. `alembic upgrade head` ni bajaring, keyin botni ishga tushiring.
+  2. Sinov guruhida `/qoshilish` yuboring, vazifa oling va ball to‘plang. Guruhni superguruhga aylantiring. `/men` va `/sozlamalar` da oldingi ball va sozlamalar saqlanganini tekshiring.
+  3. Oldingi vazifani yangi superguruhda bajaring: u bir marta hisoblanishi kerak. Botni qayta ishga tushiring va ballni yana tekshiring.
+  4. Administratorning anonim rejimini yoqing. `/sozlamalar` va `/vazifa` ishlashi kerak; oddiy a'zo uchun admin amallari yopiq qoladi.
+  5. Telegram a'zolik tekshiruvini bajara olmasa, `/qoshilish` administrator huquqi haqida noto‘g‘ri xabar emas, a'zolikni tekshirib bo‘lmagani haqida xabar berishi kerak.

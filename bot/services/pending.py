@@ -29,6 +29,7 @@ class PendingChallenges:
                         Challenge.deadline_at,
                         Challenge.created_at,
                         Challenge.message_id,
+                        Challenge.origin_chat_id,
                     ).where(Challenge.status == "pending")
                 )
             ).all()
@@ -41,7 +42,9 @@ class PendingChallenges:
         self.message_ids.clear()
         for row in rows:
             self.add(row.id, row.chat_id, row.user_id, row.kind, row.deadline_at, row.created_at)
-            self.message_ids[row.id] = row.message_id
+            self.message_ids[row.id] = (
+                0 if row.origin_chat_id not in {None, row.chat_id} else row.message_id
+            )
 
     def add(
         self, challenge_id: int, chat_id: int, user_id: int, kind=None, deadline=None, created=None

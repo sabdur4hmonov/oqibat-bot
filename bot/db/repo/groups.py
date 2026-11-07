@@ -14,15 +14,16 @@ class GroupRepository:
         self.participants = participants
 
     async def get(self, chat_id: int) -> Chat | None:
+        chat_id = self.locks.resolve(chat_id)
         async with self.sessions() as session:
             return await session.get(Chat, chat_id)
 
     async def bot_membership(self, tg_chat, member) -> Chat:
-        async with self.locks.for_chat(tg_chat.id):
+        async with self.locks.hold(tg_chat.id) as chat_id:
             async with self.sessions.begin() as session:
-                chat = await session.get(Chat, tg_chat.id)
+                chat = await session.get(Chat, chat_id)
                 if chat is None:
-                    chat = Chat(id=tg_chat.id, title=tg_chat.title or "")
+                    chat = Chat(id=chat_id, title=tg_chat.title or "")
                     session.add(chat)
                     await session.flush()
                 chat.title = tg_chat.title or ""
@@ -44,7 +45,7 @@ class GroupRepository:
         self, chat_id: int, tg_user, *, opted_in: bool | None = None, active: bool = True
     ) -> bool:
         removed = []
-        async with self.locks.for_chat(chat_id):
+        async with self.locks.hold(chat_id) as chat_id:
             async with self.sessions.begin() as session:
                 chat = await session.get(Chat, chat_id)
                 if chat is None or (
@@ -85,7 +86,7 @@ class GroupRepository:
         return True
 
     async def change_setting(self, chat_id: int, field: str, value) -> Chat | None:
-        async with self.locks.for_chat(chat_id):
+        async with self.locks.hold(chat_id) as chat_id:
             async with self.sessions.begin() as session:
                 chat = await session.get(Chat, chat_id)
                 if chat is None or not chat.is_active or not chat.bot_is_admin:

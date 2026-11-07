@@ -21,6 +21,10 @@ NEED_ADMIN = (
     "Tahrirlash → Administratorlar → Administrator qo‘shish. "
     "Xabarlarni o‘chirish, a'zolarni cheklash va xabarlarni qadash huquqlarini bering."
 )
+MEMBER_CHECK_FAILED = (
+    "Guruhdagi a'zoligingizni tekshirib bo‘lmadi. "
+    "Guruh a'zosi ekaningizni tekshirib, keyinroq qayta urinib ko‘ring."
+)
 JOINED = "Qo‘shildingiz! Vazifa va o‘yinlarda qatnashishingiz mumkin. ✅"
 OPTED_OUT = (
     "O‘yindan chiqdingiz. Endi sizga yangi vazifa berilmaydi. /qoshilish bilan qayta qo‘shiling."

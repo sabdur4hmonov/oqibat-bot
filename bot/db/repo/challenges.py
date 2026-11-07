@@ -15,7 +15,9 @@ class ChallengeRepository:
         self.sessions, self.pending, self.locks = sessions, pending, locks
 
     async def create(self, **values) -> int:
-        async with self.locks.for_chat(values["chat_id"]):
+        async with self.locks.hold(values["chat_id"]) as chat_id:
+            values = {**values, "chat_id": chat_id}
+            values.setdefault("origin_chat_id", chat_id)
             async with self.sessions.begin() as session:
                 challenge = Challenge(**values)
                 session.add(challenge)
@@ -35,7 +37,7 @@ class ChallengeRepository:
     async def resolve(self, chat_id: int, challenge_id: int, status: str) -> bool:
         if status not in {"done", "missed", "cancelled"}:
             raise ValueError("Invalid challenge resolution")
-        async with self.locks.for_chat(chat_id):
+        async with self.locks.hold(chat_id) as chat_id:
             async with self.sessions.begin() as session:
                 challenge = await session.get(Challenge, challenge_id)
                 if (
@@ -50,7 +52,7 @@ class ChallengeRepository:
             return True
 
     async def assign(self, chat_id, now, items, kind=None, force=False):
-        async with self.locks.for_chat(chat_id):
+        async with self.locks.hold(chat_id) as chat_id:
             if self.pending.for_chat(chat_id):
                 return None
             async with self.sessions.begin() as session:
@@ -94,6 +96,7 @@ class ChallengeRepository:
                     return None
                 challenge = Challenge(
                     chat_id=chat_id,
+                    origin_chat_id=chat_id,
                     user_id=selected,
                     kind=item["kind"],
                     prompt_key=item["key"],
@@ -118,21 +121,25 @@ class ChallengeRepository:
             )
             return challenge, user, chat, item
 
-    async def set_message(self, chat_id: int, challenge_id: int, message_id: int) -> None:
-        async with self.locks.for_chat(chat_id):
+    async def set_message(
+        self, chat_id: int, challenge_id: int, message_id: int, origin_chat_id=None
+    ) -> None:
+        async with self.locks.hold(chat_id) as chat_id:
             async with self.sessions.begin() as session:
                 await session.execute(
                     update(Challenge)
                     .where(Challenge.id == challenge_id, Challenge.status == "pending")
-                    .values(message_id=message_id)
+                    .values(message_id=message_id, origin_chat_id=origin_chat_id or chat_id)
                 )
             if challenge_id in self.pending.message_ids:
-                self.pending.message_ids[challenge_id] = message_id
+                self.pending.message_ids[challenge_id] = (
+                    0 if origin_chat_id not in {None, chat_id} else message_id
+                )
 
     async def complete(
         self, chat_id: int, challenge_id: int, user_id: int, kind: str, sent_at, message_id
     ):
-        async with self.locks.for_chat(chat_id):
+        async with self.locks.hold(chat_id) as chat_id:
             async with self.sessions.begin() as session:
                 challenge = await session.get(Challenge, challenge_id)
                 member = await session.get(Membership, (chat_id, user_id))
@@ -143,7 +150,10 @@ class ChallengeRepository:
                     or challenge.user_id != user_id
                     or challenge.kind != kind
                     or challenge.message_id is None
-                    or message_id <= challenge.message_id
+                    or (
+                        challenge.origin_chat_id in {None, chat_id}
+                        and message_id <= challenge.message_id
+                    )
                     or sent_at > challenge.deadline_at
                     or sent_at < challenge.created_at.replace(microsecond=0)
                     or member is None
@@ -162,7 +172,7 @@ class ChallengeRepository:
 
     async def expire(self, chat_id: int, challenge_id: int, now):
         outcome = None
-        async with self.locks.for_chat(chat_id):
+        async with self.locks.hold(chat_id) as chat_id:
             async with self.sessions.begin() as session:
                 challenge = await session.get(Challenge, challenge_id)
                 if (

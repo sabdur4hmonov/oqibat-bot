@@ -70,12 +70,21 @@ the production choice for 10,000 groups. Live PostgreSQL verification still requ
 a PostgreSQL server. All stored timestamps are timezone-aware UTC at the ORM
 boundary. SQLite values are reattached to UTC when loaded; naive input is rejected.
 Chat-local clock settings default to Asia/Tashkent (daily 09:00, quiet 23:00–08:00).
-The scheduler runs every 30 seconds and currently posts daily messages, assigns challenges
-and resolves expired tasks. Games arrive in later phases. Daily timing includes the stable 0–15 minute
+The bulk scheduler runs every 30 seconds and currently posts daily messages and assigns challenges.
+An independent one-second loop resolves deadlines; queued sends never hold expiry state open.
+Games arrive in later phases. Daily timing includes the stable 0–15 minute
 offset, so a time set two minutes ahead can post two to seventeen minutes later, plus
 up to one scheduler interval. Quiet hours defer daily delivery until quiet end.
 
 ## Telegram checks
+
+Group upgrades to supergroups are handled automatically: one transaction moves all
+chat-owned records, preserves settings and history, and leaves a durable inactive alias
+for the old ID. Runtime caches and queued API destinations follow the new ID. Repeated
+migration updates are safe. When both IDs already have data, opt-out wins, duplicate
+delivery/point references are merged, and conflicting point amounts abort the transaction
+for operator review. Original message IDs retain their original chat scope. Anonymous
+administrators are recognized only when the message's sender chat is that same group.
 
 1. Botning shaxsiy chatini oching va **Start** tugmasini bosing.
 2. Salomlashuv, “Guruhda oqibat bo‘lsin”, Instagram manzili va guruhga qo‘shish
@@ -153,8 +162,10 @@ overhead and does not prove end-to-end Telegram or production server capacity.
   cannot occupy all game callback slots. The sender still enforces one global limit.
   The `daily`, `challenge` and `expire` hooks are registered. Register `weekly` and `game` in their product
   phases. A chat hook returns `True` only after success; its next UTC timestamp is then
-  recomputed with a conditional bulk update. Missing/failed hooks keep due work intact.
-  Expiry/game hooks must persist their own status/deadline transition before returning
+  recomputed with a conditional bulk update. Missing hooks keep due work intact;
+  failed hooks log the failure and back off that chat/job for ten minutes.
+  Expiry/game hooks run in a separate one-second loop with their own lock, independent
+  of bulk work. They must persist their own status/deadline transition before returning
   success. Keep the scheduled-post idempotency ledger for daily/weekly sends.
   A chat hook can return an aware UTC datetime to defer its due time, for example until
   quiet end, instead of losing the job or repeatedly querying it during quiet hours.

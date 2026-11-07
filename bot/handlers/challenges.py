@@ -5,14 +5,17 @@ from aiogram.types import Message
 from bot import texts
 from bot.handlers.settings import permitted
 from bot.services.challenges import KIND_ALIASES
+from bot.utils.admin import is_anonymous_admin
 
 
 async def force_challenge(
     message: Message, command: CommandObject, bot: Bot, admins, sender, challenge_service
 ) -> None:
-    if message.from_user is None:
+    if message.from_user is None and not is_anonymous_admin(message):
         return
-    allowed, error = await permitted(admins, message.chat.id, message.from_user.id)
+    allowed, error = await permitted(
+        admins, message.chat.id, message.from_user.id if message.from_user else None, message
+    )
     if not allowed:
         await sender.send(message.chat.id, lambda: bot.send_message(message.chat.id, error))
         return

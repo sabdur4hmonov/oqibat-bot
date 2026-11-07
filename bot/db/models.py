@@ -86,6 +86,7 @@ class Chat(Timestamps, Base):
     next_daily_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
     next_challenge_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
     next_weekly_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
+    migrated_to_chat_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
 
 
 class User(Timestamps, Base):
@@ -143,6 +144,7 @@ class Challenge(Base):
     prompt_key: Mapped[str] = mapped_column(String(128))
     status: Mapped[str] = mapped_column(String(16), default="pending", index=True)
     message_id: Mapped[int | None] = mapped_column(BigInteger)
+    origin_chat_id: Mapped[int | None] = mapped_column(BigInteger)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utc_now)
     deadline_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
     resolved_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
@@ -164,6 +166,7 @@ class ScheduledPost(Base):
     local_date: Mapped[date] = mapped_column(Date, primary_key=True)
     status: Mapped[str] = mapped_column(String(12), default="reserved", server_default="reserved")
     message_id: Mapped[int | None] = mapped_column(BigInteger)
+    origin_chat_id: Mapped[int | None] = mapped_column(BigInteger)
     posted_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
     content_key: Mapped[str | None] = mapped_column(String(128))
 

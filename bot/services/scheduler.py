@@ -4,7 +4,7 @@ import asyncio
 import logging
 import time
 from collections.abc import Awaitable, Callable
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import bindparam, select
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -38,6 +38,8 @@ class Scheduler:
         self.hooks = hooks or {}
         self.last_tick_duration = 0.0
         self._lock = asyncio.Lock()
+        self._deadline_lock = asyncio.Lock()
+        self.last_deadline_tick_duration = 0.0
         self._workers = {kind: asyncio.Semaphore(25) for kind in (*CHAT_JOBS, "expire", "game")}
 
     async def _process(self, kind: str, row, now: datetime) -> bool | datetime:
@@ -67,7 +69,15 @@ class Scheduler:
                     }
             except Exception:
                 logger.exception("Could not reschedule %s for chat %s", kind, chat.id)
-            return None
+            retry_at = now + timedelta(minutes=10)
+            logger.warning(
+                "Scheduled %s failed for chat %s; backing off until %s", kind, chat.id, retry_at
+            )
+            return {
+                "chat_key": chat.id,
+                "expected": getattr(chat, column.key),
+                "next_value": retry_at,
+            }
 
         changes = [
             change
@@ -111,9 +121,9 @@ class Scheduler:
             counts = {kind: 0 for kind in (*CHAT_JOBS, "expire", "game")}
             try:
                 tasks = {}
-                # Separate kinds progress together; bulk delivery cannot stall game deadlines.
+                # Bulk work has its own loop/lock, entirely separate from deadline progression.
                 async with asyncio.TaskGroup() as group:
-                    for kind in ("game", "expire", "challenge", "daily", "weekly"):
+                    for kind in ("challenge", "daily", "weekly"):
                         if kind in self.hooks:
                             operation = (
                                 self._chat_batch if kind in CHAT_JOBS else self._deadline_batch
@@ -123,6 +133,28 @@ class Scheduler:
                 return counts
             finally:
                 self.last_tick_duration = time.perf_counter() - started
+
+    async def deadline_tick(self, now: datetime | None = None) -> dict[str, int]:
+        async with self._deadline_lock:
+            started = time.perf_counter()
+            now = now or utc_now()
+            try:
+                tasks = {}
+                async with asyncio.TaskGroup() as group:
+                    for kind in ("game", "expire"):
+                        if kind in self.hooks:
+                            tasks[kind] = group.create_task(self._deadline_batch(kind, now))
+                return {kind: task.result() for kind, task in tasks.items()}
+            finally:
+                self.last_deadline_tick_duration = time.perf_counter() - started
+
+    async def run_deadlines(self) -> None:
+        while True:
+            try:
+                await self.deadline_tick()
+            except Exception:
+                logger.exception("Deadline tick failed; will retry")
+            await asyncio.sleep(1)
 
     async def run(self) -> None:
         while True:

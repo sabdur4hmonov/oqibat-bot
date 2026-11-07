@@ -48,9 +48,10 @@ async def test_missing_or_failed_hook_does_not_lose_due_work(sessions):
         session.add(Chat(id=-1, title="Sinov", bot_is_admin=True, next_daily_at=due))
     assert not any((await Scheduler(sessions).tick(now)).values())
     scheduler = Scheduler(sessions, hooks={"daily": AsyncMock(side_effect=RuntimeError("offline"))})
-    assert (await scheduler.tick(now))["daily"] == 0
+    assert (await scheduler.tick(now))["daily"] == 1
     async with sessions() as session:
-        assert (await session.get(Chat, -1)).next_daily_at == due
+        assert (await session.get(Chat, -1)).next_daily_at == now + timedelta(minutes=10)
+    assert (await scheduler.tick(now + timedelta(seconds=30)))["daily"] == 0
 
 
 async def test_due_query_uses_timestamp_index(sessions):

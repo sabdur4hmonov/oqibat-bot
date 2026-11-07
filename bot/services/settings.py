@@ -59,3 +59,9 @@ class SettingPrompts:
 
     def clear(self, chat: int, user: int) -> None:
         self.pending.pop((chat, user), None)
+
+    def find_reply(self, chat: int, reply_id: int):
+        for (candidate_chat, owner), (field, message_id, expires) in self.pending.items():
+            if candidate_chat == chat and message_id == reply_id and expires > self.clock():
+                return field, owner
+        return None

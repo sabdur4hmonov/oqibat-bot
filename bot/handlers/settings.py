@@ -5,10 +5,12 @@ from aiogram.types import CallbackQuery, ForceReply, Message
 from bot import texts
 from bot.keyboards.group import setting_choices, settings_keyboard
 from bot.services.settings import INPUT_FIELDS, parse_setting
-from bot.utils.admin import is_admin
+from bot.utils.admin import is_admin, is_anonymous_admin
 
 
-async def permitted(admins, chat_id: int, user_id: int) -> tuple[bool, str]:
+async def permitted(admins, chat_id: int, user_id: int | None, message=None) -> tuple[bool, str]:
+    if message is not None and is_anonymous_admin(message):
+        return True, ""
     try:
         return (
             (True, "") if await is_admin(admins, chat_id, user_id) else (False, texts.ADMINS_ONLY)
@@ -18,9 +20,11 @@ async def permitted(admins, chat_id: int, user_id: int) -> tuple[bool, str]:
 
 
 async def settings(message: Message, bot: Bot, groups, admins, sender) -> None:
-    if message.from_user is None:
+    if message.from_user is None and not is_anonymous_admin(message):
         return
-    allowed, error = await permitted(admins, message.chat.id, message.from_user.id)
+    allowed, error = await permitted(
+        admins, message.chat.id, message.from_user.id if message.from_user else None, message
+    )
     if not allowed:
         await sender.send(message.chat.id, lambda: bot.send_message(message.chat.id, error))
         return
@@ -106,23 +110,38 @@ class PendingSettingReply(Filter):
     async def __call__(self, message: Message, setting_prompts=None) -> bool | dict:
         if (
             setting_prompts is None
-            or message.from_user is None
+            or (message.from_user is None and not is_anonymous_admin(message))
             or message.reply_to_message is None
             or not message.text
         ):
             return False
+        if is_anonymous_admin(message):
+            match = setting_prompts.find_reply(message.chat.id, message.reply_to_message.message_id)
+            return {"setting_field": match[0], "setting_actor_id": match[1]} if match else False
         field = setting_prompts.get(
             message.chat.id, message.from_user.id, message.reply_to_message.message_id
         )
-        return {"setting_field": field} if field else False
+        return (
+            {"setting_field": field, "setting_actor_id": message.from_user.id} if field else False
+        )
 
 
 async def setting_reply(
-    message: Message, bot: Bot, groups, admins, sender, setting_prompts, setting_field: str
+    message: Message,
+    bot: Bot,
+    groups,
+    admins,
+    sender,
+    setting_prompts,
+    setting_field: str,
+    setting_actor_id=None,
 ) -> None:
-    allowed, error = await permitted(admins, message.chat.id, message.from_user.id)
+    actor = setting_actor_id if setting_actor_id is not None else message.from_user.id
+    allowed, error = await permitted(
+        admins, message.chat.id, message.from_user.id if message.from_user else None, message
+    )
     if not allowed:
-        setting_prompts.clear(message.chat.id, message.from_user.id)
+        setting_prompts.clear(message.chat.id, actor)
         await sender.send(message.chat.id, lambda: bot.send_message(message.chat.id, error))
         return
     try:
@@ -133,7 +152,7 @@ async def setting_reply(
         )
         return
     chat = await groups.change_setting(message.chat.id, setting_field, value)
-    setting_prompts.clear(message.chat.id, message.from_user.id)
+    setting_prompts.clear(message.chat.id, actor)
     if chat is not None:
         await sender.send(
             message.chat.id,

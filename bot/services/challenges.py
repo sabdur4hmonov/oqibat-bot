@@ -2,6 +2,7 @@
 
 from bot import texts
 from bot.db.models import Chat
+from bot.services.effects import Effects
 from bot.services.sender import Priority
 from bot.utils.time import after_quiet, is_quiet, utc_now
 
@@ -16,7 +17,9 @@ def message_kind(message) -> str | None:
 
 
 class ChallengeService:
-    def __init__(self, sessions, bot, sender, repository, pending, content, penalties) -> None:
+    def __init__(
+        self, sessions, bot, sender, repository, pending, content, penalties, effects=None
+    ) -> None:
         self.sessions, self.bot, self.sender = sessions, bot, sender
         self.repo, self.pending, self.content, self.penalties = (
             repository,
@@ -25,8 +28,10 @@ class ChallengeService:
             penalties,
         )
         self.early_messages = {}
+        self.effects = effects or Effects()
 
     async def assign(self, chat_id: int, kind=None, *, force=False, now=None):
+        chat_id = self.repo.locks.resolve(chat_id)
         now = now or utc_now()
         async with self.sessions() as session:
             chat = await session.get(Chat, chat_id)
@@ -54,7 +59,12 @@ class ChallengeService:
             await self.repo.resolve(chat_id, challenge.id, "cancelled")
             self.early_messages.pop(challenge.id, None)
             return texts.CHALLENGE_SEND_FAILED
-        await self.repo.set_message(chat_id, challenge.id, sent.message_id)
+        await self.repo.set_message(
+            chat_id,
+            challenge.id,
+            sent.message_id,
+            getattr(getattr(sent, "chat", None), "id", chat_id),
+        )
         early = self.early_messages.pop(challenge.id, None)
         if early is not None:
             await self.complete(early)
@@ -63,8 +73,8 @@ class ChallengeService:
     async def scheduled(self, chat, now):
         if is_quiet(now, chat.tz, chat.quiet_start, chat.quiet_end):
             return after_quiet(now, chat.tz, chat.quiet_start, chat.quiet_end)
-        await self.assign(chat.id, now=now)
-        return True
+        outcome = await self.assign(chat.id, now=now)
+        return outcome not in {texts.CHALLENGE_SEND_FAILED, texts.NEED_ADMIN}
 
     async def complete(self, message) -> bool:
         if message.from_user is None or message.from_user.is_bot:
@@ -72,7 +82,8 @@ class ChallengeService:
         kind = message_kind(message)
         if kind is None:
             return False
-        challenge_id = self.pending.match(message.chat.id, message.from_user.id, kind, message.date)
+        chat_id = self.repo.locks.resolve(message.chat.id)
+        challenge_id = self.pending.match(chat_id, message.from_user.id, kind, message.date)
         if challenge_id is None:
             return False
         posted_id = self.pending.message_ids.get(challenge_id)
@@ -82,7 +93,7 @@ class ChallengeService:
         if message.message_id <= posted_id:
             return False
         delta = await self.repo.complete(
-            message.chat.id,
+            chat_id,
             challenge_id,
             message.from_user.id,
             kind,
@@ -107,6 +118,10 @@ class ChallengeService:
         if result is None:
             return False
         chat, user_id, misses = result
+        self.effects.start(self._notify_expiry(chat, user_id, misses))
+        return True
+
+    async def _notify_expiry(self, chat, user_id, misses) -> None:
         await self.penalties.apply(chat, user_id, misses)
         await self.sender.send(
             chat.id,
@@ -115,4 +130,3 @@ class ChallengeService:
             ),
             priority=Priority.CHALLENGE,
         )
-        return True

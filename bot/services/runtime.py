@@ -13,8 +13,10 @@ from bot.services.admin_cache import AdminCache
 from bot.services.challenges import ChallengeService
 from bot.services.content import ContentLibrary
 from bot.services.daily import DailyService
+from bot.services.effects import Effects
 from bot.services.locks import ChatLocks
 from bot.services.metrics import Metrics
+from bot.services.migrations import ChatMigrations
 from bot.services.participation import Participants
 from bot.services.penalties import Penalties
 from bot.services.pending import PendingChallenges
@@ -32,39 +34,54 @@ class ScaleRuntime:
         self.pending = PendingChallenges()
         self.participants = Participants()
         self.checkins = CheckinBuffer(sessions)
-        self.points = Points(sessions)
         self.locks = ChatLocks()
+        self.points = Points(sessions, self.locks)
         self.admins = AdminCache(bot)
         self.metrics = Metrics()
         self.scheduler = Scheduler(sessions)
         self.sender = Sender(sessions, on_forbidden=self.activity.mark_forbidden)
+        self.effects = Effects()
         self.challenges = ChallengeRepository(sessions, self.pending, self.locks)
         self.games = GameSessionRepository(sessions, self.locks)
         self.groups = GroupRepository(sessions, self.locks, self.pending, self.participants)
         self.setting_prompts = SettingPrompts()
         self.content = ContentLibrary()
         self.daily = DailyService(
-            sessions, bot, self.sender, self.content, self.participants, self.checkins
+            sessions, bot, self.sender, self.content, self.participants, self.checkins, self.locks
         )
         self.scheduler.hooks["daily"] = self.daily.post
         self.penalties = Penalties(
             bot, self.sender, self.admins, getattr(settings, "owner_id", None)
         )
         self.challenge_service = ChallengeService(
-            sessions, bot, self.sender, self.challenges, self.pending, self.content, self.penalties
+            sessions,
+            bot,
+            self.sender,
+            self.challenges,
+            self.pending,
+            self.content,
+            self.penalties,
+            self.effects,
         )
         self.scheduler.hooks["challenge"] = self.challenge_service.scheduled
         self.scheduler.hooks["expire"] = self.challenge_service.expire
         self.sessions = sessions
         self.tasks = []
+        self.migrations = ChatMigrations(self, bot)
+        self.locks.resolve = self.migrations.resolve
+        self.sender.resolve_chat = self.migrations.resolve
+        self.sender.on_migrate = self.migrations.migrate
+        self.daily.resolve_chat = self.migrations.resolve
 
     async def __aenter__(self):
+        await self.migrations.load()
         await self.pending.load(self.sessions)
         await self.participants.load(self.sessions)
         await self.daily.load()
         self.tasks = [
             asyncio.create_task(self.activity.run(), name="activity-flush"),
             asyncio.create_task(self.scheduler.run(), name="scheduler-tick"),
+            asyncio.create_task(self.scheduler.run_deadlines(), name="deadline-tick"),
             asyncio.create_task(self.checkins.run(), name="checkin-flush"),
             asyncio.create_task(
                 self.metrics.run(self.sender, self.scheduler), name="scale-metrics"
@@ -76,6 +93,7 @@ class ScaleRuntime:
         for task in self.tasks:
             task.cancel()
         await asyncio.gather(*self.tasks, return_exceptions=True)
+        await self.effects.close()
         await self.sender.close()
         try:
             await self.activity.flush()
@@ -98,6 +116,7 @@ class ScaleRuntime:
             "checkins": self.checkins,
             "points": self.points,
             "challenge_service": self.challenge_service,
+            "migrations": self.migrations,
         }
 
 
@@ -108,6 +127,39 @@ class ScaleMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
         self.runtime.metrics.record_update()
         data.update(self.runtime.workflow())
+        membership = event.chat_member or event.my_chat_member
+        if membership and self.runtime.migrations.resolve(membership.chat.id) != membership.chat.id:
+            return None  # Ignore delayed membership events from the inactive source group.
+        if event.message and (
+            event.message.migrate_to_chat_id or event.message.migrate_from_chat_id
+        ):
+            return await handler(event, data)
+        for field in ("message", "callback_query"):
+            container = getattr(event, field)
+            message = (
+                container if field == "message" else (container.message if container else None)
+            )
+            if message is None:
+                continue
+            canonical = self.runtime.migrations.resolve(message.chat.id)
+            if canonical != message.chat.id:
+                sender_chat = getattr(message, "sender_chat", None)
+                if sender_chat and sender_chat.id == message.chat.id:
+                    sender_chat = sender_chat.model_copy(update={"id": canonical})
+                elif sender_chat and sender_chat.id == canonical:
+                    sender_chat = None
+                message = message.model_copy(
+                    update={
+                        "chat": message.chat.model_copy(update={"id": canonical}),
+                        "sender_chat": sender_chat,
+                    }
+                )
+                replacement = (
+                    message
+                    if field == "message"
+                    else container.model_copy(update={"message": message})
+                )
+                event = event.model_copy(update={field: replacement})
         message = event.message
         if message and message.from_user and not message.from_user.is_bot:
             user = message.from_user

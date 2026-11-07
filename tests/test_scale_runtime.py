@@ -158,6 +158,6 @@ async def test_runtime_shutdown_flushes_and_stops_tasks(sessions):
     runtime = ScaleRuntime(sessions, SimpleNamespace())
     async with runtime:
         runtime.activity.mark_private(42, "Sinov", None)
-        assert len(runtime.tasks) == 4
+        assert len(runtime.tasks) == 5
     assert all(task.done() for task in runtime.tasks)
     assert not runtime.activity.users

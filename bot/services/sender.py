@@ -12,7 +12,7 @@ from enum import IntEnum
 from typing import Any, Literal, TypeVar
 
 from aiogram import Bot
-from aiogram.exceptions import TelegramForbiddenError, TelegramRetryAfter
+from aiogram.exceptions import TelegramForbiddenError, TelegramMigrateToChat, TelegramRetryAfter
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from bot.db.repo.reachability import mark_inactive
@@ -92,6 +92,7 @@ class _Item:
     future: asyncio.Future = field(compare=False)
     retry_scope: Literal["chat", "global"] = field(compare=False, default="global")
     attempts: int = field(compare=False, default=0)
+    migrations: int = field(compare=False, default=0)
 
 
 class Sender:
@@ -113,6 +114,9 @@ class Sender:
         self._active: set[asyncio.Task] = set()
         self._futures: set[asyncio.Future] = set()
         self._closed = False
+        self.aliases = {}
+        self.resolve_chat = lambda chat_id: self.aliases.get(chat_id, chat_id)
+        self.on_migrate = None
 
     @property
     def queue_length(self) -> int:
@@ -169,6 +173,7 @@ class Sender:
             item = heapq.heappop(self._queue)
             if item.future.done():
                 continue
+            item.chat_id = self.resolve_chat(item.chat_id)
             ready = self.limiter.ready_at(item.chat_id, now)
             if ready <= now:
                 selected = item
@@ -213,6 +218,35 @@ class Sender:
         result = None
         try:
             result = await item.operation()
+        except TelegramMigrateToChat as error:
+            old_id, new_id = item.chat_id, error.migrate_to_chat_id
+            logger.info("TelegramMigrateToChat: %s -> %s", old_id, new_id)
+            try:
+                if old_id is None or old_id == new_id or item.migrations >= 2:
+                    raise ValueError("Invalid or repeated Telegram migration response")
+                if self.on_migrate:
+                    await self.on_migrate(old_id, new_id)
+                elif self.sessions is not None:
+                    from bot.db.repo.migrations import ChatMigrationRepository
+                    from bot.services.locks import ChatLocks
+
+                    await ChatMigrationRepository(self.sessions, ChatLocks()).migrate(
+                        old_id, new_id
+                    )
+                self.aliases[old_id] = new_id
+                starts = self.limiter.chat_starts.pop(old_id, deque())
+                starts.extend(self.limiter.chat_starts.get(new_id, ()))
+                self.limiter.chat_starts[new_id] = deque(sorted(starts))
+                pause = self.limiter.chat_pauses.pop(old_id, 0)
+                self.limiter.chat_pauses[new_id] = max(
+                    pause, self.limiter.chat_pauses.get(new_id, 0)
+                )
+                item.chat_id, item.migrations = new_id, item.migrations + 1
+                if not item.future.done() and not self._closed:
+                    self._enqueue(item)
+                    return
+            except Exception:
+                logger.exception("Could not migrate Telegram chat %s -> %s", old_id, new_id)
         except TelegramRetryAfter as error:
             scope = item.chat_id if item.retry_scope == "chat" else None
             self.limiter.pause(scope, self.clock.now() + error.retry_after)
