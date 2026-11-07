@@ -5,9 +5,10 @@ from dataclasses import dataclass
 
 from sqlalchemy import select
 
-from bot.db.models import Chat, GameSession, Membership
+from bot.db.models import Challenge, Chat, GameSession, Membership
 from bot.services.game_cache import view
 from bot.services.points import record_event
+from bot.utils.time import utc_now
 
 
 @dataclass(frozen=True)
@@ -23,9 +24,10 @@ class GameBusy(ValueError):
 
 
 class GameSessionRepository:
-    def __init__(self, sessions, locks, cache=None) -> None:
+    def __init__(self, sessions, locks, cache=None, pending=None) -> None:
         self.sessions, self.locks = sessions, locks
         self.cache = cache
+        self.pending = pending
 
     async def create(self, chat_id: int, **values) -> int:
         async with self.locks.hold(chat_id) as chat_id:
@@ -54,6 +56,10 @@ class GameSessionRepository:
                     or not member.is_active
                 ):
                     return None
+                if game == "hyj":
+                    target = await session.get(Membership, (chat_id, state.get("target")))
+                    if target is None or not target.opted_in or not target.is_active:
+                        return None
                 query = select(GameSession.id).where(
                     GameSession.chat_id == chat_id, GameSession.status.in_(["lobby", "running"])
                 )
@@ -106,6 +112,52 @@ class GameSessionRepository:
             if self.cache:
                 self.cache.sync(row)
             return view(row) if allowed else None
+
+    async def refuse_hyj(self, chat_id, game_id, user_id):
+        """Cancel a linked pending dare and record only refusal, in one transaction."""
+        challenge_id = None
+        async with self.locks.hold(chat_id) as chat_id:
+            async with self.sessions.begin() as session:
+                game = await session.get(GameSession, game_id)
+                member = await session.get(Membership, (chat_id, user_id))
+                chat = await session.get(Chat, chat_id)
+                if (
+                    game is None
+                    or game.chat_id != chat_id
+                    or game.game != "hyj"
+                    or game.status not in {"lobby", "running"}
+                    or game.state.get("target") != user_id
+                    or member is None
+                    or not member.opted_in
+                    or not member.is_active
+                    or chat is None
+                    or not chat.is_active
+                    or not chat.bot_is_admin
+                    or game.phase_deadline_at is None
+                    or game.phase_deadline_at <= utc_now()
+                ):
+                    return None
+                challenge = await session.scalar(
+                    select(Challenge).where(Challenge.game_session_id == game_id).limit(1)
+                )
+                if challenge:
+                    if challenge.status != "pending" or challenge.deadline_at <= utc_now():
+                        return None
+                    challenge.status, challenge.resolved_at = "cancelled", utc_now()
+                    challenge_id = challenge.id
+                game.status, game.phase_deadline_at = "finished", None
+                game.state = {
+                    **game.state,
+                    "phase": "done",
+                    "result": "refused",
+                    "rev": game.state.get("rev", 0) + 1,
+                }
+                await record_event(session, chat_id, user_id, -2, "hyj_refuse", f"game:{game_id}")
+            if challenge_id is not None and self.pending:
+                self.pending.remove(challenge_id)
+            if self.cache:
+                self.cache.sync(game)
+            return view(game)
 
     async def change(self, chat_id: int, game_id: int, transform) -> bool:
         """transform is synchronous and changes only this locked ORM game object."""

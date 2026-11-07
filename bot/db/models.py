@@ -145,6 +145,7 @@ class Challenge(Base):
     status: Mapped[str] = mapped_column(String(16), default="pending", index=True)
     message_id: Mapped[int | None] = mapped_column(BigInteger)
     origin_chat_id: Mapped[int | None] = mapped_column(BigInteger)
+    game_session_id: Mapped[int | None] = mapped_column(ForeignKey("game_sessions.id"), index=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utc_now)
     deadline_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
     resolved_at: Mapped[datetime | None] = mapped_column(UTCDateTime())

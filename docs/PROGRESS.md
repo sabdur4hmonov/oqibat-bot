@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 5 implemented and locally verified; proceeding to Phase 6 under the owner's explicit request to continue through remaining PLAN phases.
+- Current phase: Phase 6 implemented and locally verified. STOP after its push, as explicitly requested by the owner; Phase 7 (Mafia) waits for Claude's review of Phases 4–6.
 - Last updated: 2026-11-07 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -249,3 +249,24 @@
   4. `O‘zbekiston`, `O'zbekiston` va `Ўзбекистон` kabi yozuvlarni mos so‘z kelganda tekshiring.
   5. Bir turda so‘zni ikki marta almashtiring; uchinchisi rad etiladi. Boshlovchi so‘zni guruhga yozsa −3 va yangi so‘z bo‘lishi kerak.
   6. Bir turni uch daqiqa kuting: so‘z ochiladi va yangi boshlovchi tanlanadi. 10 turdan keyin o‘yin tugaydi; oldinroq `/stop` ham ishlaydi.
+
+
+### Phase 6 — Haqiqat yoki jasorat — 2026-11-07
+- Status: done for implementation/local acceptance; stopped here at the owner's explicit request. Phase 7 has not been started and waits for Claude's review of Phases 4–6.
+- Commit(s): this entry accompanies `phase-6: truth dare and atomic refusal lifecycle`; Phase 5 was pushed as `2510f79`.
+- What was built: `/hyj` with random opted-in or reply target; target-only choice/refusal buttons; truth question with 30-minute text/voice response and atomic +5; targeted dare through the existing typed challenge engine with a one-hour deadline and existing kind scores; atomic game/task/point resolution so completion, refusal and expiry cannot double-score. Refusal costs only −2 and cancels the dare without moderation. Target opt-out and `/stop` cancel safely. Deadline work remains independent of outbound waits; question-send recovery and bounded early-response buffering are included. Outbound board edits have a separate game-specific lock to prevent a delayed question edit overwriting a refusal/final result.
+- Files added/changed: pure truth-answer validation, orchestration/handlers, shared challenge/game/group repositories and lifecycle caches, runtime/commands/texts, README and tests. New migration `e26b09e84d37` adds nullable indexed `challenges.game_session_id` with a foreign key; old migrations preserved. Migration handling also resets the truth message-number boundary in the new chat scope.
+- Tests: `pytest -q`: **222 passed**; `ruff check .`: **all checks passed**. `alembic upgrade head` and `alembic check` pass with no schema drift. The full suite includes offline module startup and mocked polling startup; no real Telegram requests were made. Sixteen Phase 6 tests cover both truth response types, all four dare media/score kinds, random/reply selection, target authorization, deadline/message boundaries, pending-task conflict, mute/kick-mode refusal without moderation, completion/refusal and expiry/refusal races, transaction rollback, opt-out/stop cancellation and delayed-edit ordering.
+- Acceptance criteria: ✅ truth and dare branches run end-to-end in mocked Telegram flows; ✅ only the target can choose/refuse; ✅ correct point amounts, cancellation and one outcome per task; ❌ live Telegram acceptance remains pending a real bot token.
+- Deviations from PLAN.md and why: choice timeout is 90 seconds; truth/choice timeouts have no extra penalty. Unrefused dare expiry uses the existing configured challenge penalty, while an accepted refusal only costs −2 and cancels it. Dares obey the mandatory quiet-hour rules, including extending an ending inside quiet hours to quiet end. A durable task-to-game link is needed to make refusal/completion/expiry atomic and restart-safe. No new dependency or architecture redesign.
+- Open questions / decisions needed: no blocking implementation question. Claude should review Phases 4–6 before the owner authorizes Phase 7.
+- Known issues / TODO: real test-group behavior remains unverified without credentials. The three sample content items are illustrative; production content is still owner/Claude-authored. Outbound notifications are memory-only across a crash; task/game status and point events are durable. Phase 7 and all later phases remain untouched in this phase.
+- Manual test steps (Uzbek, simple):
+  1. `alembic upgrade head` ni bajaring, keyin botni ishga tushiring. Sinov guruhida bot admin bo‘lsin, a'zolar `/qoshilish` bilan qo‘shilsin.
+  2. Bir a'zoning xabariga javoban `/hyj` yuboring. Faqat o‘sha a'zo “Haqiqat”, “Jasorat” yoki “Rad etish” tugmasini bosa olishi kerak. Boshqa a'zo bosganda rad javobi chiqadi.
+  3. “Haqiqat”ni tanlang. 30 daqiqa ichida matn yoki ovozli javob yuboring: +5 bir marta beriladi. `/men` bilan tekshiring.
+  4. Yangi `/hyj` da “Jasorat”ni tanlang. Tinch vaqt bo‘lmasin va boshqa vazifa kutilayotgan bo‘lmasin. Tanlangan a'zo kerakli video, ovoz, surat yoki matnni yuborsin; odatdagi vazifa ballari beriladi.
+  5. Yangi jasoratda muddat tugashidan oldin “Rad etish”ni bosing. Faqat −2 bo‘lishi, vazifa bekor qilinishi va a'zo cheklanmasligi/chiqarilmasligi kerak. Tugmani qayta bosish yana ball ayirmaydi.
+  6. `/stop` yoki tanlangan a'zoning `/chiqish` buyrug‘i o‘yin va vazifani jarimasiz bekor qilishi kerak.
+  7. Haqiqatni javobsiz 30 daqiqa qoldiring: qo‘shimcha jarimasiz tugaydi. Jasoratni rad etmasdan muddatigacha bajarmasangiz, guruhning oddiy vazifa jazosi ishlaydi; buni faqat rozilik bergan sinov a'zolari bilan tekshiring.
+  8. Shu bosqichdan keyin to‘xtaymiz. Claude 4–6-bosqichlarni ko‘rib chiqmaguncha Mafia boshlanmaydi.

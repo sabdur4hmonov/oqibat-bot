@@ -30,7 +30,17 @@ class ChallengeService:
         self.early_messages = {}
         self.effects = effects or Effects()
 
-    async def assign(self, chat_id: int, kind=None, *, force=False, now=None):
+    async def assign(
+        self,
+        chat_id: int,
+        kind=None,
+        *,
+        force=False,
+        now=None,
+        target=None,
+        hours=None,
+        game_id=None,
+    ):
         chat_id = self.repo.locks.resolve(chat_id)
         now = now or utc_now()
         async with self.sessions() as session:
@@ -41,7 +51,16 @@ class ChallengeService:
             return texts.QUIET_ASSIGN
         if self.pending.for_chat(chat_id):
             return texts.PENDING_CHALLENGE
-        result = await self.repo.assign(chat_id, now, self.content.banks["challenges"], kind, force)
+        result = await self.repo.assign(
+            chat_id,
+            now,
+            self.content.banks["challenges"],
+            kind,
+            force,
+            target=target,
+            hours=hours,
+            game_id=game_id,
+        )
         if result is None:
             return texts.NO_CHALLENGE_CANDIDATE
         challenge, user, chat, item = result

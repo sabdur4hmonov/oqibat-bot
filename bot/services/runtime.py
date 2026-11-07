@@ -28,6 +28,7 @@ from bot.services.points import CheckinBuffer, Points
 from bot.services.scheduler import Scheduler
 from bot.services.sender import Sender
 from bot.services.settings import SettingPrompts
+from bot.services.truth_dare import TruthDare
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +46,9 @@ class ScaleRuntime:
         self.scheduler = Scheduler(sessions)
         self.sender = Sender(sessions, on_forbidden=self.activity.mark_forbidden)
         self.effects = Effects()
-        self.challenges = ChallengeRepository(sessions, self.pending, self.locks)
         self.game_cache = GameCache()
-        self.games = GameSessionRepository(sessions, self.locks, self.game_cache)
+        self.challenges = ChallengeRepository(sessions, self.pending, self.locks, self.game_cache)
+        self.games = GameSessionRepository(sessions, self.locks, self.game_cache, self.pending)
         self.game_hub = GameHub(
             self.games,
             self.game_cache,
@@ -57,7 +58,9 @@ class ScaleRuntime:
             self.participants,
             self.effects,
         )
-        self.groups = GroupRepository(sessions, self.locks, self.pending, self.participants)
+        self.groups = GroupRepository(
+            sessions, self.locks, self.pending, self.participants, self.game_cache
+        )
         self.setting_prompts = SettingPrompts()
         self.content = ContentLibrary()
         self.easy_games = EasyGames(self.game_hub, self.content, sessions)
@@ -84,6 +87,10 @@ class ScaleRuntime:
         )
         self.scheduler.hooks["challenge"] = self.challenge_service.scheduled
         self.scheduler.hooks["expire"] = self.challenge_service.expire
+        self.truth_dare = TruthDare(self.game_hub, self.content, sessions, self.challenge_service)
+        self.game_hub.register(("hyj",), self.truth_dare)
+        self.challenges.on_game_resolved = self.truth_dare.challenge_resolved
+        self.groups.on_game_resolved = self.truth_dare.challenge_resolved
         self.sessions = sessions
         self.tasks = []
         self.migrations = ChatMigrations(self, bot)
@@ -141,6 +148,7 @@ class ScaleRuntime:
             "game_hub": self.game_hub,
             "easy_games": self.easy_games,
             "krokodil_game": self.krokodil_game,
+            "truth_dare": self.truth_dare,
         }
 
 

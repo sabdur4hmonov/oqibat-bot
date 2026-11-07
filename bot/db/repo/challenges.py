@@ -2,8 +2,9 @@
 
 from sqlalchemy import select, update
 
-from bot.db.models import Challenge, Chat, ContentUsage, Membership, User
+from bot.db.models import Challenge, Chat, ContentUsage, GameSession, Membership, User
 from bot.services.content import choose_content
+from bot.services.game_cache import view
 from bot.services.penalties import challenge_deadline
 from bot.services.picker import Candidate, pick_member
 from bot.services.points import challenge_points, record_event
@@ -11,8 +12,33 @@ from bot.utils.time import is_quiet, utc_now
 
 
 class ChallengeRepository:
-    def __init__(self, sessions, pending, locks) -> None:
+    def __init__(self, sessions, pending, locks, game_cache=None) -> None:
         self.sessions, self.pending, self.locks = sessions, pending, locks
+        self.game_cache = game_cache
+        self.on_game_resolved = None
+
+    def _sync_game(self, game):
+        if game is not None:
+            if self.game_cache is not None:
+                self.game_cache.sync(game)
+            if game.status not in {"lobby", "running"} and self.on_game_resolved:
+                self.on_game_resolved(view(game))
+
+    async def _finish_game(self, session, challenge):
+        if challenge.game_session_id is None:
+            return None
+        game = await session.get(GameSession, challenge.game_session_id)
+        if game and game.status in {"lobby", "running"}:
+            game.status = "cancelled" if challenge.status == "cancelled" else "finished"
+            game.phase_deadline_at = None
+            game.state = {
+                **game.state,
+                "phase": "done",
+                "result": f"dare_{challenge.status}",
+                "rev": game.state.get("rev", 0) + 1,
+            }
+            return game
+        return None
 
     async def create(self, **values) -> int:
         async with self.locks.hold(values["chat_id"]) as chat_id:
@@ -48,10 +74,14 @@ class ChallengeRepository:
                     return False
                 challenge.status = status
                 challenge.resolved_at = utc_now()
+                game = await self._finish_game(session, challenge)
             self.pending.remove(challenge_id)
+            self._sync_game(game)
             return True
 
-    async def assign(self, chat_id, now, items, kind=None, force=False):
+    async def assign(
+        self, chat_id, now, items, kind=None, force=False, *, target=None, hours=None, game_id=None
+    ):
         async with self.locks.hold(chat_id) as chat_id:
             if self.pending.for_chat(chat_id):
                 return None
@@ -61,6 +91,16 @@ class ChallengeRepository:
                     return None
                 if is_quiet(now, chat.tz, chat.quiet_start, chat.quiet_end) or (
                     not force and chat.challenges_per_day == 0
+                ):
+                    return None
+                game = await session.get(GameSession, game_id) if game_id is not None else None
+                if game_id is not None and (
+                    game is None
+                    or game.chat_id != chat_id
+                    or game.game != "hyj"
+                    or game.status != "running"
+                    or game.state.get("phase") != "preparing"
+                    or game.state.get("target") != target
                 ):
                     return None
                 members = (
@@ -75,7 +115,12 @@ class ChallengeRepository:
                     )
                 ).all()
                 selected = pick_member(
-                    [Candidate(member.user_id, member.last_picked_at) for member, _ in members], now
+                    [
+                        Candidate(member.user_id, member.last_picked_at)
+                        for member, _ in members
+                        if target is None or member.user_id == target
+                    ],
+                    now,
                 )
                 if selected is None:
                     return None
@@ -97,12 +142,17 @@ class ChallengeRepository:
                 challenge = Challenge(
                     chat_id=chat_id,
                     origin_chat_id=chat_id,
+                    game_session_id=game_id,
                     user_id=selected,
                     kind=item["kind"],
                     prompt_key=item["key"],
                     created_at=now,
                     deadline_at=challenge_deadline(
-                        now, chat.challenge_hours, chat.tz, chat.quiet_start, chat.quiet_end
+                        now,
+                        hours or chat.challenge_hours,
+                        chat.tz,
+                        chat.quiet_start,
+                        chat.quiet_end,
                     ),
                 )
                 session.add(challenge)
@@ -111,6 +161,16 @@ class ChallengeRepository:
                     ContentUsage(chat_id=chat_id, content_key=item["key"], used_at=now)
                 )
                 await session.flush()
+                if game:
+                    game.state = {
+                        **game.state,
+                        "phase": "dare",
+                        "challenge_id": challenge.id,
+                        "prompt": item["text"],
+                        "display_tz": chat.tz,
+                        "rev": game.state.get("rev", 0) + 1,
+                    }
+                    game.phase_deadline_at = challenge.deadline_at
             self.pending.add(
                 challenge.id,
                 chat_id,
@@ -119,6 +179,7 @@ class ChallengeRepository:
                 challenge.deadline_at,
                 challenge.created_at,
             )
+            self._sync_game(game)
             return challenge, user, chat, item
 
     async def set_message(
@@ -143,6 +204,7 @@ class ChallengeRepository:
             async with self.sessions.begin() as session:
                 challenge = await session.get(Challenge, challenge_id)
                 member = await session.get(Membership, (chat_id, user_id))
+                chat = await session.get(Chat, chat_id)
                 if (
                     challenge is None
                     or challenge.status != "pending"
@@ -159,7 +221,17 @@ class ChallengeRepository:
                     or member is None
                     or not member.opted_in
                     or not member.is_active
+                    or chat is None
+                    or not chat.is_active
+                    or not chat.bot_is_admin
                 ):
+                    return None
+                linked = (
+                    await session.get(GameSession, challenge.game_session_id)
+                    if challenge.game_session_id
+                    else None
+                )
+                if linked and linked.status not in {"lobby", "running"}:
                     return None
                 delta = challenge_points(kind, done=True)
                 challenge.status, challenge.resolved_at = "done", utc_now()
@@ -167,7 +239,9 @@ class ChallengeRepository:
                 await record_event(
                     session, chat_id, user_id, delta, "challenge_done", f"challenge:{challenge_id}"
                 )
+                game = await self._finish_game(session, challenge)
             self.pending.remove(challenge_id)
+            self._sync_game(game)
             return delta
 
     async def expire(self, chat_id: int, challenge_id: int, now):
@@ -184,6 +258,11 @@ class ChallengeRepository:
                     return None
                 chat = await session.get(Chat, chat_id)
                 member = await session.get(Membership, (chat_id, challenge.user_id))
+                linked = (
+                    await session.get(GameSession, challenge.game_session_id)
+                    if challenge.game_session_id
+                    else None
+                )
                 challenge.resolved_at = now
                 if (
                     chat is None
@@ -192,6 +271,7 @@ class ChallengeRepository:
                     or member is None
                     or not member.opted_in
                     or not member.is_active
+                    or (linked is not None and linked.status not in {"lobby", "running"})
                 ):
                     challenge.status = "cancelled"
                 else:
@@ -211,5 +291,7 @@ class ChallengeRepository:
                             f"challenge:{challenge_id}",
                         )
                     outcome = (chat, challenge.user_id, member.consecutive_misses)
+                game = await self._finish_game(session, challenge)
             self.pending.remove(challenge_id)
+            self._sync_game(game)
         return outcome

@@ -3,6 +3,7 @@
 import logging
 
 from bot import texts
+from bot.services.locks import ChatLocks
 from bot.services.sender import Priority
 
 logger = logging.getLogger(__name__)
@@ -13,6 +14,7 @@ class GameHub:
         self.repo, self.cache, self.bot, self.sender = repository, cache, bot, sender
         self.admins, self.participants = admins, participants
         self.effects = effects
+        self.board_locks = ChatLocks()
         self.services = {}
 
     def register(self, kinds, service) -> None:
@@ -33,7 +35,10 @@ class GameHub:
                 )
             return await self.bot.send_message(game.chat_id, text, reply_markup=markup)
 
-        return await self.sender.send(game.chat_id, operation, priority=Priority.GAME)
+        # This is an outbound-only lock, never the chat state/deadline lock.
+        # A delayed earlier edit must finish before the final/cancelled board is applied.
+        async with self.board_locks.for_chat(game.id):
+            return await self.sender.send(game.chat_id, operation, priority=Priority.GAME)
 
     async def cancel(self, game, text=None, *, defer=False):
         def transition(row):

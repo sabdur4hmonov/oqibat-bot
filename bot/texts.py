@@ -56,6 +56,7 @@ GROUP_COMMANDS = {
     "viktorina": "Besh savolli viktorina",
     "tanla": "Ikki variantdan birini tanlash",
     "krokodil": "So‘z topish o‘yini",
+    "hyj": "Haqiqat yoki jasorat",
     "stop": "O‘yinni to‘xtatish",
 }
 GAME_JOIN_FIRST = "O‘yin uchun bot admin bo‘lishi va siz /qoshilish bilan qo‘shilishingiz kerak."
@@ -81,6 +82,51 @@ KROK_SKIP = "So‘zni almashtirish"
 KROK_HOST_ONLY = "So‘zni faqat hozirgi boshlovchi ko‘ra oladi."
 KROK_NO_SKIPS = "Bir turda faqat ikki marta so‘z almashtirish mumkin."
 KROK_SKIPPED = "So‘z almashtirilmoqda. So‘zni ko‘rish tugmasini yana bosing."
+HYJ_TRUTH = "Haqiqat"
+HYJ_DARE = "Jasorat"
+HYJ_REFUSE = "Rad etish (−2)"
+HYJ_TARGET_ONLY = "Bu tugmani faqat tanlangan ishtirokchi bosa oladi."
+HYJ_INVALID_TARGET = "Javob berilgan a'zo /qoshilish bilan o‘yinga qo‘shilgan bo‘lsin."
+
+
+def hyj_choice(game):
+    state = game.state
+    return (
+        f"🎭 {mention(state['target'], state['name'])}, haqiqat yoki jasorat?\n"
+        "Tanlash uchun 90 soniya. Faqat siz tugmani bosa olasiz. Rad etish: −2 ball."
+    )
+
+
+def hyj_truth(game):
+    state = game.state
+    return (
+        f"💬 {mention(state['target'], state['name'])}, haqiqat:\n{escape(state['question'])}\n\n"
+        "30 daqiqada matn yoki ovozli xabar bilan javob bering. Javob uchun +5 ball."
+    )
+
+
+def hyj_dare(game):
+    state = game.state
+    end = game.phase_deadline_at.astimezone(ZoneInfo(state.get("display_tz", "Asia/Tashkent")))
+    return (
+        f"🎯 {mention(state['target'], state['name'])}, jasorat:\n{escape(state['prompt'])}\n\n"
+        f"Muddati: {end:%d.%m %H:%M}. Rad etish: faqat −2, cheklash yoki chiqarish yo‘q."
+    )
+
+
+def hyj_result(game):
+    result = game.state.get("result")
+    who = mention(game.state["target"], game.state["name"])
+    ending = {
+        "truth_done": "haqiqatga javob berdi. +5 ball! ✅",
+        "dare_done": "jasoratni bajardi! Vazifa ballari berildi. ✅",
+        "refused": "rad etdi. Faqat −2 ball; cheklash yoki chiqarish yo‘q.",
+        "dare_missed": "jasorat muddati tugadi. Guruhning vazifa jazosi qo‘llanadi.",
+        "dare_cancelled": "jasorat bekor qilindi. Ball jazosi yo‘q.",
+        "timeout": "uchun o‘yin muddati tugadi. Qo‘shimcha jazo yo‘q.",
+        "opted_out": "o‘yindan chiqdi. Vazifa bekor qilindi, ball jazosi yo‘q.",
+    }
+    return f"🎭 {who} {ending.get(result, 'uchun o‘yin yakunlandi.')}"
 
 
 def krok_word(word):

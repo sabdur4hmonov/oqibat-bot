@@ -5,7 +5,7 @@ Python 3.12, aiogram 3, SQLAlchemy 2 async, Alembic. Phase 0 implements the foun
 and private `/start` and `/help`. Phase 0.5 adds shared scale services. Phase 1 implements group onboarding,
 member consent and admin settings; Phase 2 adds daily posts, content rotation, quiet hours
 and daily check-in points. Phase 3 adds challenges, point ledgers, penalties and leaderboards.
-Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls. Phase 5 adds Krokodil.
+Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls. Phase 5 adds Krokodil; Phase 6 adds Haqiqat yoki jasorat.
 
 ## Games
 
@@ -316,3 +316,25 @@ A host revealing the word (including inside a longer message) loses 3 points and
 a new word in the same round. The board is edited; `/stop` remains available. Existing
 rounds resume after restart. Word entries must be meaningful and at most 100 characters
 to fit Telegram's private popup. Unrelated guesses use cached state without SQL.
+
+
+### Haqiqat yoki jasorat
+
+`/hyj` chooses an opted-in target at random; reply to an opted-in member to target
+them instead. Only that target can choose or refuse. The choice lasts 90 seconds.
+Truth gives a question and 30 minutes to answer in text or voice, for +5 points.
+Truth/choice timeouts have no extra penalty. Dare assigns that same target through
+the existing challenge engine, with a one-hour deadline (extended to quiet end if
+needed), the usual required media type and +15/+10/+10/+5 completion points.
+Dares are not assigned during quiet hours, and an existing pending challenge must
+finish first; the target can still choose truth instead.
+
+Refusing before the deadline costs only 2 points and atomically cancels a pending
+dare; it never mutes or kicks. A dare left to expire without refusal follows the
+normal configured challenge penalty policy. Refusal, completion and expiry cannot
+all score the same task. `/stop` or target opt-out cancels without a penalty.
+Established truth/dare state survives restart; an ambiguous question send cancels
+with a restart notice. Outbound edits for one game are serialized independently of
+state locks so a delayed question edit cannot overwrite the final result.
+
+Phase 7 (Mafia) has not been started. It waits for Claude's review of Phases 4–6.
