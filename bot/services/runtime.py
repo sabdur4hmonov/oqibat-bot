@@ -13,7 +13,10 @@ from bot.services.admin_cache import AdminCache
 from bot.services.challenges import ChallengeService
 from bot.services.content import ContentLibrary
 from bot.services.daily import DailyService
+from bot.services.easy_games import EasyGames
 from bot.services.effects import Effects
+from bot.services.game_cache import GameCache
+from bot.services.game_hub import GameHub
 from bot.services.locks import ChatLocks
 from bot.services.metrics import Metrics
 from bot.services.migrations import ChatMigrations
@@ -42,10 +45,23 @@ class ScaleRuntime:
         self.sender = Sender(sessions, on_forbidden=self.activity.mark_forbidden)
         self.effects = Effects()
         self.challenges = ChallengeRepository(sessions, self.pending, self.locks)
-        self.games = GameSessionRepository(sessions, self.locks)
+        self.game_cache = GameCache()
+        self.games = GameSessionRepository(sessions, self.locks, self.game_cache)
+        self.game_hub = GameHub(
+            self.games,
+            self.game_cache,
+            bot,
+            self.sender,
+            self.admins,
+            self.participants,
+            self.effects,
+        )
         self.groups = GroupRepository(sessions, self.locks, self.pending, self.participants)
         self.setting_prompts = SettingPrompts()
         self.content = ContentLibrary()
+        self.easy_games = EasyGames(self.game_hub, self.content, sessions)
+        self.game_hub.register(("duel", "quiz", "wyr"), self.easy_games)
+        self.scheduler.hooks["game"] = self.game_hub.advance
         self.daily = DailyService(
             sessions, bot, self.sender, self.content, self.participants, self.checkins, self.locks
         )
@@ -78,6 +94,8 @@ class ScaleRuntime:
         await self.pending.load(self.sessions)
         await self.participants.load(self.sessions)
         await self.daily.load()
+        await self.game_cache.load(self.sessions)
+        await self.game_hub.recover(list(self.game_cache.records.values()))
         self.tasks = [
             asyncio.create_task(self.activity.run(), name="activity-flush"),
             asyncio.create_task(self.scheduler.run(), name="scheduler-tick"),
@@ -117,6 +135,8 @@ class ScaleRuntime:
             "points": self.points,
             "challenge_service": self.challenge_service,
             "migrations": self.migrations,
+            "game_hub": self.game_hub,
+            "easy_games": self.easy_games,
         }
 
 
@@ -175,4 +195,5 @@ class ScaleMiddleware(BaseMiddleware):
         result = await handler(event, data)
         if message and message.from_user and not message.from_user.is_bot:
             await self.runtime.challenge_service.complete(message)
+            await self.runtime.game_hub.observe(message)
         return result

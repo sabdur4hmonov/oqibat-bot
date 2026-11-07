@@ -2,10 +2,26 @@
 
 **Guruhda oqibat bo‘lsin.** Telegram group engagement bot for Uzbekistan.
 Python 3.12, aiogram 3, SQLAlchemy 2 async, Alembic. Phase 0 implements the foundation
-and private `/start` and `/help`. Phase 0.5 adds shared scale services; product behavior for
-challenges and games remains in later phases. Phase 1 implements group onboarding,
+and private `/start` and `/help`. Phase 0.5 adds shared scale services. Phase 1 implements group onboarding,
 member consent and admin settings; Phase 2 adds daily posts, content rotation, quiet hours
 and daily check-in points. Phase 3 adds challenges, point ledgers, penalties and leaderboards.
+Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls.
+
+## Games
+
+Participants must opt in with `/qoshilish` and the bot must be a group admin.
+`/duel` opens a 90-second challenge; reply to a participant to target them. The starter
+chooses 🎲/🎯/🎳; the bot rolls in the order shown on the board. Ties reroll and results
+wait four seconds for the animation. `/viktorina` runs five non-anonymous 30-second quiz
+polls, awards +3 per correct answer and +2 for the first correct answer, then edits the
+same scoreboard. The first answer per person/question is final. With the three sample
+questions, questions rotate and may repeat across the five rounds; replace the sample
+bank with real owner-authored content. `/tanla` opens a non-anonymous regular poll for
+60 seconds, without points. One main game can run per group, alongside duels (one per starter).
+`/stop` is available to the starter or an admin; reply to a duel board to select that duel.
+An anonymous admin can also stop games. Incomplete poll/dice sends are cancelled on
+restart because replaying an ambiguous Telegram send could duplicate it; established
+quiz questions and dice-animation deadlines resume from their saved state.
 
 ## Windows PowerShell setup
 

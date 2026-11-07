@@ -73,3 +73,25 @@ class ContentLibrary:
                 raise ValueError("Content keys must be unique across banks")
             keys.update(item["key"] for item in items)
             self.banks[kind] = items
+
+    async def draw(self, sessions, chat_id: int, bank: str, now) -> dict | None:
+        from sqlalchemy import select
+
+        from bot.db.models import ContentUsage
+
+        async with sessions.begin() as session:
+            used = dict(
+                (
+                    await session.execute(
+                        select(ContentUsage.content_key, ContentUsage.used_at).where(
+                            ContentUsage.chat_id == chat_id
+                        )
+                    )
+                ).all()
+            )
+            item = choose_content(self.banks[bank], used)
+            if item is not None:
+                await session.merge(
+                    ContentUsage(chat_id=chat_id, content_key=item["key"], used_at=now)
+                )
+            return item

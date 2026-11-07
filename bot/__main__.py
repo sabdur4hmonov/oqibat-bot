@@ -17,6 +17,7 @@ from bot.db.models import Base
 from bot.db.session import create_engine, create_session_factory
 from bot.handlers.challenges import create_router as create_challenges_router
 from bot.handlers.errors import handle_error
+from bot.handlers.games.easy import create_router as create_games_router
 from bot.handlers.group_setup import create_router as create_group_router
 from bot.handlers.private import create_router
 from bot.handlers.settings import create_router as create_settings_router
@@ -37,6 +38,7 @@ def create_dispatcher() -> Dispatcher:
     dispatcher.include_router(create_settings_router())
     dispatcher.include_router(create_challenges_router())
     dispatcher.include_router(create_stats_router())
+    dispatcher.include_router(create_games_router())
     dispatcher.errors.register(handle_error)
     return dispatcher
 

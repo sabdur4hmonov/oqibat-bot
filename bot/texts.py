@@ -52,7 +52,77 @@ GROUP_COMMANDS = {
     "vazifa": "Hozir vazifa berish (admin)",
     "men": "Mening ballarim",
     "top": "Guruh reytingi",
+    "duel": "Bot tashlaydigan zar dueli",
+    "viktorina": "Besh savolli viktorina",
+    "tanla": "Ikki variantdan birini tanlash",
+    "stop": "O‘yinni to‘xtatish",
 }
+GAME_JOIN_FIRST = "O‘yin uchun bot admin bo‘lishi va siz /qoshilish bilan qo‘shilishingiz kerak."
+GAME_BUSY = "Bu turdagi o‘yin allaqachon ketmoqda. Yakunini kuting yoki /stop yuboring."
+GAME_CANCELLED = "O‘yin to‘xtatildi. 🛑"
+GAME_TIMEOUT = "O‘yin kutish muddati tugadi. Qayta boshlashingiz mumkin."
+GAME_RESTARTED = "Bot qayta ishga tushdi. Kechirasiz, bu o‘yinni qayta boshlang."
+GAME_BUTTON_EXPIRED = "Bu tugma siz uchun emas yoki uning vaqti tugagan."
+GAME_NO_CONTENT = "Bu o‘yin uchun savollar hali kiritilmagan."
+NO_ACTIVE_GAME = "Hozir faol o‘yin yo‘q."
+STOP_DENIED = "O‘yinni faqat uni boshlagan a'zo yoki administrator to‘xtata oladi."
+DUEL_INVALID_TARGET = "O‘zingizdan boshqa, /qoshilish bilan qo‘shilgan a'zoni tanlang."
+DUEL_ACCEPT = "Duelni qabul qilish"
+QUIZ_START = (
+    "🧠 Viktorina boshlanmoqda! 5 savol, har biriga 30 soniya. To‘g‘ri javob +3, birinchi +2."
+)
+WYR_START = "🤔 Qaysi birini tanlaysiz? Ovoz berish uchun 60 soniya."
+WYR_FINISHED = "Tanlov yakunlandi. Natijalar so‘rovnomada! ✅"
+
+
+def duel_lobby(game):
+    state = game.state
+    starter = mention(game.started_by, state["names"][str(game.started_by)])
+    target = (
+        mention(state["target"], state["names"][str(state["target"])])
+        if state.get("target")
+        else "Istalgan ishtirokchi"
+    )
+    return (
+        f"{state['emoji']} {starter} duelga chaqirdi!\n{target} qabul qilsin.\n"
+        "Zar turini boshlovchi tanlaydi. Kutish: 90 soniya."
+    )
+
+
+def duel_rolling(game):
+    state = game.state
+    first = mention(game.started_by, state["names"][str(game.started_by)])
+    second = mention(state["opponent"], state["names"][str(state["opponent"])])
+    return (
+        f"{state['emoji']} Duel, {state['round']}-urinish. Teng bo‘lsa qayta tashlayman.\n"
+        f"Birinchi zar: {first}\nIkkinchi zar: {second}"
+    )
+
+
+def duel_result(game):
+    state = game.state
+    winner = mention(state["winner"], state["names"][str(state["winner"])])
+    return (
+        f"{state['emoji']} Natija: {state['values'][0]} : {state['values'][1]}\n"
+        f"{winner} g‘olib! +2 ball. 🏆"
+    )
+
+
+def quiz_board(game, final=False):
+    state = game.state
+    heading = (
+        "🏆 Viktorina yakunlandi!"
+        if final
+        else f"🧠 Viktorina: {state.get('question_index', 0) + 1}/5"
+    )
+    scores = sorted(state.get("scores", {}).items(), key=lambda pair: (-pair[1], int(pair[0])))
+    rows = [
+        f"{i}. {mention(int(user), state['names'].get(user, 'Ishtirokchi'))} — {score} ball"
+        for i, (user, score) in enumerate(scores[:15], 1)
+    ]
+    return heading + "\n" + ("\n".join(rows) if rows else "Hali to‘g‘ri javob yo‘q.")
+
+
 QUIET_ASSIGN = "Hozir tinch vaqt. Vazifani tinch vaqt tugagach bering."
 PENDING_CHALLENGE = "Bu guruhda hali bajarilmagan vazifa bor. Avval u yakunlansin."
 NO_CHALLENGE_CANDIDATE = "Mos ishtirokchi yoki vazifa topilmadi. /qoshilish bilan qo‘shiling."
@@ -146,11 +216,8 @@ def setting_prompt(field: str, user) -> str:
 
 
 def group_help() -> str:
-    return (
-        "<b>Guruhda oqibat bo‘lsin!</b>\n\n"
-        "/qoshilish — o‘yinga qo‘shilish\n/chiqish — o‘yindan chiqish\n"
-        "/sozlamalar — guruh sozlamalari (faqat admin)\n"
-        "Vazifalar va o‘yinlar keyingi bosqichlarda qo‘shiladi."
+    return f"<b>{SLOGAN}!</b>\n\n" + "\n".join(
+        f"/{command} — {description}" for command, description in GROUP_COMMANDS.items()
     )
 
 
@@ -163,7 +230,7 @@ def start_text(first_name: str, instagram_handle: str) -> str:
         f"Salom, {escape(first_name)}! 👋\n\n"
         f"<b>{SLOGAN}</b>\n"
         "Men Oqibat botman. Guruhingizda do‘stlar bilan aloqani saqlashga yordam beraman.\n"
-        "Hozir dastlabki tayyorgarlik bosqichidaman. Guruh o‘yinlari keyinroq qo‘shiladi.\n\n"
+        "Vazifalar, viktorina va zar duellarida birga qatnashing!\n\n"
         "Yordam: /help\n\n"
         f"Muallif: @{escape(instagram_handle)}"
     )
@@ -177,6 +244,6 @@ def help_text(instagram_handle: str) -> str:
         "Botni guruhingizga qo‘shish uchun quyidagi tugmani bosing. "
         "Qo‘shishda administrator huquqlarini bering.\n"
         "Guruhda /qoshilish — qo‘shilish, /chiqish — chiqish, /sozlamalar — admin sozlamalari.\n"
-        "Vazifalar va o‘yinlar keyinroq qo‘shiladi.\n\n"
+        "Guruhda /help orqali barcha buyruqlarni ko‘ring.\n\n"
         f"Muallif: @{escape(instagram_handle)}"
     )

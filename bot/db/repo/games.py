@@ -1,13 +1,31 @@
 """All game state writes share a chat lock; never send Telegram messages under it."""
 
 from copy import deepcopy
+from dataclasses import dataclass
 
-from bot.db.models import GameSession
+from sqlalchemy import select
+
+from bot.db.models import Chat, GameSession, Membership
+from bot.services.game_cache import view
+from bot.services.points import record_event
+
+
+@dataclass(frozen=True)
+class Award:
+    user_id: int
+    delta: int
+    reason: str
+    ref_id: str
+
+
+class GameBusy(ValueError):
+    pass
 
 
 class GameSessionRepository:
-    def __init__(self, sessions, locks) -> None:
+    def __init__(self, sessions, locks, cache=None) -> None:
         self.sessions, self.locks = sessions, locks
+        self.cache = cache
 
     async def create(self, chat_id: int, **values) -> int:
         async with self.locks.hold(chat_id) as chat_id:
@@ -16,7 +34,71 @@ class GameSessionRepository:
                 session.add(game)
                 await session.flush()
                 game_id = game.id
+            if self.cache:
+                self.cache.sync(game)
             return game_id
+
+    async def start(
+        self, chat_id: int, user_id: int, game: str, state: dict, deadline, status="running"
+    ):
+        async with self.locks.hold(chat_id) as chat_id:
+            async with self.sessions.begin() as session:
+                chat = await session.get(Chat, chat_id)
+                member = await session.get(Membership, (chat_id, user_id))
+                if (
+                    chat is None
+                    or not chat.is_active
+                    or not chat.bot_is_admin
+                    or member is None
+                    or not member.opted_in
+                    or not member.is_active
+                ):
+                    return None
+                query = select(GameSession.id).where(
+                    GameSession.chat_id == chat_id, GameSession.status.in_(["lobby", "running"])
+                )
+                if game == "duel":
+                    query = query.where(
+                        GameSession.game == "duel", GameSession.started_by == user_id
+                    )
+                else:
+                    query = query.where(GameSession.game != "duel")
+                if await session.scalar(query.limit(1)) is not None:
+                    raise GameBusy()
+                row = GameSession(
+                    chat_id=chat_id,
+                    game=game,
+                    status=status,
+                    started_by=user_id,
+                    state={**state, "rev": 0},
+                    phase_deadline_at=deadline,
+                )
+                session.add(row)
+                await session.flush()
+            if self.cache:
+                self.cache.sync(row)
+            return view(row)
+
+    async def transition(self, chat_id: int, game_id: int, transform, *, expected_rev=None):
+        async with self.locks.hold(chat_id) as chat_id:
+            async with self.sessions.begin() as session:
+                row = await session.get(GameSession, game_id)
+                if row is None or row.chat_id != chat_id or row.status not in {"lobby", "running"}:
+                    return None
+                if expected_rev is not None and row.state.get("rev", 0) != expected_rev:
+                    return None
+                row.state = deepcopy(row.state)
+                awards = transform(row)
+                if awards is False:
+                    return None
+                row.state = {**row.state, "rev": row.state.get("rev", 0) + 1}
+                for award in awards or []:
+                    await record_event(
+                        session, chat_id, award.user_id, award.delta, award.reason, award.ref_id
+                    )
+            if self.cache:
+                self.cache.sync(row)
+            return view(row)
 
     async def change(self, chat_id: int, game_id: int, transform) -> bool:
         """transform is synchronous and changes only this locked ORM game object."""
@@ -29,4 +111,6 @@ class GameSessionRepository:
                 transform(game)
                 # Assign a fresh object so SQLAlchemy detects in-place JSON changes.
                 game.state = deepcopy(game.state)
+            if self.cache:
+                self.cache.sync(game)
             return True

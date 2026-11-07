@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 3 implemented and locally verified; proceeding to Phase 4 under the owner's explicit request to continue through remaining PLAN phases.
+- Current phase: Phase 4 implemented and locally verified; proceeding to Phase 5 under the owner's explicit request to continue through remaining PLAN phases.
 - Last updated: 2026-11-07 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -211,3 +211,22 @@
   3. Oldingi vazifani yangi superguruhda bajaring: u bir marta hisoblanishi kerak. Botni qayta ishga tushiring va ballni yana tekshiring.
   4. Administratorning anonim rejimini yoqing. `/sozlamalar` va `/vazifa` ishlashi kerak; oddiy a'zo uchun admin amallari yopiq qoladi.
   5. Telegram a'zolik tekshiruvini bajara olmasa, `/qoshilish` administrator huquqi haqida noto‘g‘ri xabar emas, a'zolikni tekshirib bo‘lmagani haqida xabar berishi kerak.
+
+
+### Phase 4 — Easy games — 2026-11-07
+- Status: done for implementation/local acceptance; live Telegram play remains pending credentials.
+- Commit(s): this entry accompanies `phase-4: dice duels quiz rounds and choice polls`; prior review fixes were pushed as `8eb6e56`.
+- What was built: open/reply-targeted 90-second dice lobbies, starter emoji selection (🎲/🎯/🎳), bot-only rolls, four-second animation deadline, tie rerolls and atomic +2 award; five non-anonymous 30-second quiz polls with first-answer scoring (+3 and first-correct +2), instant-response buffering, one edited scoreboard and durable ledger references; 60-second non-anonymous regular choice polls; shared game cache, transactional revision-checked transitions and starter/admin/anonymous-admin `/stop`. Game deadline hooks commit state before tracked outbound effects, retaining Claude's independent-loop fix.
+- Files added/changed: pure easy-game engines, game repository/cache/hub/orchestrator and handlers, runtime/command/text wiring, content draw helper, README and tests. New migration `31b65b0e9d42` adds `wyr` to the game constraint and follows the review migration; old migrations preserved.
+- Tests: `pytest -q`: **194 passed**; `ruff check .`: **all checks passed**. Alembic upgrade and schema check pass. Tests cover ranges/ties/scoring, duplicate button spam, reply-target protection, all five quiz rounds and totals, early poll answers, consent checks, stop permissions, anonymous stop, cancellation before award, creation races, ambiguous restart recovery and deadline progress during a global send pause. Offline startup remains covered by the full suite.
+- Acceptance criteria: ✅ each game runs end-to-end through mocked aiogram updates; ✅ duel/quiz points recorded once; ✅ `/stop` closes active polls and cancels state; ❌ live test-group play has not been performed without a bot token.
+- Deviations from PLAN.md and why: a regular choice poll lasts 60 seconds and earns no points (the plan leaves this unspecified). Track it as a `wyr` session so one-main-game and stop behavior apply. A duel lobby lasts 90 seconds; each starter may have one active duel. The first quiz answer per question is final, and polls disable revoting. Three sample questions necessarily repeat over five rounds; no additional production content was invented. Ambiguous in-flight poll/dice sends cancel on restart; established question/animation state resumes.
+- Open questions / decisions needed: none blocking; live interaction and real content remain owner checks.
+- Known issues / TODO: outbound delivery can be delayed by Telegram limits; no state lock or deadline loop waits for it. A crash can lose pending notifications, but committed game state/points remain durable.
+- Manual test steps (Uzbek, simple):
+  1. `alembic upgrade head` ni bajaring. Botni ishga tushiring, sinov guruhida admin qiling. Kamida ikki a'zo `/qoshilish` yuborsin.
+  2. `/duel` yuboring. Boshlovchi 🎲, 🎯 yoki 🎳 ni tanlasin, ikkinchi a'zo duelni qabul qilsin. Bot ikkala zarni tashlaydi; natija animatsiyadan keyin chiqadi. Teng bo‘lsa qayta tashlaydi, g‘olibga +2 beriladi.
+  3. Bir a'zoning xabariga javoban `/duel` yuboring: faqat o‘sha a'zo qabul qila olishi kerak.
+  4. `/viktorina` yuboring. Besh savolga javob bering, har biriga 30 soniya ajratiladi. Yakunda o‘sha natija xabari yangilanadi; `/men` orqali ballni tekshiring.
+  5. `/tanla` yuboring. Ochiq so‘rovnomada ovoz bering; u bir daqiqadan so‘ng yopiladi.
+  6. O‘yin boshlovchisi yoki admin `/stop` yuborsin: o‘yin to‘xtashi kerak. Oddiy boshqa a'zo buni qila olmasligi kerak. Duel xabariga javoban `/stop` yuborib, aynan shu duelni tanlang.
