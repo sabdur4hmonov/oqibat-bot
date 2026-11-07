@@ -28,7 +28,9 @@ def setting_choices(field: str) -> InlineKeyboardMarkup:
     rows = []
     for raw in CHOICES.get(field, ()):
         value = (
-            raw if field == "penalty_mode" else (raw == "1" if field == "daily_enabled" else raw)
+            raw
+            if field == "penalty_mode"
+            else (raw == "1" if field in {"daily_enabled", "mafia_delete_dead_messages"} else raw)
         )
         rows.append(
             [

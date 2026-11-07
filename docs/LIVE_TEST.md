@@ -1,4 +1,4 @@
-# Oqibat Bot: 0–6-bosqichlarni Telegramda tekshirish
+# Oqibat Bot: 0–7-bosqichlarni Telegramda tekshirish
 
 Bu ro‘yxat Sardorbek va yana ikki kishi uchun. **A** — Sardorbek, guruh egasi va
 administrator; **B** va **C** — oddiy a'zolar. Guruhda uch kishi va bot bo‘ladi.
@@ -6,8 +6,8 @@ Har bir qadamni bajargach, natija to‘g‘ri bo‘lsa `[ ]` ni `[x]` qiling. Ba
 qadamni belgilamang; sababini yoniga yozing. Shartli qadam mos kelmasa `Mos emas`
 deb yozing. Uzoq kutiladigan sinovlarni keyinroq tugatish mumkin.
 
-7-bosqich — Mafia hali boshlanmagan. Haftalik xulosa va rasmli natijalar ham keyingi
-bosqichlarda; bu ro‘yxatda ulardan ishlash talab qilinmaydi.
+0–6-bosqichlar uchun uch kishi yetadi. 13-bo‘limdagi Mafia uchun kamida besh kishi
+kerak. Haftalik xulosa va rasmli natijalar keyingi bosqichlarda.
 
 ## 1. BotFather, Python va .env
 
@@ -534,3 +534,35 @@ Keyinga qolgan yoki mos bo‘lmagan sinovlar va sababi:
 BotFather va admin xabar ko‘rishi bo‘yicha rasmiy manbalar:
 [Telegram boshlang‘ich qo‘llanmasi](https://core.telegram.org/bots/tutorial),
 [Telegram botlar FAQ](https://core.telegram.org/bots/faq#what-messages-will-my-bot-get).
+
+
+## 13. Mafia — kamida besh kishi
+
+- [ ] **13.1.** Kamida besh haqiqiy sinov a'zosi guruhda `/qoshilish` yuborsin.
+  Bittasi `/mafia` yuborsin, hammalari tugmadagi havolani bosib shaxsiy chatda Start qilsin.
+  **Kutiladi:** 90 soniyalik kutish ro‘yxati bitta xabarda yangilanadi; guruhdagi
+  oddiy tugma yoki yozuv bilan qo‘shilish yo‘q. Beshdan kam bo‘lsa o‘yin bekor bo‘ladi.
+- [ ] **13.2.** Boshqa guruhda ham Mafia ochib, shu foydalanuvchi bilan qo‘shilishga urining.
+  **Kutiladi:** bir paytda bitta Mafia kutish/o‘yiniga qatnashish mumkin. Eski yoki
+  yopilgan havola yangi o‘yinga qo‘shmaydi.
+- [ ] **13.3.** Olti kishi qo‘shilsin; bittasi boshlanishdan oldin botni bloklasin.
+  **Kutiladi:** unga rol yetkazilmasa ro‘yxatdan olinadi va guruhda aytiladi. Qolgan
+  besh kishi uchun rollar qayta hisoblanadi. Faqat to‘rt kishi qolsa bekor qilinadi.
+  Dastlabki rol yangilansa eski taklif bekor; tasdiqlangan rol va tugmalarni kuting.
+- [ ] **13.4.** Rollarni shaxsiy chatda ko‘ring. Tunda mafia nishon tanlasin, doktor
+  bir kishini saqlasin, komissar bir kishini tekshirsin.
+  **Kutiladi:** mafia sheriklarini va faqat o‘zlariga ko‘rinadigan jonli ovoz hisobini
+  ko‘radi. Komissar javobi faqat o‘ziga chiqadi. Mafia umuman ovoz bermasa hujum yo‘q.
+- [ ] **13.5.** Tunni 60 soniya kuting, keyin 90 soniya muhokama va 60 soniya ovoz bering.
+  **Kutiladi:** tongda qurbon yoki doktor saqlagani aytiladi, chiqqan odam roli ochiladi.
+  Guruh ovozlari bitta doskada yangilanadi, ovozni almashtirish mumkin; teng bo‘lsa hech kim chiqmaydi.
+- [ ] **13.6.** O‘yindan chiqqan odam ovoz bersin. Keyingi turda eski tugmalarni bosing.
+  **Kutiladi:** oynachada rad etiladi; holat va ball o‘zgarmaydi. Doktor o‘zini ketma-ket
+  ikki kecha saqlay olmaydi; komissar bir kechada faqat bir tekshiruv qiladi.
+- [ ] **13.7.** `/sozlamalar` da chiqqanlarning xabarini o‘chirishni tekshiring.
+  **Kutiladi:** dastlab o‘chiq. Yoqilganda va botda o‘chirish huquqi bo‘lsa o‘yindan
+  chiqqan a'zoning yangi guruh xabari o‘chiriladi; tirik odamning xabari qoladi.
+- [ ] **13.8.** O‘yinni oxirigacha o‘ynang; alohida sinovlarda `/stop` va botni qayta yoqishni tekshiring.
+  **Kutiladi:** tinch aholi yoki mafia g‘olib bo‘ladi, g‘olib tomonga +10 va tirik qolganlarga +3.
+  20 tur/60 daqiqa chegarasi durang qiladi. Stop yoki qayta yoqish bekor qiladi va
+  ishtirokchilarga shaxsiy xabar beradi; bekor qilingan o‘yinga ball berilmaydi.

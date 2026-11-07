@@ -121,6 +121,7 @@ GROUP_COMMANDS = {
     "tanla": "Ikki variantdan birini tanlash",
     "krokodil": "So‘z topish o‘yini",
     "hyj": "Haqiqat yoki jasorat",
+    "mafia": "Mafia: 5–15 kishilik o‘yin",
     "stop": "O‘yinni to‘xtatish",
 }
 GAME_JOIN_FIRST = "O‘yin uchun bot admin bo‘lishi va siz /qoshilish bilan qo‘shilishingiz kerak."
@@ -151,6 +152,166 @@ HYJ_DARE = "Jasorat"
 HYJ_REFUSE = "Rad etish (−2)"
 HYJ_TARGET_ONLY = "Bu tugmani faqat tanlangan ishtirokchi bosa oladi."
 HYJ_INVALID_TARGET = "Javob berilgan a'zo /qoshilish bilan o‘yinga qo‘shilgan bo‘lsin."
+MAFIA_JOIN = "Mafiaga qo‘shilish (shaxsiy chat)"
+MAFIA_JOINED = "Mafiaga qo‘shildingiz! O‘yin boshlanishini guruhda kuting."
+MAFIA_LOBBY_CLOSED = "Mafia kutish muddati yopiq, to‘lgan yoki bu havola eskirgan."
+MAFIA_ALREADY_PLAYING = "Siz boshqa Mafia o‘yinidasiz. Bir paytda faqat bitta o‘yinda qatnashing."
+MAFIA_OPT_IN = "Avval o‘sha guruhda /qoshilish yuboring, keyin havolani yana bosing."
+MAFIA_TOO_FEW = "Mafia bekor qilindi: kamida 5 ta tayyor ishtirokchi kerak."
+MAFIA_DELIVERY_FAILED = "Mafia bekor qilindi: rollarni yetkazib bo‘lmadi. Keyinroq qayta boshlang."
+MAFIA_RESTART = (
+    "Bot qayta ishga tushdi. Kechirasiz, Mafia bekor qilindi. /mafia bilan qayta boshlang."
+)
+MAFIA_STALE = "Bu Mafia tugmasi eskirgan, siz uchun emas yoki bu bosqichda ishlamaydi."
+MAFIA_CHOICE_SAVED = "Tanlov saqlandi."
+MAFIA_IS_MAFIA = "Tekshiruv: bu o‘yinchi — mafia."
+MAFIA_NOT_MAFIA = "Tekshiruv: bu o‘yinchi mafia emas."
+MAFIA_ROLE_NAMES = {
+    "mafia": "Mafia",
+    "doctor": "Doktor",
+    "commissioner": "Komissar",
+    "town": "Tinch aholi",
+}
+MAFIA_OUTCOMES = {
+    "town": "Tinch aholi g‘alaba qozondi!",
+    "mafia": "Mafia g‘alaba qozondi!",
+    "draw": "Durang: vaqt yoki 20 tur chegarasi tugadi.",
+}
+
+
+def mafia_event(state):
+    event = state.get("last_event") or {}
+    victim = event.get("victim")
+    if victim:
+        who = mention(int(victim), state["players"][victim])
+        role = MAFIA_ROLE_NAMES[event["role"]]
+        return f"{who} o‘yindan chiqdi. Roli: <b>{role}</b>."
+    if event.get("saved"):
+        return "Tong otdi: doktor nishondagi o‘yinchini saqlab qoldi. 🩺"
+    if event.get("kind") == "night":
+        return "Tong otdi: bu kecha hech kim o‘yindan chiqmadi."
+    if event.get("kind") == "vote":
+        return "Ovozlar teng yoki ovoz yo‘q: hech kim chiqarilmadi."
+    return ""
+
+
+def mafia_group(game):
+    state = game.state
+    removed = state.get("removed", [])
+    notice = (
+        (
+            "Shaxsiy aloqasi yo‘q yoki chiqib ketganlar ro‘yxatdan olindi: "
+            + ", ".join(escape(name[:24]) for name in removed)
+            + ".\n"
+        )
+        if removed
+        else ""
+    )
+    phase = state["phase"]
+    if phase in {"lobby", "preparing"}:
+        players = "\n".join(
+            f"{i}. {mention(int(user), name)}"
+            for i, (user, name) in enumerate(state["players"].items(), 1)
+        )
+        status = (
+            "Kutish: 90 soniya. 5–15 kishi. Guruhda /qoshilish yuboring, "
+            "so‘ng havoladan shaxsiy chatga o‘ting."
+            if phase == "lobby"
+            else "Shaxsiy aloqa va rollar tayyorlanmoqda. Hali tun boshlanmadi."
+        )
+        return f"🎭 <b>Mafia</b> — {len(state['players'])}/15\n{notice}{status}\n\n{players}"
+    if phase == "done":
+        outcome = MAFIA_OUTCOMES.get(state.get("winner"), "Mafia to‘xtatildi. Ball berilmaydi.")
+        roles = "\n".join(
+            f"{mention(int(user), state['players'][user])} — {MAFIA_ROLE_NAMES[role]}"
+            for user, role in state.get("roles", {}).items()
+        )
+        return f"🎭 {outcome}\n{mafia_event(state)}\n\n{roles}"
+    status = {
+        "night": "🌙 Tun: 60 soniya. Harakatlar shaxsiy chatdagi tugmalarda.",
+        "discussion": "☀️ Muhokama: 90 soniya. Guruhda gaplashing.",
+        "vote": "🗳 Ovoz berish: 60 soniya. Faqat tirik o‘yinchilar; ovozni almashtirish mumkin.",
+    }[phase]
+    text = (
+        f"🎭 Mafia — {state['round']}-tur\n{mafia_event(state)}\n{status}\n"
+        f"Tirik: {len(state['alive'])}."
+    )
+    if phase == "vote":
+        from bot.games.mafia.engine import tally
+
+        counts = tally(state)
+        text += "\n\n" + "\n".join(
+            f"{mention(int(user), state['players'][user])}: {counts.get(user, 0)}"
+            for user in state["alive"]
+        )
+    return text
+
+
+def mafia_proposal(game, user, proposed):
+    role = proposed[user]
+    team = ", ".join(
+        escape(game.state["players"][who]) for who, value in proposed.items() if value == "mafia"
+    )
+    return (
+        f"🎭 Mafia #{game.id}. Tayyorlash {game.state['setup_attempt']}.\n"
+        f"Dastlabki rol: <b>{MAFIA_ROLE_NAMES[role]}</b>.\n"
+        + (f"Mafia jamoasi: {team}.\n" if role == "mafia" else "")
+        + "Hali harakat qilmang. Hamma tayyor bo‘lgach rol tasdiqlanadi; "
+        "yangilansa oldingisi bekor."
+    )
+
+
+def mafia_private(game, user):
+    from bot.games.mafia.engine import tally
+
+    state, user = game.state, str(user)
+    role = state["roles"][user]
+    text = (
+        f"🎭 Mafia #{game.id} — {escape(state.get('chat_title', ''))}\n"
+        f"Sizning rolingiz: <b>{MAFIA_ROLE_NAMES[role]}</b>.\n"
+    )
+    if user not in state["alive"]:
+        return text + "Siz o‘yindan chiqdingiz. Harakat yoki ovoz bera olmaysiz."
+    text += f"{state['round']}-tur. "
+    if state["phase"] == "night":
+        if role == "mafia":
+            team = [
+                mention(int(who), state["players"][who])
+                for who, value in state["roles"].items()
+                if value == "mafia"
+            ]
+            text += (
+                "Mafia jamoasi: "
+                + ", ".join(team)
+                + ".\nNishonni tanlang. Ovoz yo‘q bo‘lsa hujum yo‘q.\n"
+            )
+            counts = tally(state, mafia=True)
+            text += "\n".join(
+                f"{mention(int(who), state['players'][who])}: {count}"
+                for who, count in sorted(counts.items())
+            )
+        elif role == "doctor":
+            text += "Kimni saqlaysiz? O‘zingizni ketma-ket ikki kecha saqlay olmaysiz."
+        elif role == "commissioner":
+            text += "Bir kishini tekshiring. Javob faqat sizga oynachada chiqadi."
+        else:
+            text += "Tongni kuting. Sizda tungi harakat yo‘q."
+    else:
+        text += "Muhokama va kunduzgi ovoz berish guruhda."
+    return text
+
+
+def mafia_end_dm(game, user):
+    points_note = (
+        "\nTirik qolganlarga +3 ball."
+        if game.state.get("winner") == "draw"
+        else "\nG‘olib jamoaga +10, oxirigacha tirik qolganlarga +3."
+    )
+    return (
+        f"🎭 Mafia #{game.id} yakunlandi. "
+        + MAFIA_OUTCOMES.get(game.state.get("winner"), "O‘yin bekor qilindi. Ball berilmaydi.")
+        + (points_note if game.state.get("winner") else "")
+    )
 
 
 def hyj_choice(game):
@@ -341,6 +502,7 @@ SETTING_LABELS = {
     "kick_after_misses": "Nechta o‘tkazishdan keyin chiqarish",
     "quiet_start": "Tinch vaqt boshlanishi",
     "quiet_end": "Tinch vaqt tugashi",
+    "mafia_delete_dead_messages": "Mafia: o‘yindan chiqqanlarning xabarini o‘chirish",
 }
 SETTING_PROMPTS = {
     "tz": "Vaqt mintaqasini kiriting, masalan: Asia/Tashkent. Shu xabarga javob yozing.",
@@ -352,7 +514,7 @@ SETTING_PROMPTS = {
 
 
 def setting_value(field: str, value) -> str:
-    if field == "daily_enabled":
+    if field in {"daily_enabled", "mafia_delete_dead_messages"}:
         return YES_NO[value]
     if field == "penalty_mode":
         return PENALTY_NAMES[value]

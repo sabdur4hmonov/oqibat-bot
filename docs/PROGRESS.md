@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 6 implemented and locally verified; review ZIP, Uzbek live-test checklist and environment checker prepared. STOP after the preparation push. Phase 7 (Mafia) waits for Claude's review of Phases 4–6.
+- Current phase: Phase 7 Mafia implemented and locally verified; continuing to Phases 8 and 9 under the owner's explicit sequential-run override. No deployment authorized.
 - Last updated: 2026-11-07 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -292,3 +292,22 @@
   3. Botni jurnal bilan ishga tushiring. Uch kishilik sinov guruhida qadamlarni bajaring; faqat haqiqatan o‘tganlarini belgilang.
   4. Ishlamagan qadamning vaqtini va 11-bo‘limdagi jurnal parchasini yozing; token va `.env` ni ulashmang.
   5. `D:\Coding projects\oqibat-review.zip` va test natijalarini Claude ko‘rishi uchun tayyorlang. Phase 7 hozircha boshlanmaydi.
+
+
+### Phase 7 — Mafia — 2026-11-07
+- Status: implementation/local acceptance complete; live Telegram testing remains unverified without credentials. The owner explicitly authorized Phases 7–9 in sequence for this run, overriding the earlier phase stop/review gate.
+- Commit(s): this entry accompanies `phase-7: Mafia engine private actions and bounded lifecycle`.
+- What was built: pure role distribution, night/doctor/commissioner/day-vote/win/scoring logic; 90-second deep-link-only lobby; one active lobby/game reservation per user across chats; provisional role delivery with forbidden-recipient removal, group announcement and role recalculation before confirmation; mafia teammate names and private live tally; no-vote/no-kill; private role boards and one edited group board; session+round validation on every action, dead/wrong-context rejection, doctor self-save limit, one commissioner check/night; 20-round/60-minute draw caps; starter/admin stop and restart cancellation with private notices; opt-out/leave forfeits without further action/awards. State/points commit under the shared chat lock; deadline hooks dispatch tracked outbound effects and never await the send queue. All Mafia sends/edits/deletes use GAME priority.
+- Files added/changed: `bot/games/mafia/`, Mafia orchestration/keyboards/handlers, deep-link private start, runtime/game cache synchronization, admin setting UI, texts, README/PLAN/LIVE_TEST, tests, new migration `ea783b4100c2`. The new chat setting defaults OFF; deletion checks the bot's delete right fresh. SQL error parameter logging is disabled to avoid leaking private role state. The missing-env CLI preflight now reports before importing the SDK, fixing a cold-start timeout found by the full suite.
+- Tests: `pytest -q`: **282 passed**; `ruff check .`: **all checks passed**; `alembic upgrade head` and `alembic check`: passed, no schema drift. Pure scripted town/mafia wins plus 1,000 seeded random complete games check termination, valid winners, role distribution, no resurrection and rejected dead actions/votes. Mocked flows exercise both five-player winners and exact points, private checks/tallies, stale/foreign-context callbacks, cross-chat join races, forbidden role DMs (continue with five/cancel with four), stop/restart notices, optional deletion/right checks, migration registry/board rekeying, draw during preparation and independent deadlines during a global send pause. Alembic upgrade/schema check passed.
+- Acceptance criteria: ✅ full five-player games reach town/mafia winners through mocked aiogram updates; ✅ dead players cannot act/vote; ✅ all requested extra rules implemented and locally tested; ❌ real Telegram five-person play remains unverified without a token. This does not block the offline implementation of the following phases.
+- Deviations from PLAN.md and why: reservations include lobbies to prevent ambiguous concurrent private flows. Role proposals are explicitly provisional and all are discarded/recalculated after a forbidden recipient; actions activate only after every remaining recipient succeeds. Ambiguous non-forbidden delivery failures cancel safely. Lobby creation starts the 60-minute cap; a preparation-only draw earns no points. Opt-out/leave forfeits and excludes that user from game awards. Deletion is best effort and bounded to 5,000 pending deletions globally. No dependency or architecture change; one process remains mandatory.
+- Open questions / decisions needed: no blocking implementation question. Public role/tally timing and permission behavior still need consenting live testers.
+- Known issues / TODO: private notifications/queued edits are process-local and can be lost on a crash; restart cancels durable Mafia sessions. Real delivery may lag during Telegram pauses while state deadlines continue. Production capacity is not established by the local fuzz/simulation tests.
+- Manual test steps (Uzbek, simple):
+  1. `alembic upgrade head` ni bajaring. Kamida besh kishi sinov guruhida `/qoshilish` yuborsin. `/mafia` ni boshlang va har bir kishi havola orqali botning shaxsiy chatida Start qilsin.
+  2. 90 soniyadan keyin rollar shaxsiy chatda tasdiqlansin. Mafia sheriklarini ko‘rsin; nishon tanlaganda ovoz hisobi faqat mafialarda yangilansin. Doktor va komissar o‘z tugmalarini sinasin.
+  3. 60 soniya tun, 90 soniya muhokama, 60 soniya guruh ovozini tekshiring. Chiqqan odam va oldingi tur tugmalari ishlamasin; guruh doskasi qayta yuborilmasdan yangilansin.
+  4. Olti kishidan biri boshlanish oldidan botni bloklasin: u ro‘yxatdan olinsin, besh kishi bilan rollar qayta hisoblansin. Beshdan biri bloklasa o‘yin bekor bo‘lsin.
+  5. `/sozlamalar` dagi chiqqanlarning xabarini o‘chirish dastlab o‘chiq bo‘lsin. Faqat yoqilganda va botda o‘chirish huquqi bo‘lsa yangi xabarlar o‘chirilsin.
+  6. G‘olib tomonga +10, tirik qolganlarga +3 ni `/men` bilan tekshiring. `/stop` va qayta yoqish o‘yinni bekor qilib, ishtirokchilarga shaxsiy xabar bersin. To‘liq qadamlar LIVE_TEST 13-bo‘limida.

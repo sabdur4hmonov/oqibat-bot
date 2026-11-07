@@ -353,4 +353,35 @@ Established truth/dare state survives restart; an ambiguous question send cancel
 with a restart notice. Outbound edits for one game are serialized independently of
 state locks so a delayed question edit cannot overwrite the final result.
 
-Phase 7 (Mafia) has not been started. It waits for Claude's review of Phases 4–6.
+### Mafia (Phase 7)
+
+`/mafia` opens a 90-second lobby for 5–15 opted-in group members. Everyone, including
+the starter, joins through the private `start=mafia_<session_id>` link. A person may
+reserve only one active Mafia lobby/game across all groups. At lobby close, role DMs
+are prepared without active buttons. Forbidden recipients are removed, announced in
+the edited group board, and roles are recalculated for the remaining players; fewer
+than five cancels. Role proposals are provisional until every remaining DM succeeds.
+If proposals change, earlier ones are void and the private message is edited. A generic
+ambiguous delivery error cancels safely rather than silently dropping a player.
+
+Roles follow PLAN: 1/2/3 mafia for 5–6/7–9/10–15 players, plus one doctor and commissioner.
+Mafia teammates are named privately; their changing vote tally stays in their private
+boards. No mafia vote means no kill. Night lasts 60 seconds, discussion 90 and the
+changeable group vote 60. Night vote ties pick a random tied target; day ties eliminate
+nobody. The doctor cannot self-save on consecutive nights. The commissioner checks
+once per night and gets a private popup. Dead/stale/wrong-context callbacks are rejected;
+every action identifies both session and round. Group and private boards are edited.
+
+Town wins with no mafia; mafia wins at parity. Winning-side members earn +10 and
+survivors +3 (a draw awards only survivors); opt-out/leave forfeits participation and
+awards no points to that player. At 20 completed rounds or 60 minutes from lobby
+creation the game is a draw; an unstarted preparation earns no points. `/stop` is
+starter/admin only and notifies all players privately. Restart cancels every active
+Mafia with a group apology and private notifications, preserving committed points.
+
+`/sozlamalar` has an OFF-by-default dead-player message deletion toggle. It can be
+changed during play; actual deletion checks the bot's delete right fresh. This is
+best effort through the same limited GAME queue; Telegram failures do not crash play.
+All Mafia sends/edits/deletes use GAME priority. Deadlines commit independently of
+queued delivery. Keep one bot process: user reservations and state locks are local.
+

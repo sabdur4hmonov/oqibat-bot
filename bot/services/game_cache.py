@@ -38,6 +38,7 @@ class GameCache:
         self.by_chat: dict[int, set[int]] = {}
         self.by_poll: dict[str, int] = {}
         self.main_ids: dict[int, int] = {}
+        self.listeners = []
 
     async def load(self, sessions) -> None:
         async with sessions() as session:
@@ -64,6 +65,8 @@ class GameCache:
             if old.game != "duel":
                 self.main_ids.pop(old.chat_id, None)
         if game.status not in {"lobby", "running"}:
+            for listener in self.listeners:
+                listener(game, old)
             return
         snapshot = view(game)
         self.records[game.id] = snapshot
@@ -72,6 +75,8 @@ class GameCache:
             self.main_ids[game.chat_id] = game.id
         if game.state.get("poll_id"):
             self.by_poll[game.state["poll_id"]] = game.id
+        for listener in self.listeners:
+            listener(game, old)
 
     def get(self, game_id: int) -> GameView | None:
         game = self.records.get(game_id)

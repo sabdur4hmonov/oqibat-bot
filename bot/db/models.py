@@ -87,6 +87,9 @@ class Chat(Timestamps, Base):
     next_challenge_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
     next_weekly_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
     migrated_to_chat_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
+    mafia_delete_dead_messages: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=text("false")
+    )
 
 
 class User(Timestamps, Base):

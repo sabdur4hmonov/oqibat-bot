@@ -1,22 +1,40 @@
 from aiogram import Bot, F, Router
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.types import Message
 
 from bot import texts
 from bot.config import Settings
 from bot.keyboards.private import add_to_group_keyboard
 from bot.services.activity import ActivityBuffer
-from bot.services.sender import Sender
+from bot.services.sender import Priority, Sender
 
 
 async def start(
-    message: Message, bot: Bot, settings: Settings, activity: ActivityBuffer, sender: Sender
+    message: Message,
+    bot: Bot,
+    settings: Settings,
+    activity: ActivityBuffer,
+    sender: Sender,
+    command: CommandObject,
+    mafia_game=None,
 ) -> None:
     if message.from_user is None:
         return
     activity.mark_private(
         message.from_user.id, message.from_user.first_name, message.from_user.username
     )
+    if command.args and command.args.startswith("mafia_"):
+        await activity.flush()
+        value = command.args.removeprefix("mafia_")
+        result = texts.MAFIA_LOBBY_CLOSED
+        if mafia_game is not None and value.isascii() and value.isdecimal() and len(value) <= 19:
+            result = await mafia_game.join(int(value), message.from_user)
+        await sender.send(
+            message.chat.id,
+            lambda: bot.send_message(message.chat.id, result),
+            priority=Priority.GAME,
+        )
+        return
     await sender.send(
         message.chat.id,
         lambda: bot.send_message(

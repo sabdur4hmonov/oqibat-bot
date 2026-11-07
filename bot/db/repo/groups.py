@@ -113,11 +113,30 @@ class GroupRepository:
         return True
 
     async def change_setting(self, chat_id: int, field: str, value) -> Chat | None:
+        game = None
         async with self.locks.hold(chat_id) as chat_id:
             async with self.sessions.begin() as session:
                 chat = await session.get(Chat, chat_id)
                 if chat is None or not chat.is_active or not chat.bot_is_admin:
                     return None
                 setattr(chat, field, value)
+                if field == "mafia_delete_dead_messages":
+                    game = await session.scalar(
+                        select(GameSession)
+                        .where(
+                            GameSession.chat_id == chat_id,
+                            GameSession.game == "mafia",
+                            GameSession.status.in_(["lobby", "running"]),
+                        )
+                        .limit(1)
+                    )
+                    if game:
+                        game.state = {
+                            **game.state,
+                            "delete_dead": value,
+                            "rev": game.state.get("rev", 0) + 1,
+                        }
                 initialize_schedule(chat, utc_now())
+            if game is not None and self.game_cache is not None:
+                self.game_cache.sync(game)
             return chat

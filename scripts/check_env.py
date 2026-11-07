@@ -8,6 +8,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from bot import texts  # noqa: E402
+
+# Missing setup needs no SDK imports or network stack. This also keeps the CLI
+# responsive on Windows while antivirus scans a cold Python environment.
+if __name__ == "__main__" and not (ROOT / ".env").is_file():
+    print(texts.ENV_FILE_MISSING)
+    raise SystemExit(1)
+
 from aiogram import Bot  # noqa: E402
 from aiogram.exceptions import (  # noqa: E402
     TelegramNetworkError,
@@ -18,7 +26,6 @@ from pydantic import ValidationError  # noqa: E402
 from sqlalchemy import inspect, text  # noqa: E402
 from sqlalchemy.engine import make_url  # noqa: E402
 
-from bot import texts  # noqa: E402
 from bot.config import Settings  # noqa: E402
 from bot.db.models import Base  # noqa: E402
 from bot.db.session import create_engine  # noqa: E402

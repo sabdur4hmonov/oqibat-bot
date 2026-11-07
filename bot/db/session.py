@@ -8,7 +8,7 @@ def create_engine(database_url: str, *, pool_size: int = 15) -> AsyncEngine:
     options = (
         {"pool_size": pool_size, "max_overflow": 0} if database_url.startswith("postgresql") else {}
     )
-    engine = create_async_engine(database_url, pool_pre_ping=True, **options)
+    engine = create_async_engine(database_url, pool_pre_ping=True, hide_parameters=True, **options)
     if engine.dialect.name == "sqlite":
 
         @event.listens_for(engine.sync_engine, "connect")

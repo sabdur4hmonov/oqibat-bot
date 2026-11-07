@@ -83,6 +83,7 @@ oqibat-bot/
   daily_enabled, daily_time (HH:MM local), challenges_per_day (0–3, default 1),
   challenge_hours (2/6/10/24, default 10), penalty_mode (`off`|`points`|`mute`|`kick`, default `points`),
   mute_days (1/3/7, default 3), kick_after_misses (default 3), quiet_start (23:00), quiet_end (08:00),
+  mafia_delete_dead_messages (bool, default false),
   created_at, updated_at
 - `users`: id (tg user id), first_name, username, started_private (bool), created_at, updated_at
 - `memberships`: chat_id, user_id, opted_in, opted_in_at, last_seen_at, last_picked_at,
@@ -228,6 +229,14 @@ town wins; mafia ≥ others → mafia wins. Game state in `game_sessions.state`;
 games are cancelled with an apology message. Engine logic pure and unit-tested (role distribution,
 night resolution, vote resolution, win check).
 **Accept:** a full 5-player game runs to a winner; dead players cannot vote or act; tests pass.
+
+Owner additions for this run: join only through `start=mafia_<session_id>` while the lobby is open;
+one active Mafia per user (including its lobby); prune forbidden role-DM recipients and recompute
+roles before confirming play, continuing with 5+ remaining. Mafia members learn teammates and share
+a private live tally; abstaining mafia cause no kill. All action callbacks include session + round,
+reject stale/dead actors, and use GAME priority. Edit lobby/tallies. Optional dead-message deletion
+defaults OFF and requires the bot's delete right. Draw after 20 rounds or 60 minutes. Stop/restart
+cancels and privately notifies players. Test both winners and fuzz 1,000 complete games.
 
 ### Phase 8 — Weekly summary & polish
 Sunday 20:00 summary (top 5 of the week, most active, challenge stats, footer, add-to-group button),

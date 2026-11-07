@@ -19,6 +19,7 @@ from bot.services.game_cache import GameCache
 from bot.services.game_hub import GameHub
 from bot.services.krokodil import Krokodil
 from bot.services.locks import ChatLocks
+from bot.services.mafia import Mafia
 from bot.services.metrics import Metrics
 from bot.services.migrations import ChatMigrations
 from bot.services.participation import Participants
@@ -91,6 +92,10 @@ class ScaleRuntime:
         self.game_hub.register(("hyj",), self.truth_dare)
         self.challenges.on_game_resolved = self.truth_dare.challenge_resolved
         self.groups.on_game_resolved = self.truth_dare.challenge_resolved
+        self.mafia_game = Mafia(
+            self.game_hub, sessions, getattr(settings, "bot_username", "OqibatBot")
+        )
+        self.game_hub.register(("mafia",), self.mafia_game)
         self.sessions = sessions
         self.tasks = []
         self.migrations = ChatMigrations(self, bot)
@@ -105,6 +110,7 @@ class ScaleRuntime:
         await self.participants.load(self.sessions)
         await self.daily.load()
         await self.game_cache.load(self.sessions)
+        self.mafia_game.load()
         await self.game_hub.recover(list(self.game_cache.records.values()))
         self.tasks = [
             asyncio.create_task(self.activity.run(), name="activity-flush"),
@@ -149,6 +155,7 @@ class ScaleRuntime:
             "easy_games": self.easy_games,
             "krokodil_game": self.krokodil_game,
             "truth_dare": self.truth_dare,
+            "mafia_game": self.mafia_game,
         }
 
 
@@ -205,6 +212,10 @@ class ScaleMiddleware(BaseMiddleware):
             except Exception:
                 logger.exception("Admin refresh failed for chat %s", membership.chat.id)
         result = await handler(event, data)
+        if event.chat_member:
+            await self.runtime.mafia_game.membership_changed(
+                event.chat_member.chat.id, event.chat_member.new_chat_member.user.id
+            )
         if message and message.from_user and not message.from_user.is_bot:
             await self.runtime.challenge_service.complete(message)
             await self.runtime.game_hub.observe(message)
