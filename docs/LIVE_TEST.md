@@ -1,4 +1,4 @@
-# Oqibat Bot: 0–8-bosqichlarni Telegramda tekshirish
+# Oqibat Bot: 0–9-bosqichlarni Telegramda tekshirish
 
 Bu ro‘yxat Sardorbek va yana ikki kishi uchun. **A** — Sardorbek, guruh egasi va
 administrator; **B** va **C** — oddiy a'zolar. Guruhda uch kishi va bot bo‘ladi.
@@ -7,7 +7,7 @@ qadamni belgilamang; sababini yoniga yozing. Shartli qadam mos kelmasa `Mos emas
 deb yozing. Uzoq kutiladigan sinovlarni keyinroq tugatish mumkin.
 
 0–6-bosqichlar uchun uch kishi yetadi. 13-bo‘limdagi Mafia uchun kamida besh kishi
-kerak. Haftalik xulosa 14-bo‘limda, rasmli natijalar keyingi bosqichda.
+kerak. Haftalik xulosa 14-bo‘limda, rasmli natijalar va server 15-bo‘limda.
 
 ## 1. BotFather, Python va .env
 
@@ -582,3 +582,25 @@ BotFather va admin xabar ko‘rishi bo‘yicha rasmiy manbalar:
 - [ ] **14.3.** Shaxsiy chatda va guruhda `/help` yuboring.
   **Kutiladi:** barcha 0–7-bosqich buyruqlari, o‘yin vaqtlari, shior, muallif va guruhga
   qo‘shish tugmasi bor. Oddiy vazifa/o‘yin xabarlariga muallif satri qo‘shilmaydi.
+
+## 15. Rasmli natijalar va serverga tayyorlik
+
+- [ ] **15.1.** `.env` da `RESULT_CARDS_ENABLED=true` bo‘lsin. Ismida Oʻtkir,
+  Gʻulom yoki Ўткир bo‘lgan a'zo bilan duel/viktorina/Krokodilni yakunlang.
+  **Kutiladi:** oxirgi matnli doska va bitta natija rasmi chiqadi. Ismlar, ballar
+  hamda Instagram belgisi aniq ko‘rinadi; uzun ism rasm tashqarisiga chiqmaydi.
+- [ ] **15.2.** Haqiqat va jasoratni bajaring, alohida sinovda rad eting yoki `/stop` qiling.
+  **Kutiladi:** bajarilgan haqiqat +5 yoki jasoratning tegishli balli rasmda ko‘rinadi.
+  Rad etilgan/bekor o‘yinda g‘olib rasmi yo‘q. Mafia g‘olib jamoasi rasmi top 5 ni ko‘rsatadi.
+- [ ] **15.3.** Yakshanba xulosasini kuting; kelgach botni qayta yoqing.
+  **Kutiladi:** bitta top-5 rasm, tagida to‘liq vazifa/eng faol xulosasi va qo‘shish
+  tugmasi bor. Shu haftaning xulosasi qayta yuborilmaydi.
+- [ ] **15.4.** `RESULT_CARDS_ENABLED=false` qilib botni qayta yoqing va yangi duel o‘ynang.
+  **Kutiladi:** oddiy yakuniy doska/ballar ishlaydi, yangi rasm kelmaydi.
+- [ ] **15.5.** README dagi Docker yoki systemd yo‘lini faqat alohida sinov muhiti
+  va sinov botida bajaring. Avval migratsiya, `python -m bot --check`, so‘ng checker.
+  **Kutiladi:** baza tayyor, getMe/username to‘g‘ri, faqat bitta bot jarayoni ishlaydi.
+  Boshqa Docker loyihalari o‘zgarmaydi; `.env` obrazga yoki Git ga kirmaydi.
+- [ ] **15.6.** README bo‘yicha bazadan nusxa oling va yangi bo‘sh sinov bazasiga tiklang.
+  **Kutiladi:** nusxa fayli bor, tiklash xatosiz; asl baza saqlanadi. Jurnalni ochib
+  xato va besh daqiqalik navbat/yangilanish/tick ko‘rsatkichlarini topa olasiz.

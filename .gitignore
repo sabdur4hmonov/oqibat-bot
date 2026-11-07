@@ -12,6 +12,8 @@ htmlcov/
 *.db-*
 *.sqlite*
 *.log
+backups/
+*.dump
 .idea/
 .vscode/
 build/

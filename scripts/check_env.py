@@ -1,6 +1,7 @@
 """Read-only preflight: python scripts/check_env.py. Never prints credentials."""
 
 import asyncio
+import os
 import re
 import sys
 from pathlib import Path
@@ -12,7 +13,13 @@ from bot import texts  # noqa: E402
 
 # Missing setup needs no SDK imports or network stack. This also keeps the CLI
 # responsive on Windows while antivirus scans a cold Python environment.
-if __name__ == "__main__" and not (ROOT / ".env").is_file():
+REQUIRED_ENV = ("BOT_TOKEN", "BOT_USERNAME", "INSTAGRAM_HANDLE", "OWNER_ID")
+
+if (
+    __name__ == "__main__"
+    and not (ROOT / ".env").is_file()
+    and not all(os.environ.get(key) for key in REQUIRED_ENV)
+):
     print(texts.ENV_FILE_MISSING)
     raise SystemExit(1)
 
@@ -125,11 +132,12 @@ async def check_database(settings, root=ROOT, emit=print) -> bool:
 
 
 async def check_environment(root=ROOT, emit=print) -> int:
-    if not (root / ".env").is_file():
+    env_file = root / ".env"
+    if not env_file.is_file() and not all(os.environ.get(key) for key in REQUIRED_ENV):
         emit(texts.ENV_FILE_MISSING)
         return 1
     try:
-        settings = Settings(_env_file=root / ".env")
+        settings = Settings(_env_file=env_file if env_file.is_file() else None)
     except ValidationError as error:
         emit(texts.ENV_INVALID_HEADER)
         for problem in error.errors(include_url=False, include_context=False, include_input=False):

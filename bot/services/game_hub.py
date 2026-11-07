@@ -16,6 +16,7 @@ class GameHub:
         self.effects = effects
         self.board_locks = ChatLocks()
         self.services = {}
+        self.cards = None
 
     def register(self, kinds, service) -> None:
         for kind in kinds:
@@ -57,7 +58,13 @@ class GameHub:
         service = self.services.get(game.game)
         if service:
             await service.cleanup(game)
-        return await self.board(game, text, markup)
+        sent = await self.board(game, text, markup)
+        await self.result_card(game)
+        return sent
+
+    async def result_card(self, game):
+        if self.cards:
+            await self.cards.game(game)
 
     async def stop(
         self, chat_id: int, user_id: int, reply_id=None, *, anonymous_admin=False

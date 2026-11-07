@@ -250,6 +250,10 @@ Quiet-hour deferral across Monday retains the original scheduled Sunday/week ide
 ### Phase 9 — Result cards & deployment
 Pillow cards for weekly top and game winners (with `@INSTAGRAM_HANDLE` watermark, Uzbek-capable font
 bundled in repo), PostgreSQL support verified, Dockerfile or systemd unit, deployment guide in README.
+Owner additions: bundle the free font's license; provide Dockerfile, bot + PostgreSQL Compose,
+systemd example and step-by-step deployment instructions. Do not deploy. Verify PostgreSQL
+locally if available, otherwise explicitly mark it unverified. Keep rendering off the event loop,
+use the shared priority sender, and retain text results if rendering is unavailable.
 
 ### Later (not now)
 Telegram Mini App (leaderboards, Mafia voting screen), more Mafia roles, seasons and achievements.

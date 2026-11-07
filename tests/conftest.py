@@ -40,6 +40,7 @@ def settings():
         bot_username="OqibatBot",
         instagram_handle="oqibat.test",
         owner_id=123,
+        result_cards_enabled=False,  # Logical flows isolate PNG/upload tests below.
     )
 
 

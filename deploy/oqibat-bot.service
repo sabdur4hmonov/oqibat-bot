@@ -1,0 +1,33 @@
+[Unit]
+Description=Oqibat Telegram bot (one worker)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=oqibat
+Group=oqibat
+WorkingDirectory=/opt/oqibat-bot
+EnvironmentFile=/opt/oqibat-bot/.env
+Environment=ENVIRONMENT=production
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONUTF8=1
+ExecStartPre=/opt/oqibat-bot/.venv/bin/alembic upgrade head
+ExecStart=/opt/oqibat-bot/.venv/bin/python -m bot
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+LimitNOFILE=65536
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/oqibat-bot
+StateDirectory=oqibat
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

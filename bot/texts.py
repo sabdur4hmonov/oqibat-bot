@@ -4,6 +4,15 @@ from html import escape
 from zoneinfo import ZoneInfo
 
 SLOGAN = "Guruhda oqibat bo‘lsin"
+CARD_BRAND = "OQIBAT"
+CARD_WEEKLY_TITLE = "Haftalik top 5"
+CARD_GAME_TITLES = {
+    "quiz": "Viktorina natijalari",
+    "duel": "Duel g‘olibi",
+    "krokodil": "Krokodil natijalari",
+    "hyj": "Haqiqat yoki jasorat",
+    "mafia": "Mafia g‘oliblari",
+}
 ADD_TO_GROUP = "Botni guruhingizga qo‘shing"
 START_DESCRIPTION = "Bot bilan tanishish"
 HELP_DESCRIPTION = "Yordam va qo‘llanma"
@@ -30,6 +39,7 @@ ENV_FIELD_HINTS = {
     "webhook_secret": "WEBHOOK_SECRET: webhook uchun maxfiy harf, raqam, _ yoki - qiymat kerak.",
     "webhook_host": "WEBHOOK_HOST: serverning mahalliy manzilini yozing, masalan 127.0.0.1.",
     "webhook_port": "WEBHOOK_PORT: 1 dan 65535 gacha port raqamini yozing.",
+    "result_cards_enabled": "RESULT_CARDS_ENABLED: rasmli natijalar uchun true, matn uchun false.",
 }
 ENV_RUNTIME_HINT = (
     "ENVIRONMENT/DATABASE_URL/USE_WEBHOOK/WEBHOOK_URL/WEBHOOK_SECRET ni tekshiring. "
@@ -574,18 +584,22 @@ def help_text(instagram_handle: str) -> str:
     )
 
 
-def weekly_summary(week, data, instagram_handle):
+def weekly_summary(week, data, instagram_handle, *, compact=False):
+    def name(value):
+        return value[:24] + "…" if compact and len(value) > 24 else value
+
     title = f"🏆 <b>Haftalik oqibat</b> — {week:%d.%m.%Y} haftasi\n{SLOGAN}!"
     top = (
         "\n".join(
-            f"{i}. {mention(user, name)} — {points} ball"
-            for i, (user, name, points) in enumerate(data["top"], 1)
+            f"{i}. {mention(user, name(label))} — {points} ball"
+            for i, (user, label, points) in enumerate(data["top"], 1)
         )
         or NO_SCORES
     )
     active = data["active"]
     activity = (
-        f"🔥 Eng faol: {mention(active[0], active[1])} — {active[2]} ta muvaffaqiyatli ishtirok."
+        f"🔥 Eng faol: {mention(active[0], name(active[1]))} — "
+        f"{active[2]} ta muvaffaqiyatli ishtirok."
         if active
         else "🔥 Bu haftada hali ball olgan ishtirok yo‘q."
     )
@@ -594,3 +608,45 @@ def weekly_summary(week, data, instagram_handle):
         f"🎯 Hafta vazifalari: bajarildi {data['done']}, o‘tkazildi {data['missed']}. "
         f"Hozir kutilmoqda: {data['pending']}.\n\nMuallif: @{escape(instagram_handle)}"
     )
+
+
+def card_points(points):
+    return f"{points} ball"
+
+
+def card_watermark(instagram):
+    return f"@{instagram}"
+
+
+def card_week(week):
+    return f"{week:%d.%m.%Y} haftasi · {SLOGAN}"
+
+
+def game_card_data(game):
+    if game.status != "finished":
+        return None
+    state = game.state
+    rows = []
+    if game.game in {"quiz", "krokodil"}:
+        scores = sorted(state.get("scores", {}).items(), key=lambda pair: (-pair[1], int(pair[0])))
+        rows = [
+            (state.get("names", {}).get(user, "Ishtirokchi"), score)
+            for user, score in scores[:5]
+            if score > 0
+        ]
+    elif game.game == "duel" and state.get("winner"):
+        rows = [(state["names"].get(str(state["winner"]), "Ishtirokchi"), 2)]
+    elif game.game == "hyj" and state.get("result") in {"truth_done", "dare_done"}:
+        points = 5 if state["result"] == "truth_done" else state.get("result_points", 0)
+        rows = [(state["name"], points)] if points else []
+    elif game.game == "mafia" and state.get("winner") in {"town", "mafia"}:
+        for user, role in state.get("roles", {}).items():
+            side = "mafia" if role == "mafia" else "town"
+            if side == state["winner"] and user not in state.get("forfeited", []):
+                rows.append((state["players"][user], 10 + (3 if user in state["alive"] else 0)))
+        rows.sort(key=lambda pair: -pair[1])
+    return {"title": CARD_GAME_TITLES[game.game], "rows": rows[:5]} if rows else None
+
+
+def game_card_caption(game):
+    return f"🏆 {CARD_GAME_TITLES[game.game]}"

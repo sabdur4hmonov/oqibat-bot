@@ -1,0 +1,54 @@
+name: oqibat
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-oqibat}
+      POSTGRES_USER: ${POSTGRES_USER:-oqibat}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a random URL-safe POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  bot:
+    build: .
+    env_file:
+      - ${OQIBAT_ENV_FILE:-.env}
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-oqibat}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-oqibat}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-15}
+      WEBHOOK_HOST: 0.0.0.0
+      WEBHOOK_PORT: "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-c", "alembic upgrade head && exec python -m bot"]
+    ports:
+      - "127.0.0.1:${WEBHOOK_PORT:-8080}:8080"
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres_data:

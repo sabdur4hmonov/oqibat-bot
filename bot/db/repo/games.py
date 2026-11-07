@@ -159,6 +159,43 @@ class GameSessionRepository:
                 self.cache.sync(game)
             return view(game)
 
+    async def claim_result_card(self, chat_id, game_id):
+        async with self.locks.hold(chat_id) as chat_id:
+            async with self.sessions.begin() as session:
+                row = await session.get(GameSession, game_id)
+                chat = await session.get(Chat, chat_id)
+                if (
+                    row is None
+                    or row.chat_id != chat_id
+                    or row.status != "finished"
+                    or row.state.get("result_card_claimed")
+                    or chat is None
+                    or not chat.is_active
+                    or not chat.bot_is_admin
+                ):
+                    return False
+                row.state = {
+                    **row.state,
+                    "result_card_claimed": True,
+                    "result_card_status": "reserved",
+                }
+            return True
+
+    async def record_result_card(self, chat_id, game_id, sent):
+        async with self.locks.hold(chat_id) as chat_id:
+            async with self.sessions.begin() as session:
+                row = await session.get(GameSession, game_id)
+                if (
+                    row
+                    and row.chat_id == chat_id
+                    and row.state.get("result_card_status") == "reserved"
+                ):
+                    row.state = {
+                        **row.state,
+                        "result_card_status": "sent" if sent is not None else "failed",
+                        "result_card_message_id": getattr(sent, "message_id", None),
+                    }
+
     async def change(self, chat_id: int, game_id: int, transform) -> bool:
         """transform is synchronous and changes only this locked ORM game object."""
         async with self.locks.hold(chat_id) as chat_id:

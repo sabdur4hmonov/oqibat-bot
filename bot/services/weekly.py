@@ -3,6 +3,7 @@
 from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
+from aiogram.types import BufferedInputFile
 from sqlalchemy import String, cast, func, literal, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
@@ -91,6 +92,7 @@ class Weekly:
         self.checkins = checkins
         self.username = getattr(settings, "bot_username", "OqibatBot")
         self.instagram = getattr(settings, "instagram_handle", "oqibat")
+        self.cards = None
 
     async def post(self, chat, now):
         await self.checkins.flush()
@@ -127,15 +129,28 @@ class Weekly:
                 data = await summary(
                     session, chat_id, since, min(until, now + timedelta(microseconds=1))
                 )
-        sent = await self.sender.send(
-            chat_id,
-            lambda: self.bot.send_message(
+        payload = await self.cards.weekly(week, data) if self.cards else None
+        if payload is not None:
+            sent = await self.sender.send(
                 chat_id,
-                texts.weekly_summary(week, data, self.instagram),
-                reply_markup=add_to_group_keyboard(self.username),
-            ),
-            priority=Priority.BULK,
-        )
+                lambda: self.bot.send_photo(
+                    chat_id,
+                    BufferedInputFile(payload, filename="oqibat-weekly.png"),
+                    caption=texts.weekly_summary(week, data, self.instagram, compact=True),
+                    reply_markup=add_to_group_keyboard(self.username),
+                ),
+                priority=Priority.BULK,
+            )
+        else:
+            sent = await self.sender.send(
+                chat_id,
+                lambda: self.bot.send_message(
+                    chat_id,
+                    texts.weekly_summary(week, data, self.instagram),
+                    reply_markup=add_to_group_keyboard(self.username),
+                ),
+                priority=Priority.BULK,
+            )
         async with self.locks.hold(chat_id) as chat_id:
             async with self.sessions.begin() as session:
                 await session.execute(

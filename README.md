@@ -5,7 +5,7 @@ Python 3.12, aiogram 3, SQLAlchemy 2 async, Alembic. Phase 0 implements the foun
 and private `/start` and `/help`. Phase 0.5 adds shared scale services. Phase 1 implements group onboarding,
 member consent and admin settings; Phase 2 adds daily posts, content rotation, quiet hours
 and daily check-in points. Phase 3 adds challenges, point ledgers, penalties and leaderboards.
-Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls. Phase 5 adds Krokodil; Phase 6 adds Haqiqat yoki jasorat. Phase 7 adds Mafia; Phase 8 adds weekly summaries and full help.
+Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls. Phase 5 adds Krokodil; Phase 6 adds Haqiqat yoki jasorat. Phase 7 adds Mafia; Phase 8 adds weekly summaries and full help. Phase 9 adds shareable result cards and deployment examples.
 
 ## Games
 
@@ -59,6 +59,8 @@ Create a bot with Telegram **@BotFather** (`/newbot`). Set these local `.env` va
 | `WEBHOOK_SECRET` | Random private header secret: 1–256 letters/digits/`_`/`-` |
 | `WEBHOOK_HOST` | Local bind address, default `127.0.0.1` |
 | `WEBHOOK_PORT` | Local HTTP port behind a TLS reverse proxy, default `8080` |
+| `RESULT_CARDS_ENABLED` | `true` (default) for winner/weekly PNG cards; `false` keeps text results |
+| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Compose database settings; use a fresh random hex password |
 
 The example token is a placeholder. Do not commit `.env` or send the token in chat.
 The username is checked against Telegram's `getMe` before polling. Secrets are
@@ -97,8 +99,9 @@ migration; create a new revision for every later schema change.
 The database URL can also be `postgresql+asyncpg://user:password@localhost/oqibat`.
 Production requires this PostgreSQL URL and a pool size from 10 to 20 (default 15),
 with overflow disabled. SQLite remains for development and isolated tests; it is not
-the production choice for 10,000 groups. Live PostgreSQL verification still requires
-a PostgreSQL server. All stored timestamps are timezone-aware UTC at the ORM
+the production choice for 10,000 groups. An isolated PostgreSQL 16.14 smoke test verifies
+migrations, UTC, bulk upserts, ledger uniqueness, game constraints and due scheduling.
+This is not a production capacity measurement. All stored timestamps are timezone-aware UTC at the ORM
 boundary. SQLite values are reattached to UTC when loaded; naive input is rejected.
 Chat-local clock settings default to Asia/Tashkent (daily 09:00, quiet 23:00–08:00).
 The bulk scheduler runs every 30 seconds and currently posts daily messages and assigns challenges.
@@ -130,7 +133,7 @@ administrators are recognized only when the message's sender chat is that same g
 
 Only implemented commands are registered. The group scope currently includes `/help`,
 `/qoshilish`, `/chiqish`, `/sozlamalar`, `/vazifa`, `/men`, `/top`, `/duel`, `/viktorina`,
-`/tanla`, `/krokodil`, `/hyj` and `/stop`. Polling requests
+`/tanla`, `/krokodil`, `/hyj`, `/mafia` and `/stop`. Polling requests
 `message`, `callback_query`, `my_chat_member`, `chat_member` and `poll_answer` updates;
 group updates track onboarding and membership. Incoming activity and private reachability
 are buffered without opting anyone into a group. The activity middleware also refreshes
@@ -301,14 +304,13 @@ ruff check .
 alembic check
 ```
 
-Tests use temporary SQLite databases and mocked Telegram sessions; no real bot token
+Tests normally use temporary SQLite databases and mocked Telegram sessions; no real bot token
 or network is needed. They cover config validation, escaping, normalization, migrations,
 schema constraints, UTC conversion, sender failures, routing and startup. Manual live
 Telegram checks require your local `.env` credentials.
 
 See [data/README.md](data/README.md) for the six content bank schemas and three
-sample objects per bank. The planned modules for later phases are documentation-only
-placeholders. Implementation rules and progress are in `AGENTS.md`, `docs/PLAN.md`
+sample objects per bank. Implementation rules and progress are in `AGENTS.md`, `docs/PLAN.md`
 and `docs/PROGRESS.md`.
 
 Official references used for the foundation:
@@ -409,3 +411,187 @@ still uses the indexed 500-row batches, never a scan of chats.
 
 Private and group `/help` now list every implemented command and game timing, plus
 the footer and add-to-group button. Routine game/task/daily messages have no footer.
+
+### Result cards (Phase 9)
+
+Weekly top-five reports are a single PNG with the full report in its caption. Completed
+quiz/Krokodil scores, duel wins, completed truth/dares and Mafia winning teams get a
+separate top-five result card after the normal final board. Ties/draws without a winning
+result and cancelled games have no winner card. Larger Mafia teams show their first five
+ranked members; every member's actual points still go into the ledger. Cards show this
+game's points, not lifetime balances. `@INSTAGRAM_HANDLE` is watermarked on every card.
+
+Rendering uses at most two worker threads, outside the event loop. The bundled Noto Sans
+font supports Uzbek Latin/apostrophes and Cyrillic; its SIL OFL license and source/hash
+are in [assets/fonts](assets/fonts/README.md). Long names are shortened by pixel width;
+control characters are removed. Text results remain if rendering fails. Set
+`RESULT_CARDS_ENABLED=false` to disable rendering/uploads. A game reserves its card once
+in existing session JSON before upload; ambiguous or failed uploads are logged, not
+automatically repeated after restart. Weekly photos share the existing post reservation.
+
+## Serverga joylash: Docker Compose (tavsiya)
+
+Quyidagi buyruqlar qo‘llanma; agent botni serverga joylamadi. Docker Desktop ishlayotgan
+Windows PowerShell yoki Docker Engine + Compose o‘rnatilgan server kerak. Avval sinov
+botida LIVE_TEST qadamlarini bajaring. Bitta token uchun **faqat bitta bot jarayoni**
+ishlasin; bir vaqtda mahalliy polling, Compose va systemd ni ishlatmang.
+
+1. Loyihani alohida papkaga oling. Quyidagi buyruqlarni shu papkada bajaring:
+
+   ```powershell
+   git clone https://github.com/sabdur4hmonov/oqibat-bot.git
+   Set-Location oqibat-bot
+   Copy-Item .env.example .env
+   python -c "import secrets; print(secrets.token_hex(24))"
+   notepad .env
+   ```
+
+2. BotFather tokeni, aniq `BOT_USERNAME`, `OWNER_ID`, `INSTAGRAM_HANDLE` ni kiriting.
+   `POSTGRES_PASSWORD` ga hozir yaratilgan tasodifiy hex qiymatni qo‘ying.
+   `POSTGRES_USER=oqibat`, `POSTGRES_DB=oqibat`, `ENVIRONMENT=production`,
+   `DB_POOL_SIZE=15`, `USE_WEBHOOK=false` bo‘lsin. Compose ichidagi `DATABASE_URL`
+   avtomatik `db:5432` ga sozlanadi; `.env` dagi mahalliy SQLite URL ishlatilmaydi.
+   Keyinchalik bazaning parolini faqat `.env` da o‘zgartirish mavjud PostgreSQL
+   foydalanuvchisi parolini o‘zgartirmaydi. `.env` ni sir saqlang.
+
+3. Faqat shu loyiha konfiguratsiyasini tekshiring, obrazni quring va bazani tayyorlang:
+
+   ```powershell
+   docker compose -p oqibat config --quiet
+   docker compose -p oqibat build bot
+   docker compose -p oqibat up -d db
+   docker compose -p oqibat run --rm bot alembic upgrade head
+   docker compose -p oqibat run --rm bot python -m bot --check
+   docker compose -p oqibat run --rm bot python scripts/check_env.py
+   ```
+
+   Oxirgi buyruq haqiqiy Telegram `getMe` bilan token/username va bazani tekshiradi,
+   botni ishga tushirmaydi. Xato bo‘lsa, o‘zbekcha ko‘rsatmani bajaring. Muhit
+   qiymatlari to‘liq berilsa, checker jismoniy `.env` faylisiz ham ishlaydi.
+   Docker obraziga `.env` kiritilmaydi. Obraz root bo‘lmagan 10001 foydalanuvchida
+   ishlaydi; Compose fayl tizimi o‘qish uchun, vaqtinchalik `/tmp` yozish uchun ochiq.
+
+4. Tekshiruv o‘tgach, boshqa bot jarayonini to‘xtating va ishga tushiring:
+
+   ```powershell
+   docker compose -p oqibat up -d bot
+   docker compose -p oqibat ps
+   docker compose -p oqibat logs --tail 100 bot
+   docker compose -p oqibat logs -f bot
+   ```
+
+   Bot boshlanishida migratsiya bajariladi; polling boshlangach shaxsiy chatda
+   `/start` yuboring. Jurnalni kuzatishdan Ctrl+C bilan chiqish botni to‘xtatmaydi.
+   Botni to‘xtatish: `docker compose -p oqibat stop bot`. PostgreSQL 16 alohida
+   doimiy `oqibat_postgres_data` hajmida saqlanadi, porti tashqariga ochilmaydi.
+   Boshqa loyihalarda ham `oqibat` nomi bo‘lsa, barcha buyruqlarda boshqa bir xil
+   `-p` nomini tanlang. Global Docker tozalash buyruqlarini ishlatmang.
+
+5. Webhook kerak bo‘lsa, oldingi “Optional production webhook” bo‘limi bo‘yicha
+   HTTPS domen/reverse proxy tayyorlang. `.env` da `USE_WEBHOOK=true`, haqiqiy
+   `WEBHOOK_URL`, yangi tasodifiy `WEBHOOK_SECRET` qo‘ying. Proxy hostdagi
+   `127.0.0.1:8080` ga yo‘naltirsin; Compose ichida host `0.0.0.0`, port 8080.
+   `WEBHOOK_PORT` tashqi mahalliy portni o‘zgartiradi. Maxfiy sarlavha saqlansin.
+   `docker compose -p oqibat up -d --force-recreate bot` faqat shu botni yangilaydi.
+   Oddiy polling uchun domen/TLS yoki ochiq kiruvchi port kerak emas.
+
+### Zaxira nusxa, yangilash va qaytarish
+
+Quyidagi PowerShell misolida baza/foydalanuvchi `oqibat`; o‘zgartirgan bo‘lsangiz
+moslang. Nusxada foydalanuvchi ma'lumotlari bor; uni himoyalangan boshqa joyga ko‘chiring.
+Binary nusxani PowerShell `>` orqali o‘tkazmaymiz:
+
+```powershell
+New-Item -ItemType Directory -Force .\backups
+$backupName = 'oqibat-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.dump'
+docker compose -p oqibat exec -T db pg_dump -U oqibat -d oqibat -Fc -f /tmp/oqibat-backup.dump
+docker compose -p oqibat cp db:/tmp/oqibat-backup.dump (Join-Path .\backups $backupName)
+docker compose -p oqibat stop bot
+git pull --ff-only
+docker compose -p oqibat build bot
+docker compose -p oqibat run --rm bot alembic upgrade head
+docker compose -p oqibat run --rm bot python -m bot --check
+docker compose -p oqibat up -d bot
+```
+
+Tiklashni avval **yangi bo‘sh** bazada sinang, ishlayotgan bazani o‘chirmang:
+
+```powershell
+docker compose -p oqibat cp (Join-Path .\backups $backupName) db:/tmp/oqibat-restore.dump
+docker compose -p oqibat exec -T db createdb -U oqibat -T template0 oqibat_restore_test
+docker compose -p oqibat exec -T db pg_restore -U oqibat -d oqibat_restore_test --no-owner --exit-on-error /tmp/oqibat-restore.dump
+```
+
+Bir xil tiklash nomini qayta ishlatmang. Kodni qaytarishdan oldin migratsiya eski
+kodga mosligini Claude bilan tekshiring; avtomatik downgrade qilmang. Baza o‘zgargan
+bo‘lsa, nusxani alohida bazaga tiklash va URL ni almashtirish rejasi kerak. Bu qo‘llanma
+SQLite dan ishlab turgan PostgreSQL ga ma'lumot ko‘chirishni amalga oshirmaydi.
+
+Jurnalda `ERROR`, `Traceback`, `retry_after` va besh daqiqalik `queue_length`,
+`updates_per_minute`, `last_tick_duration_ms` ni tekshiring. Navbat doim o‘sayotgan
+bo‘lsa ko‘proq guruh qo‘shishni to‘xtating; ayniqsa `queue_length > 1000` bo‘lsa
+Claude qayd etgan heap tekshiruvini o‘lchang. Bir serverda 10,000 guruh ishlashi hali
+haqiqiy yuk ostida isbotlanmagan. Faol o‘yinlar paytida yangilashdan saqlaning:
+Mafia restartda bekor qilinadi, xotiradagi yuborish navbati saqlanmaydi.
+
+### Linux serverda systemd (Compose o‘rniga)
+
+Bu bo‘limdagi buyruqlar Linux server terminali uchun; Windows mahalliy ishga
+tushirish yuqoridagi PowerShell bo‘limida. Python 3.12 va alohida PostgreSQL bazasi
+oldindan tayyor bo‘lsin. Faqat shu bot uchun yangi `oqibat` tizim foydalanuvchisi
+va `/opt/oqibat-bot` papkasini yarating; mavjud boshqa xizmatlarni o‘zgartirmang.
+
+```bash
+sudo useradd --system --user-group --home-dir /opt/oqibat-bot --shell /usr/sbin/nologin oqibat
+sudo git clone https://github.com/sabdur4hmonov/oqibat-bot.git /opt/oqibat-bot
+sudo chown -R oqibat:oqibat /opt/oqibat-bot
+cd /opt/oqibat-bot
+sudo -u oqibat python3.12 -m venv .venv
+sudo -u oqibat .venv/bin/python -m pip install -r requirements.txt
+sudo -u oqibat cp .env.example .env
+sudo chmod 600 .env
+sudo -u oqibat nano .env
+```
+
+`ENVIRONMENT=production`, `DATABASE_URL=postgresql+asyncpg://...`, pool 15 va haqiqiy
+bot qiymatlarini kiriting. Compose ishlatilmasa POSTGRES_* qiymatlari bazani yaratmaydi;
+URL da haqiqiy PostgreSQL hisobini yozing. URL paroli maxsus belgili bo‘lsa URL-encode
+qiling. Oddiy URL-safe hex parol osonroq. systemd EnvironmentFile uchun oddiy
+`KEY=value` qatorlaridan foydalaning, shell buyruqlari/qiymat almashtirish yozmang.
+
+```bash
+sudo -u oqibat .venv/bin/alembic upgrade head
+sudo -u oqibat .venv/bin/python -m bot --check
+sudo -u oqibat .venv/bin/python scripts/check_env.py
+sudo install -m 644 deploy/oqibat-bot.service /etc/systemd/system/oqibat-bot.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now oqibat-bot.service
+sudo systemctl status oqibat-bot.service
+sudo journalctl -u oqibat-bot.service -n 100 --no-pager
+```
+
+Xizmat faqat bot foydalanuvchisida, PostgreSQL bilan ishlaydi; `/opt/oqibat-bot`
+xizmat vaqtida yozishdan himoyalangan. `sudo systemctl stop oqibat-bot.service`
+to‘xtatadi. Yangilashdan oldin shu xizmatni to‘xtating, PostgreSQL nusxasini oling,
+shu papkada kod/kutubxonalarni yangilang, tekshiring va xizmatni qayta yoqing.
+Unit misoli berildi; haqiqiy systemd serverida ishlashi hali tekshirilmagan.
+
+### Ixtiyoriy PostgreSQL tekshiruvi (faqat bo‘sh sinov bazasi)
+
+`tests/test_postgres_integration.py` migratsiyadan oldin baza bo‘shligini tekshiradi.
+Faqat mahalliy `127.0.0.1`/`localhost` va `oqibat_verify_` bilan boshlanuvchi yangi
+baza nomini qabul qiladi; mavjud jadvalli bazaga tegmaydi. Har tekshiruvga yangi baza:
+
+```powershell
+$env:OQIBAT_TEST_DATABASE_URL = 'postgresql+asyncpg://TEST_USER:TEST_PASSWORD@127.0.0.1:5432/oqibat_verify_new'
+python -m pytest tests/test_postgres_integration.py -q
+Remove-Item Env:OQIBAT_TEST_DATABASE_URL
+```
+
+Sinov o‘z bazasida jadvallar/namunalar yaratadi, o‘zi o‘chirmaydi. Ishlab turgan
+baza URL ini bermang. Bu parametrsiz odatdagi pytest PostgreSQL sinovini o‘tkazib
+yuboradi. Haqiqiy Telegram, TLS webhook, systemd va 10,000 guruh yuki alohida tekshiriladi.
+
+Rasmiy qo‘llanmalar: [Compose loyiha nomlari](https://docs.docker.com/compose/how-tos/environment-variables/envvars/),
+[PostgreSQL nusxa/tiklash](https://www.postgresql.org/docs/16/backup-dump.html),
+[systemd xizmat muhiti](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html).

@@ -305,6 +305,7 @@ class EasyGames:
                 if updated.game == "quiz"
                 else texts.WYR_FINISHED,
             )
+            await self.hub.result_card(updated)
         else:
             await self.send_poll(updated)
 

@@ -191,6 +191,23 @@ async def test_missing_env_reports_setup_without_network(tmp_path):
     assert output == [texts.ENV_FILE_MISSING]
 
 
+async def test_complete_process_environment_without_dotenv_supports_containers(
+    database_url, tmp_path, monkeypatch
+):
+    for key, value in {
+        "BOT_TOKEN": TOKEN,
+        "BOT_USERNAME": "OqibatBot",
+        "INSTAGRAM_HANDLE": "oqibat.test",
+        "OWNER_ID": "123",
+        "DATABASE_URL": database_url,
+    }.items():
+        monkeypatch.setenv(key, value)
+    output = []
+    with patch.object(check_env, "Bot", return_value=fake_bot()):
+        assert await check_env.check_environment(tmp_path, output.append) == 0
+    assert output[-1] == texts.ENV_CHECK_OK
+
+
 async def test_invalid_env_reports_all_fields_without_values_or_traceback(tmp_path):
     output = []
     (tmp_path / ".env").write_text(

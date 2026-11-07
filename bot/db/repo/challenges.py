@@ -35,6 +35,9 @@ class ChallengeRepository:
                 **game.state,
                 "phase": "done",
                 "result": f"dare_{challenge.status}",
+                "result_points": challenge_points(challenge.kind, done=True)
+                if challenge.status == "done"
+                else 0,
                 "rev": game.state.get("rev", 0) + 1,
             }
             return game

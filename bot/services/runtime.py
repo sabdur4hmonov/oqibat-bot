@@ -26,6 +26,7 @@ from bot.services.participation import Participants
 from bot.services.penalties import Penalties
 from bot.services.pending import PendingChallenges
 from bot.services.points import CheckinBuffer, Points
+from bot.services.result_cards import ResultCards
 from bot.services.scheduler import Scheduler
 from bot.services.sender import Sender
 from bot.services.settings import SettingPrompts
@@ -76,6 +77,9 @@ class ScaleRuntime:
         self.scheduler.hooks["daily"] = self.daily.post
         self.weekly = Weekly(sessions, self.locks, bot, self.sender, self.checkins, settings)
         self.scheduler.hooks["weekly"] = self.weekly.post
+        self.cards = ResultCards(self.games, bot, self.sender, settings)
+        self.game_hub.cards = self.cards
+        self.weekly.cards = self.cards
         self.penalties = Penalties(
             bot, self.sender, self.admins, getattr(settings, "owner_id", None)
         )

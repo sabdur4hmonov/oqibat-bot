@@ -45,6 +45,7 @@ class Settings(DatabaseSettings):
     webhook_secret: SecretStr | None = None
     webhook_host: str = "127.0.0.1"
     webhook_port: int = Field(default=8080, ge=1, le=65535)
+    result_cards_enabled: bool = True
 
     @model_validator(mode="after")
     def validate_runtime(self):
