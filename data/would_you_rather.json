@@ -1,0 +1,5 @@
+[
+  {"key": "wyr_001", "question": "Qaysi sayohatni tanlaysiz?", "options": ["Tog‘", "Dengiz"]},
+  {"key": "wyr_002", "question": "Dam olishda qaysi biri yoqadi?", "options": ["Kitob", "Kino"]},
+  {"key": "wyr_003", "question": "Qaysi ichimlikni tanlaysiz?", "options": ["Choy", "Qahva"]}
+]
