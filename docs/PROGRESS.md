@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 0 foundation implemented; live Telegram verification pending. Stopped before Phase 1.
+- Current phase: Phase 0.5 implemented and locally verified; proceeding to Phase 1 under the owner's explicit request to continue through remaining PLAN phases.
 - Last updated: 2026-11-07 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -78,3 +78,40 @@
   6. `/help` yuboring. O‘zbekcha yordam, shior, muallif manzili va shu tugma chiqishi kerak.
   7. Guruhga qo‘shish tugmasini bosing. Telegram guruh tanlash va administrator huquqlarini berish oynasini ochishi kerak. Hozir guruh o‘yinlari va qo‘shilish tugmalari ishlamaydi; ular keyingi bosqichlar uchun.
   8. PowerShell oynasida **Ctrl+C** bosing. Bot to‘xtashi kerak. `python -m bot` bilan qayta ishga tushirib, `/start` ni yana tekshiring.
+
+### Phase 0.5 — Scale foundation — 2026-11-07
+- Status: done for local phase acceptance; real Telegram, public TLS webhook and live PostgreSQL checks remain unverified without credentials/server access.
+- Commit(s): `f104496` `phase-0.5: scale queue scheduling and runtime services`; this log is committed separately.
+- What was built:
+  - PLAN section 10 records all requested scale rules for later phases; section 8 now includes Phase 0.5. No unresolved Claude review notes were present.
+  - One bounded async priority queue shared by the runtime, rolling 25 attempts/second globally and 18/minute per chat, at most 25 in flight, priority GAME > CHALLENGE > BULK, retry once, chat/global pauses, direct callback answers, safe cancellation and forbidden handling.
+  - Stable daily 0–900 second and weekly 0–3599 second BLAKE2 spreading, local-time recurrence converted to UTC, three indexed chat due timestamps, and both requested composite deadline indexes in new migration `6d500d9c95f9`. The old migration was not edited.
+  - Scheduler infrastructure queries at most 500 indexed due rows per kind. Job kinds progress concurrently, with 25 callbacks per kind; successful chat jobs conditionally bulk-update their next time. Unimplemented/failed hooks retain due state; no product hooks were registered in this phase.
+  - Message activity/name buffering with 60-second transactional bulk flushes and shutdown flush; no SQL on ordinary incoming messages. Unknown groups are not created and opt-in flags are preserved. Failed flushes retain newer observations. Forbidden private sends cannot be overwritten by an older in-flight activity flush.
+  - Startup-loaded pending challenge set and commit-synchronized repository; admin cache with 10-minute TTL, coalesced fetches, membership invalidation/refresh and stale-fetch protection; shared per-chat game/session locks and repository writes.
+  - Production PostgreSQL mode with 10–20 connections (default 15), no overflow; optional authenticated aiohttp webhook with env settings and polling default. Transport changes preserve pending updates. Runtime owns queue, flush, tick and metric task lifecycle.
+  - Five-minute INFO metrics for queue length, rolling updates/minute and last tick duration; isolated 5,000-chat simulation and Windows documentation.
+- Files added/changed: `docs/PLAN.md`, `.env.example`, `README.md`, `requirements.txt`, entrypoint/config/private handlers, DB models/session and challenge/game repositories, new migration, scale services, `scripts/simulate_load.py`, existing tests and six scale test modules.
+- Tests: `pytest -q`: **91 passed**, no warnings; `ruff check .`: **all checks passed**. `alembic upgrade head` and `alembic check`: passed, **No new upgrade operations detected**. Offline module startup and mocked polling startup still pass.
+- Load result: 5,000 fake chats, ten real scheduler ticks, 500 daily + 500 challenge + 500 weekly items per tick. **15,000 due items processed**, zero due daily rows remaining; tick **164.366–412.688 ms**, mean **238.250 ms**, using an isolated temporary SQLite DB and fake successful work hooks. Zero Telegram requests. These results do not prove production delivery capacity.
+- Acceptance criteria:
+  - ✅ PLAN rules, prioritized limiter, callback bypass, explicit retry scopes and stable spreading implemented and tested with a fake clock.
+  - ✅ New UTC/index migration, indexed bounded queries, recurrence and query-plan index use verified.
+  - ✅ Incoming-message path has zero SQL; 1,000 repeated messages coalesce into two table upserts. Chunked 350-user flush, opt-in preservation and failed-flush recovery verified.
+  - ✅ Pending-cache startup/commit synchronization, admin TTL/coalescing/invalidation races, concurrent game state changes and metrics verified.
+  - ✅ PostgreSQL-required production config and bounded pool tested without connecting; local webhook rejects missing/wrong secrets and accepts a valid update; runtime cleanup tested.
+  - ✅ Isolated 5,000-chat simulation runs, prints counts/timings and respects 500-per-kind batches.
+  - ❌ Live PostgreSQL/public webhook/Telegram capacity not measured. Docker CLI exists but its daemon is not running; no database server or real bot credentials were supplied.
+- Deviations from PLAN.md and why:
+  - Telegram's retry response has no global/chat scope indicator. Ambiguous 429s conservatively pause globally; known chat-specific callers can choose `retry_scope="chat"`. This is explicit in PLAN and README rather than guessing a Telegram feature.
+  - SQL cannot portably upsert users and memberships in one statement. One flush transaction executes one upsert per table per 100-row chunk to respect SQLite limits; never one write per message.
+  - Added `ENVIRONMENT`, `DB_POOL_SIZE` and `WEBHOOK_HOST` alongside requested webhook variables. Declared `aiohttp` directly because the owner explicitly requested it; it was already an aiogram dependency.
+  - Due timestamps are NULL until that chat is initialized/configured. Later onboarding/settings call `initialize_schedule` for that chat; no all-chat initialization scan was introduced.
+- Open questions / decisions needed: no blocking architecture question. Single process per server is required for these in-memory coordination primitives. Production capacity must be measured on the actual server before claiming support for 10,000 active groups.
+- Known issues / TODO: caches/buffer/queue are not crash-durable; the last minute of activity may be lost on a crash. Actual post/challenge/game hooks remain for their planned phases. The owner explicitly authorized continuing through the remaining PLAN phases, superseding the earlier stop-after-0.5 instruction.
+- Manual test steps (Uzbek, simple):
+  1. Virtual muhitni yoqing. `alembic upgrade head`, keyin `python -m bot --check` buyrug‘ini bajaring.
+  2. `python scripts/simulate_load.py --ticks 10` buyrug‘ini bajaring. `fake_chats=5000` va oxirida `total_due_items_processed=15000`, `remaining_due_daily=0` chiqishi kerak. Har bir tick uchun 500 tadan uch turdagi ish va vaqt ko‘rsatiladi. Bu haqiqiy guruhlarga xabar yubormaydi.
+  3. `.env` dagi haqiqiy bot ma'lumotlarini kiriting. Mahalliy tekshiruvda `USE_WEBHOOK=false` qoldiring, `python -m bot` bilan ishga tushiring va Telegramda `/start`, `/help` ni tekshiring.
+  4. Bot besh daqiqa ishlaganda PowerShell oynasida `queue_length`, `updates_per_minute`, `last_tick_duration_ms` chiqishini tekshiring. Oddiy guruh xabarlari bazaga har safar yozilmaydi; faollik taxminan bir daqiqada saqlanadi.
+  5. Webhookni faqat HTTPS domen va server tayyor bo‘lganda README bo‘yicha sozlang. `WEBHOOK_SECRET` ni oshkor qilmang. Hozirgi bosqichda hali guruh o‘yinlari yo‘q.
