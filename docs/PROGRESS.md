@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 2 implemented and locally verified; proceeding to Phase 3 under the owner's explicit request to continue through remaining PLAN phases.
+- Current phase: Phase 3 implemented and locally verified; proceeding to Phase 4 under the owner's explicit request to continue through remaining PLAN phases.
 - Last updated: 2026-11-07 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -163,3 +163,26 @@
   3. Bitta kunlik xabar kelishini, guruh nomi to‘g‘ri ko‘rinishini tekshiring. Botni qayta ishga tushiring: shu kun uchun yana xabar yuborilmasligi kerak.
   4. Kunlik xabardan keyin bir nechta xabar yozing. Bir daqiqa ichida faqat bitta +1 hodisasi saqlanadi; `/men` ko‘rinishi keyingi bosqichda qo‘shiladi.
   5. Tinch vaqt ichiga tushadigan vaqtni tanlang: kunlik xabar tinch vaqt tugaguncha yuborilmasligi kerak.
+
+### Phase 3 — Challenges, points, penalties — 2026-11-07
+- Status: done for implementation/local acceptance; live Telegram moderation remains unverified without credentials.
+- Commit(s): `996ce79` `phase-3: challenges point ledger and safe penalties`; progress committed separately.
+- What was built: pure weighted picker with active/opt-in eligibility and 24-hour fallback; scheduled/admin-forced challenges, escaped mentions and local deadlines, quiet-hour deadline extension, type/target/time/message-order completion, atomic status/streak/point ledger updates, expiry and all penalty modes, once-only debtor mentions, `/vazifa`, `/men`, `/top`. Pending type/deadline/message indexes keep unrelated messages free of SQL. All point constants from section 6.5 are defined for subsequent games.
+- Files added/changed: challenge orchestration/repository/cache, picker/penalty/point services, challenge/stats handlers, runtime and command wiring, Uzbek texts/time helpers, daily debtor integration, README and tests. Migration `c1ba47fee0f6` adds one-pending-task-per-chat uniqueness and debtor announcement time; old migrations preserved.
+- Tests: `pytest -q`: **167 passed**; `ruff check .`: **all checks passed**. `alembic upgrade head` and `alembic check`: passed, no drift. Tests include round-video +15, wrong user/kind rejection, concurrent duplicate completion, streak reset, points/off expiry, debtor text, uniqueness, picker/deadlines/points, admin/owner protection, stale-cache promotion protection, bot rights, supergroup capability, mute/kick timing and stats rendering. The assignment command cannot complete its own text task.
+- Acceptance criteria:
+  - ✅ Forced round-video task completes only for its assigned user and adds +15 exactly once in mocked Telegram integration.
+  - ✅ Expiry resolves once, increments misses, applies the configured point policy, and supports mute/kick when permitted; completed tasks reset misses.
+  - ✅ Administrators, the group creator and configured bot owner cannot be muted/kicked; target status is checked fresh immediately before the queued action. Missing owner configuration/permissions fail closed.
+  - ✅ Pure picker, quiet/deadline, point-policy tests and `/men`/`/top` integration checks pass; all totals come from the ledger.
+  - ❌ Real Telegram video/timeout/mute/kick tests are pending local credentials and a controlled test supergroup.
+- Deviations from PLAN.md and why: `/vazifa` accepts optional Uzbek format aliases for predictable manual testing. Mute/kick are skipped in basic groups because Telegram supports restriction/unban semantics in supergroups. Kick uses ban→unban with `only_if_banned=True` and an automatic five-minute ban expiry as a failsafe if immediate unban fails. Deadlines are computed at assignment and extended out of quiet hours. No dependency or architecture change.
+- Open questions / decisions needed: none blocking. Production moderation should be manually checked with consenting test accounts before enabling mute/kick in real groups.
+- Known issues / TODO: bot credentials remain absent; no real moderation was attempted. Delivery failure cancels a newly assigned task without penalizing the user. Games are next; no Phase 4 code was included in this commit.
+- Manual test steps (Uzbek, simple):
+  1. `alembic upgrade head` ni bajaring, botni ishga tushiring, sinov superguruhida administrator va a'zolarni cheklash huquqini bering. Bir nechta sinov a'zosi `/qoshilish` yuborsin.
+  2. Admin `/vazifa video` yuborsin. Tanlangan a'zo muddat tugashidan oldin dumaloq video yuborsin: tabrik va +15 chiqishi kerak. Boshqa a'zoning videosi vazifani bajarmasligi kerak.
+  3. Tanlangan a'zo `/men` yuborsin, keyin guruhda `/top` ni tekshiring. Video takror yuborilganda yana +15 berilmasligi kerak.
+  4. `/sozlamalar` da jazo turini `points` qiling. Sinov vazifasini muddatigacha bajarmang: −5 va keyingi kunlik xabarda qarzdor eslatmasi chiqishi kerak. `off` da ball ayirilmasligi kerak.
+  5. Faqat rozilik bergan oddiy sinov a'zosi bilan `mute` yoki `kick` ni tekshiring. Administrator va egaga bu choralar qo‘llanmasligi kerak. `kick` dan keyin havola orqali qaytish mumkin bo‘lishi kerak.
+  6. Tinch vaqt ichida `/vazifa` yuboring: yangi vazifa berilmasligi kerak. Muddati tinch vaqtga tushgan vazifa tinch vaqt tugaguncha uzaytiriladi.
