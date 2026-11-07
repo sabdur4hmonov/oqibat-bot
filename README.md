@@ -72,6 +72,21 @@ python -m bot --check
 python -m bot
 ```
 
+For live testing, follow the Uzbek checklist in [docs/LIVE_TEST.md](docs/LIVE_TEST.md).
+Run the preflight checker after migrations, before starting the bot:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\check_env.py
+```
+
+It checks the project-root `.env` plus normal environment overrides, token syntax,
+Telegram `getMe`, the username match, database connectivity and required tables/columns.
+It prints Uzbek instructions and returns `0` on success or `1` on failure, without
+printing credentials. The network probes have bounded timeouts. Missing SQLite files
+are reported rather than created; run migrations first. This command does not poll
+updates, start the scheduler, send messages or modify bot data. Tests use a fake
+Telegram session, so live authentication still requires your own credentials.
+
 `--check` validates configuration and all modeled tables/columns; it does
 not contact Telegram or authenticate the token. `python -m bot` registers commands
 and runs long polling until Ctrl+C. Migrations read only `DATABASE_URL`, so they
@@ -88,7 +103,7 @@ boundary. SQLite values are reattached to UTC when loaded; naive input is reject
 Chat-local clock settings default to Asia/Tashkent (daily 09:00, quiet 23:00–08:00).
 The bulk scheduler runs every 30 seconds and currently posts daily messages and assigns challenges.
 An independent one-second loop resolves deadlines; queued sends never hold expiry state open.
-Games arrive in later phases. Daily timing includes the stable 0–15 minute
+Game and expiry deadlines use that separate loop. Daily timing includes the stable 0–15 minute
 offset, so a time set two minutes ahead can post two to seventeen minutes later, plus
 up to one scheduler interval. Quiet hours defer daily delivery until quiet end.
 
@@ -110,11 +125,12 @@ administrators are recognized only when the message's sender chat is that same g
    administrator huquqlarini berish oynasini ochishi kerak.
 5. Botni administrator qiling. Guruhdagi “O‘yinga qo‘shilish” tugmasini bosing.
    `/chiqish` bilan chiqishingiz, `/qoshilish` bilan qayta qo‘shilishingiz mumkin.
-   Admin bo‘lsangiz, `/sozlamalar` menyusini tekshiring. O‘yinlar keyingi bosqichlarda qo‘shiladi.
+   Admin bo‘lsangiz, `/sozlamalar` menyusini tekshiring. To‘liq sinovlar `docs/LIVE_TEST.md` da.
 6. Botni to‘xtatish uchun PowerShell oynasida **Ctrl+C** bosing.
 
 Only implemented commands are registered. The group scope currently includes `/help`,
-`/qoshilish`, `/chiqish`, `/sozlamalar`, `/vazifa`, `/men` and `/top`. Polling requests
+`/qoshilish`, `/chiqish`, `/sozlamalar`, `/vazifa`, `/men`, `/top`, `/duel`, `/viktorina`,
+`/tanla`, `/krokodil`, `/hyj` and `/stop`. Polling requests
 `message`, `callback_query`, `my_chat_member`, `chat_member` and `poll_answer` updates;
 group updates track onboarding and membership. Incoming activity and private reachability
 are buffered without opting anyone into a group. The activity middleware also refreshes
@@ -176,8 +192,8 @@ overhead and does not prove end-to-end Telegram or production server capacity.
 - `Scheduler` selects only indexed due rows, ordered by due time, at most 500 per kind.
   Job kinds progress concurrently, with up to 25 callbacks per kind; bulk callbacks
   cannot occupy all game callback slots. The sender still enforces one global limit.
-  The `daily`, `challenge` and `expire` hooks are registered. Register `weekly` and `game` in their product
-  phases. A chat hook returns `True` only after success; its next UTC timestamp is then
+  The `daily`, `challenge`, `expire` and `game` hooks are registered; `weekly` belongs to Phase 8.
+  A chat hook returns `True` only after success; its next UTC timestamp is then
   recomputed with a conditional bulk update. Missing hooks keep due work intact;
   failed hooks log the failure and back off that chat/job for ten minutes.
   Expiry/game hooks run in a separate one-second loop with their own lock, independent

@@ -10,6 +10,70 @@ HELP_DESCRIPTION = "Yordam va qo‘llanma"
 CONFIG_ERROR = "Sozlamalarda xato bor. .env faylini README bo‘yicha tekshiring."
 STARTUP_ERROR = "Bot ishga tushmadi. Sozlamalar, baza va internet aloqasini tekshiring."
 CHECK_OK = "Sozlamalar va baza tayyor. Telegram aloqasi tekshirilmadi."
+ENV_FILE_MISSING = "[X] .env topilmadi. Avval: Copy-Item .env.example .env, keyin notepad .env."
+ENV_FILE_UNREADABLE = (
+    "[X] .env o‘qilmadi. Faylga ruxsatni va UTF-8 shaklida saqlanganini tekshiring."
+)
+ENV_SETTINGS_OK = "[OK] .env va PowerShell muhitidagi sozlamalar to‘g‘ri o‘qildi."
+ENV_INVALID_HEADER = "[X] Sozlamalarni tuzating (maxfiy qiymatlar ko‘rsatilmaydi):"
+ENV_FIELD_HINTS = {
+    "bot_token": "BOT_TOKEN: BotFather bergan tokenni raqam:kalit shaklida to‘liq nusxalang.",
+    "bot_username": "BOT_USERNAME: botning Username qiymati kerak, havola emas; oxiri bot bo‘lsin.",
+    "instagram_handle": "INSTAGRAM_HANDLE: Instagram nomini yozing, havola emas.",
+    "owner_id": "OWNER_ID: o‘zingizning noldan katta raqamli Telegram ID qiymatingizni yozing.",
+    "database_url": "DATABASE_URL: sqlite+aiosqlite yoki postgresql+asyncpg ulanish manzili kerak.",
+    "log_level": "LOG_LEVEL: DEBUG, INFO, WARNING, ERROR yoki CRITICAL bo‘lsin.",
+    "environment": "ENVIRONMENT: mahalliy sinov uchun development, server uchun production.",
+    "db_pool_size": "DB_POOL_SIZE: 10 dan 20 gacha butun son yozing.",
+    "use_webhook": "USE_WEBHOOK: mahalliy sinov uchun false yozing.",
+    "webhook_url": "WEBHOOK_URL: webhook uchun to‘liq HTTPS manzil va yo‘l kerak.",
+    "webhook_secret": "WEBHOOK_SECRET: webhook uchun maxfiy harf, raqam, _ yoki - qiymat kerak.",
+    "webhook_host": "WEBHOOK_HOST: serverning mahalliy manzilini yozing, masalan 127.0.0.1.",
+    "webhook_port": "WEBHOOK_PORT: 1 dan 65535 gacha port raqamini yozing.",
+}
+ENV_RUNTIME_HINT = (
+    "ENVIRONMENT/DATABASE_URL/USE_WEBHOOK/WEBHOOK_URL/WEBHOOK_SECRET ni tekshiring. "
+    "production uchun PostgreSQL kerak. Webhook uchun HTTPS yo‘l va "
+    "1–256 ta harf, raqam, _ yoki - dan tuzilgan maxfiy kalit kerak. "
+    "Mahalliy sinovda ENVIRONMENT=development va USE_WEBHOOK=false qoldiring."
+)
+ENV_TOKEN_BAD = (
+    "[X] BOT_TOKEN shakli noto‘g‘ri yoki namuna token qolgan. BotFather tokenini yozing."
+)
+ENV_TOKEN_OK = "[OK] BOT_TOKEN shakli to‘g‘ri. Tokenning haqiqiyligi Telegramda tekshiriladi."
+ENV_TELEGRAM_SKIPPED = "[!] Token tuzatilmaguncha Telegram tekshiruvi bajarilmaydi."
+ENV_GETME_OK = "[OK] Telegram getMe javob berdi: token qabul qilindi."
+ENV_USERNAME_OK = "[OK] Telegramdagi bot nomi BOT_USERNAME bilan mos."
+ENV_USERNAME_BAD = (
+    "[X] BOT_USERNAME token egasining Username qiymatiga mos emas. "
+    "BotFatherdagi bot nomini .env ga yozing; oddiy ko‘rinadigan ismni yozmang."
+)
+ENV_TOKEN_REJECTED = (
+    "[X] Telegram tokenni qabul qilmadi. BotFatherdagi joriy tokenni qayta nusxalang."
+)
+ENV_TELEGRAM_NETWORK = "[X] Telegramga ulanib bo‘lmadi. Internet va Telegramga kirishni tekshiring."
+ENV_TELEGRAM_TIMEOUT = "[X] Telegram javobi kechikdi. Internetni tekshirib, qayta urinib ko‘ring."
+ENV_TELEGRAM_FAILED = (
+    "[X] Telegram tekshiruvi bajarilmadi. Tokenni tekshirib, keyinroq qayta urining."
+)
+ENV_DB_OK = "[OK] Bazaga ulanish va SELECT 1 tekshiruvi muvaffaqiyatli."
+ENV_SCHEMA_OK = "[OK] Botga kerakli jadval va ustunlar mavjud."
+ENV_SCHEMA_BAD = "[X] Bazada jadval yoki ustunlar yetishmaydi. Avval: alembic upgrade head."
+ENV_DB_MISSING = "[X] SQLite baza fayli topilmadi. Loyiha papkasida: alembic upgrade head."
+ENV_DB_FAILED = (
+    "[X] Bazaga ulanib bo‘lmadi. DATABASE_URL, faylga ruxsat yoki PostgreSQL serveri, "
+    "baza nomi va kirish ma'lumotlarini tekshiring."
+)
+ENV_DB_TIMEOUT = "[X] Baza javobi kechikdi. Server, tarmoq va DATABASE_URL ni tekshiring."
+ENV_CHECK_OK = "[OK] Barcha tekshiruvlar o‘tdi. Botni ishga tushirish: python -m bot."
+ENV_CHECK_FAILED = "[X] Tekshiruv tugadi. Yuqoridagi xatolarni tuzatib, buyruqni qayta bajaring."
+ENV_CHECK_CANCELLED = "Tekshiruv to‘xtatildi."
+
+
+def env_retry_after(seconds):
+    return f"[X] Telegram vaqtincha kutishni so‘radi. {seconds} soniyadan keyin qayta tekshiring."
+
+
 JOIN_BUTTON = "O‘yinga qo‘shilish"
 WELCOME_GROUP = (
     "<b>Guruhda oqibat bo‘lsin!</b> 👋\n"

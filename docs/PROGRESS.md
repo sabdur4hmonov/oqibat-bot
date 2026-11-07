@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 6 implemented and locally verified. STOP after its push, as explicitly requested by the owner; Phase 7 (Mafia) waits for Claude's review of Phases 4–6.
+- Current phase: Phase 6 implemented and locally verified; review ZIP, Uzbek live-test checklist and environment checker prepared. STOP after the preparation push. Phase 7 (Mafia) waits for Claude's review of Phases 4–6.
 - Last updated: 2026-11-07 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -270,3 +270,25 @@
   6. `/stop` yoki tanlangan a'zoning `/chiqish` buyrug‘i o‘yin va vazifani jarimasiz bekor qilishi kerak.
   7. Haqiqatni javobsiz 30 daqiqa qoldiring: qo‘shimcha jarimasiz tugaydi. Jasoratni rad etmasdan muddatigacha bajarmasangiz, guruhning oddiy vazifa jazosi ishlaydi; buni faqat rozilik bergan sinov a'zolari bilan tekshiring.
   8. Shu bosqichdan keyin to‘xtaymiz. Claude 4–6-bosqichlarni ko‘rib chiqmaguncha Mafia boshlanmaydi.
+
+
+### Phases 0–6 — Claude review and live-test preparation — 2026-11-07
+- Status: done for preparation/local verification. No Phase 7 work was started; live Telegram testing remains for the owner and three-person test group.
+- Commit(s): this entry accompanies `test: prepare Claude review and Uzbek live checks`; Phase 6 remains `3a5ce7b`.
+- What was built:
+  - Ran the requested `git archive --format=zip -o "..\oqibat-review.zip" HEAD` against Phase 6, outside the repository, and verified no `.env` was included. The archive is refreshed from the preparation commit after committing so Claude receives the checklist and checker too; the ZIP comment records its exact source commit. Location: `D:\Coding projects\oqibat-review.zip`. It is not committed.
+  - `docs/LIVE_TEST.md`: 101 unchecked steps in simple Uzbek, each with an expected result, covering setup/BotFather/.env/owner ID, one group with three people, all implemented Phase 0–6 features, permissions/settings/quiet hours, daily points, all challenge and penalty modes, every game, restart/migration checks, scale tests, conditional PostgreSQL/webhook checks, log troubleshooting and a review report template. Slow real deadlines and optional server checks are clearly marked; Mafia and later features are excluded.
+  - `scripts/check_env.py`: reads project-root configuration with normal environment overrides, validates token syntax/placeholders and settings, checks real getMe plus case-insensitive username match, checks DB connectivity and required tables/columns. Uzbek problem-specific messages live in `bot/texts.py`; credentials and raw exception values are not printed. Returns 0 on success, 1 on failure, 130 on cancellation. Network probes have timeouts; missing SQLite files are reported without creating them. It sends no messages and starts no bot/scheduler.
+  - README links the checklist/checker and corrects stale descriptions of implemented games, commands and scheduler hooks.
+- Files added/changed: `docs/LIVE_TEST.md`, `scripts/check_env.py`, `tests/test_check_env.py`, `bot/texts.py`, `README.md`, `docs/PROGRESS.md`. No dependency, schema or game behavior change.
+- Tests: `pytest -q`: **254 passed** (32 checker tests added); `ruff check .`: **all checks passed**; `alembic check`: **no new upgrade operations detected**. All 11 PowerShell examples in LIVE_TEST parse successfully; all 101 checkboxes have an expected result. Archive inspected for excluded `.env`. Checker tests cover getMe success/error/timeout/rate limit, username mismatch, placeholder rejection, secret masking, actual temporary SQLite connectivity/schema, missing DB preservation, relative path resolution, DB failures/cleanup, env validation and CLI exit behavior.
+- Acceptance criteria: ✅ review ZIP outside repo with no `.env`; ✅ full Uzbek live checklist; ✅ environment checker and local tests; ✅ committed/pushed preparation, then stop. ❌ No real Telegram authentication or three-person live test was performed: this checkout has no `.env`. Running the checker locally correctly reports the missing `.env` with setup instructions and exit code 1.
+- Deviations from PLAN.md and why: owner-requested review/testing preparation only, not a new product phase. The checker additionally verifies schema readiness so a reachable but unmigrated database does not falsely pass. The archive is refreshed after the commit to include the new preparation files.
+- Open questions / decisions needed: none for this task. Claude's review and owner-provided local credentials are still needed before live acceptance/Phase 7 authorization.
+- Known issues / TODO: checklist items remain unchecked because real group tests have not run; PostgreSQL/webhook live checks need the corresponding server. The archive includes committed files only, not later local test notes or content edits.
+- Manual test steps (Uzbek, simple):
+  1. `docs/LIVE_TEST.md` ni oching, A/B/C ishtirokchilarni belgilang va 1-bo‘lim bo‘yicha bot hamda `.env` ni sozlang.
+  2. Migratsiyani bajaring, keyin `.\.venv\Scripts\python.exe scripts\check_env.py` ni ishga tushiring. Barcha satrlar `[OK]`, chiqish kodi 0 bo‘lsin; `[X]` bo‘lsa undagi ko‘rsatmani bajaring.
+  3. Botni jurnal bilan ishga tushiring. Uch kishilik sinov guruhida qadamlarni bajaring; faqat haqiqatan o‘tganlarini belgilang.
+  4. Ishlamagan qadamning vaqtini va 11-bo‘limdagi jurnal parchasini yozing; token va `.env` ni ulashmang.
+  5. `D:\Coding projects\oqibat-review.zip` va test natijalarini Claude ko‘rishi uchun tayyorlang. Phase 7 hozircha boshlanmaydi.
