@@ -5,7 +5,7 @@ Python 3.12, aiogram 3, SQLAlchemy 2 async, Alembic. Phase 0 implements the foun
 and private `/start` and `/help`. Phase 0.5 adds shared scale services. Phase 1 implements group onboarding,
 member consent and admin settings; Phase 2 adds daily posts, content rotation, quiet hours
 and daily check-in points. Phase 3 adds challenges, point ledgers, penalties and leaderboards.
-Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls. Phase 5 adds Krokodil; Phase 6 adds Haqiqat yoki jasorat.
+Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls. Phase 5 adds Krokodil; Phase 6 adds Haqiqat yoki jasorat. Phase 7 adds Mafia; Phase 8 adds weekly summaries and full help.
 
 ## Games
 
@@ -192,7 +192,7 @@ overhead and does not prove end-to-end Telegram or production server capacity.
 - `Scheduler` selects only indexed due rows, ordered by due time, at most 500 per kind.
   Job kinds progress concurrently, with up to 25 callbacks per kind; bulk callbacks
   cannot occupy all game callback slots. The sender still enforces one global limit.
-  The `daily`, `challenge`, `expire` and `game` hooks are registered; `weekly` belongs to Phase 8.
+  The `daily`, `challenge`, `weekly`, `expire` and `game` hooks are registered.
   A chat hook returns `True` only after success; its next UTC timestamp is then
   recomputed with a conditional bulk update. Missing hooks keep due work intact;
   failed hooks log the failure and back off that chat/job for ten minutes.
@@ -385,3 +385,27 @@ best effort through the same limited GAME queue; Telegram failures do not crash 
 All Mafia sends/edits/deletes use GAME priority. Deadlines commit independently of
 queued delivery. Keep one bot process: user reservations and state locks are local.
 
+
+### Weekly summary and help (Phase 8)
+
+A shared BULK queue delivers one summary per scheduled local week on Sunday,
+stably spread over 20:00–20:59:59. It shows the top five point totals since local
+Monday, the most active member, completed/missed task counts and current pending
+tasks, the slogan, Instagram footer and add-to-group link. "Most active" means
+most distinct positive-scoring activity references, not raw message volume; Mafia
+win/survival awards from the same game count as one activity. Ties use positive
+points then user ID. This definition uses the existing ledger without per-message
+writes or an additional activity counter.
+
+Quiet hours defer delivery. Monday catch-up keeps the original Sunday week;
+a later Sunday's summary belongs to the next week. A migrated chat keeps that week
+identity even if its hash offset changes. Reservations use the existing post ledger
+with the local Monday date as the weekly key. As with daily posts, ambiguous
+reserved/failed sends are not replayed automatically; a day's/week's delivery may
+be missing after a crash, while duplicate prevention is preserved. Large outages
+produce one report for the stored due week, not a burst for every missed week.
+Chat/date indexes bound point and resolved-task reporting queries. All scheduling
+still uses the indexed 500-row batches, never a scan of chats.
+
+Private and group `/help` now list every implemented command and game timing, plus
+the footer and add-to-group button. Routine game/task/daily messages have no footer.

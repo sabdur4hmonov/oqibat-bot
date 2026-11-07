@@ -529,10 +529,26 @@ def setting_prompt(field: str, user) -> str:
     )
 
 
-def group_help() -> str:
-    return f"<b>{SLOGAN}!</b>\n\n" + "\n".join(
+def group_help(instagram_handle=None) -> str:
+    commands = "\n".join(
         f"/{command} — {description}" for command, description in GROUP_COMMANDS.items()
     )
+    details = (
+        "\n\n🎯 Vazifalar: faqat /qoshilish bilan rozilik berganlar orasidan. "
+        "/chiqish istalgan payt ishlaydi.\n"
+        "🎲 /duel ni javob tarzida yoki ochiq yuboring; zarni bot tashlaydi.\n"
+        "🧠 /viktorina: 5 savol, har biriga 30 soniya.\n"
+        "🤔 /tanla: bir daqiqalik ochiq tanlov.\n"
+        "🐊 /krokodil: yashirin so‘z, 10 tur, har biri 3 daqiqa.\n"
+        "🎭 /hyj: haqiqatga 30 daqiqa, jasoratga 1 soat; rad etish −2.\n"
+        "🌙 /mafia: 5–15 kishi, 90 soniyalik havola orqali qo‘shilish. "
+        "Hamma botni shaxsiy chatda ochishi kerak.\n"
+        "🛑 /stop: boshlovchi yoki admin. Duelni tanlash uchun doskasiga javob bering.\n"
+        "⏰ Kunlik xabar 0–15 daqiqaga tarqatiladi; haftalik xulosa yakshanba 20:00–21:00. "
+        "Tinch vaqtda avtomatik xabar/vazifalar kutiladi."
+    )
+    footer = f"\n\nMuallif: @{escape(instagram_handle)}" if instagram_handle else ""
+    return f"<b>{SLOGAN}!</b>\n\n" + commands + details + footer
 
 
 def daily_post(template: str, group: str) -> str:
@@ -552,12 +568,29 @@ def start_text(first_name: str, instagram_handle: str) -> str:
 
 def help_text(instagram_handle: str) -> str:
     return (
-        f"<b>{SLOGAN}</b>\n\n"
-        "/start — bot bilan tanishish\n"
-        "/help — yordam\n\n"
-        "Botni guruhingizga qo‘shish uchun quyidagi tugmani bosing. "
-        "Qo‘shishda administrator huquqlarini bering.\n"
-        "Guruhda /qoshilish — qo‘shilish, /chiqish — chiqish, /sozlamalar — admin sozlamalari.\n"
-        "Guruhda /help orqali barcha buyruqlarni ko‘ring.\n\n"
-        f"Muallif: @{escape(instagram_handle)}"
+        "/start — bot bilan tanishish\n/help — yordam\n\n"
+        "Botni guruhga administrator qilib qo‘shing. Guruh buyruqlari:\n\n"
+        + group_help(instagram_handle)
+    )
+
+
+def weekly_summary(week, data, instagram_handle):
+    title = f"🏆 <b>Haftalik oqibat</b> — {week:%d.%m.%Y} haftasi\n{SLOGAN}!"
+    top = (
+        "\n".join(
+            f"{i}. {mention(user, name)} — {points} ball"
+            for i, (user, name, points) in enumerate(data["top"], 1)
+        )
+        or NO_SCORES
+    )
+    active = data["active"]
+    activity = (
+        f"🔥 Eng faol: {mention(active[0], active[1])} — {active[2]} ta muvaffaqiyatli ishtirok."
+        if active
+        else "🔥 Bu haftada hali ball olgan ishtirok yo‘q."
+    )
+    return (
+        f"{title}\n\n{top}\n\n{activity}\n"
+        f"🎯 Hafta vazifalari: bajarildi {data['done']}, o‘tkazildi {data['missed']}. "
+        f"Hozir kutilmoqda: {data['pending']}.\n\nMuallif: @{escape(instagram_handle)}"
     )

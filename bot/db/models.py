@@ -116,6 +116,7 @@ class PointEvent(Base):
     __tablename__ = "point_events"
     __table_args__ = (
         Index("uq_point_events_reference", "chat_id", "user_id", "reason", "ref_id", unique=True),
+        Index("ix_point_events_chat_created", "chat_id", "created_at"),
     )
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"), index=True)
@@ -132,6 +133,7 @@ class Challenge(Base):
         CheckConstraint("kind IN ('video_note', 'voice', 'photo', 'text')", name="kind"),
         CheckConstraint("status IN ('pending', 'done', 'missed', 'cancelled')", name="status"),
         Index("ix_challenges_status_deadline", "status", "deadline_at"),
+        Index("ix_challenges_chat_resolved", "chat_id", "resolved_at"),
         Index(
             "uq_challenges_pending_chat",
             "chat_id",

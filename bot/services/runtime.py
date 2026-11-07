@@ -30,6 +30,7 @@ from bot.services.scheduler import Scheduler
 from bot.services.sender import Sender
 from bot.services.settings import SettingPrompts
 from bot.services.truth_dare import TruthDare
+from bot.services.weekly import Weekly
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +74,8 @@ class ScaleRuntime:
             sessions, bot, self.sender, self.content, self.participants, self.checkins, self.locks
         )
         self.scheduler.hooks["daily"] = self.daily.post
+        self.weekly = Weekly(sessions, self.locks, bot, self.sender, self.checkins, settings)
+        self.scheduler.hooks["weekly"] = self.weekly.post
         self.penalties = Penalties(
             bot, self.sender, self.admins, getattr(settings, "owner_id", None)
         )

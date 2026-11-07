@@ -4,6 +4,7 @@ from aiogram.types import CallbackQuery, ChatMemberUpdated, Message
 
 from bot import texts
 from bot.keyboards.group import join_keyboard
+from bot.keyboards.private import add_to_group_keyboard
 from bot.utils.admin import member_is_active, member_is_admin
 
 
@@ -89,10 +90,14 @@ async def leave(message: Message, bot: Bot, sender, groups) -> None:
     await sender.send(message.chat.id, lambda: bot.send_message(message.chat.id, texts.OPTED_OUT))
 
 
-async def help_group(message: Message, bot: Bot, sender) -> None:
+async def help_group(message: Message, bot: Bot, sender, settings) -> None:
     await sender.send(
         message.chat.id,
-        lambda: bot.send_message(message.chat.id, texts.group_help(), reply_markup=join_keyboard()),
+        lambda: bot.send_message(
+            message.chat.id,
+            texts.group_help(settings.instagram_handle),
+            reply_markup=add_to_group_keyboard(settings.bot_username),
+        ),
     )
 
 

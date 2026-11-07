@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 7 Mafia implemented and locally verified; continuing to Phases 8 and 9 under the owner's explicit sequential-run override. No deployment authorized.
+- Current phase: Phase 8 implemented and locally verified; proceeding to Phase 9 result cards and deployment examples. No deployment authorized.
 - Last updated: 2026-11-07 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -311,3 +311,20 @@
   4. Olti kishidan biri boshlanish oldidan botni bloklasin: u ro‘yxatdan olinsin, besh kishi bilan rollar qayta hisoblansin. Beshdan biri bloklasa o‘yin bekor bo‘lsin.
   5. `/sozlamalar` dagi chiqqanlarning xabarini o‘chirish dastlab o‘chiq bo‘lsin. Faqat yoqilganda va botda o‘chirish huquqi bo‘lsa yangi xabarlar o‘chirilsin.
   6. G‘olib tomonga +10, tirik qolganlarga +3 ni `/men` bilan tekshiring. `/stop` va qayta yoqish o‘yinni bekor qilib, ishtirokchilarga shaxsiy xabar bersin. To‘liq qadamlar LIVE_TEST 13-bo‘limida.
+
+
+### Phase 8 — Weekly summary & polish — 2026-11-07
+- Status: implementation/local acceptance complete; live Sunday delivery remains unverified without credentials.
+- Commit(s): this entry accompanies `phase-8: weekly summaries reporting indexes and complete help`; Phase 7 was pushed as `32b6e73`.
+- What was built: registered weekly BULK hook using the existing indexed due scheduler; stable Sunday 20:00–21:00 spreading; per-week reservation/delivery audit; top five weekly point totals, most active member, completed/missed/current-pending challenges, slogan/footer/add-group button. Quiet hours defer delivery; Monday catch-up keeps the original week, and chat migration cannot change week identity through a changed hash offset. Full private/group help covers every implemented command, game timing and stop/opt-in rules, with appropriate footer/button. Query windows are chat/date bounded.
+- Files added/changed: weekly reporting service, runtime hook, group help handler/texts, new reporting indexes in migration `b45a921b3120`, models, README/PLAN/LIVE_TEST and weekly tests. Old migrations preserved; no dependency change.
+- Tests: `pytest -q`: **293 passed**; `ruff check .`: **all checks passed**; Alembic upgrade/check: passed, no drift. Eleven weekly tests cover timezone/week boundaries, distinct scored activity and top-five ordering, task counts, empty reports, indexed queries, post-once/restart, concurrent calls, Monday quiet deferral followed by a distinct next-week report, failed-send audit/backoff/no replay, full help/footer/buttons and migration with changed hash spreading. Offline startup and previous phase checks remain passing.
+- Acceptance criteria: ✅ one successful summary per stored chat/week; ✅ all report fields, footer and button; ✅ complete help and rate-friendly existing editing; ❌ live Sunday group delivery not exercised without a token.
+- Deviations from PLAN.md and why: "most active" was undefined. It is now explicitly defined in PLAN/README as distinct positive-scoring activity references in the existing ledger, not raw message counts. Mafia win/survival from one game count once. This avoids a new per-message counter or architecture change. Weekly ledger keys use the local Monday date. Delayed catch-up reports the stored due week; large outages do not replay every missed week. As with daily posts, ambiguous reserved/failed sends are not automatically replayed to prevent duplicates.
+- Open questions / decisions needed: no blocking implementation question; Claude/owner can later decide whether raw message-volume activity is desired instead of scored participation.
+- Known issues / TODO: local tests do not establish Telegram throughput. A crash/ambiguous delivery may leave a missing report rather than a duplicate. Real production content and live timezone/quiet-hour checks remain owner tasks.
+- Manual test steps (Uzbek, simple):
+  1. `alembic upgrade head` ni bajaring va botni ishga tushiring. Uch kishi vazifa/o‘yinlardan hafta davomida ball olsin.
+  2. Yakshanba guruh vaqti 20:00–21:00 orasida bitta xulosa kelsin: top 5, eng faol, vazifa natijalari, shior, muallif va qo‘shish tugmasini tekshiring.
+  3. Botni qayta yoqing: shu haftaning xulosasi takrorlanmasin. Tinch vaqt dushanbagacha bo‘lsa, kechikkan xulosa oldingi haftani saqlasin.
+  4. Shaxsiy va guruh chatida `/help` yuboring: barcha mavjud buyruq va o‘yinlar ko‘rinsin, muallif va qo‘shish tugmasi ishlasin. LIVE_TEST 14-bo‘limini belgilang.

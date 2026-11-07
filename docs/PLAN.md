@@ -241,6 +241,10 @@ cancels and privately notifies players. Test both winners and fuzz 1,000 complet
 ### Phase 8 — Weekly summary & polish
 Sunday 20:00 summary (top 5 of the week, most active, challenge stats, footer, add-to-group button),
 `/help` per section 7, consistent emoji style in texts, rate-limit friendly editing everywhere.
+For the unspecified "most active" metric, use distinct positive-scoring activity references
+from the weekly ledger (win + survival from one Mafia game count once), not raw message volume.
+The report covers local Monday through delivery (or that week's end on delayed catch-up).
+Quiet-hour deferral across Monday retains the original scheduled Sunday/week identity.
 **Accept:** summary posts once per week per chat.
 
 ### Phase 9 — Result cards & deployment

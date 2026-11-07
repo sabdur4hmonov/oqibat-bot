@@ -1,4 +1,4 @@
-# Oqibat Bot: 0–7-bosqichlarni Telegramda tekshirish
+# Oqibat Bot: 0–8-bosqichlarni Telegramda tekshirish
 
 Bu ro‘yxat Sardorbek va yana ikki kishi uchun. **A** — Sardorbek, guruh egasi va
 administrator; **B** va **C** — oddiy a'zolar. Guruhda uch kishi va bot bo‘ladi.
@@ -7,7 +7,7 @@ qadamni belgilamang; sababini yoniga yozing. Shartli qadam mos kelmasa `Mos emas
 deb yozing. Uzoq kutiladigan sinovlarni keyinroq tugatish mumkin.
 
 0–6-bosqichlar uchun uch kishi yetadi. 13-bo‘limdagi Mafia uchun kamida besh kishi
-kerak. Haftalik xulosa va rasmli natijalar keyingi bosqichlarda.
+kerak. Haftalik xulosa 14-bo‘limda, rasmli natijalar keyingi bosqichda.
 
 ## 1. BotFather, Python va .env
 
@@ -518,7 +518,7 @@ Kunlik xabar va avtomatik vazifalarni o‘chirib, uchovlon `/qoshilish` yuboring
   fayllar kiradi. `.env`, jurnal, mahalliy baza va `.venv` arxivda bo‘lmaydi.
   Claude ga shu ZIP va belgilangan ro‘yxat/xato qaydini bering.
 - [ ] **12.4.** Natijani yozing. **Kutiladi:** ochiq muammolar va bajarilmagan uzoq
-  sinovlar yashirilmaydi; Claude 4–6-bosqichlarni ko‘rib chiqmaguncha Phase 7 boshlanmaydi.
+  sinovlar yashirilmaydi; natijalar Claude yakuniy ko‘rib chiqishi uchun tayyor bo‘ladi.
 
 ```text
 Sana va vaqt (Asia/Tashkent):
@@ -566,3 +566,19 @@ BotFather va admin xabar ko‘rishi bo‘yicha rasmiy manbalar:
   **Kutiladi:** tinch aholi yoki mafia g‘olib bo‘ladi, g‘olib tomonga +10 va tirik qolganlarga +3.
   20 tur/60 daqiqa chegarasi durang qiladi. Stop yoki qayta yoqish bekor qiladi va
   ishtirokchilarga shaxsiy xabar beradi; bekor qilingan o‘yinga ball berilmaydi.
+
+
+## 14. Haftalik xulosa va yordam
+
+- [ ] **14.1.** Guruhda hafta davomida kunlik qatnashish, vazifa va o‘yinlardan ball oling.
+  Botni yakshanba guruh vaqti 20:00–21:00 orasida ishlating.
+  **Kutiladi:** shu haftaning bitta xulosasi: top 5, eng faol a'zo, bajarilgan/o‘tkazilgan
+  vazifalar, kutilayotganlar, shior, muallif va guruhga qo‘shish tugmasi chiqadi.
+  Eng faol — xabarlar soni emas, ball keltirgan alohida ishtiroklar soni.
+- [ ] **14.2.** Xulosa chiqqach botni qayta yoqing. Alohida haftada xulosa vaqti tinch
+  vaqtga tushsin va tinch vaqt dushanba ertalab tugasin.
+  **Kutiladi:** qayta yoqish takror xulosa bermaydi; dushanbaga surilgan xulosa oldingi
+  haftaga tegishli bo‘ladi, keyingi yakshanbaning xulosasi o‘z vaqtida chiqishi mumkin.
+- [ ] **14.3.** Shaxsiy chatda va guruhda `/help` yuboring.
+  **Kutiladi:** barcha 0–7-bosqich buyruqlari, o‘yin vaqtlari, shior, muallif va guruhga
+  qo‘shish tugmasi bor. Oddiy vazifa/o‘yin xabarlariga muallif satri qo‘shilmaydi.
