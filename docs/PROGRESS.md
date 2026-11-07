@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 0.5 implemented and locally verified; proceeding to Phase 1 under the owner's explicit request to continue through remaining PLAN phases.
+- Current phase: Phase 1 implemented and locally verified; proceeding to Phase 2 under the owner's explicit request to continue through remaining PLAN phases.
 - Last updated: 2026-11-07 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -115,3 +115,26 @@
   3. `.env` dagi haqiqiy bot ma'lumotlarini kiriting. Mahalliy tekshiruvda `USE_WEBHOOK=false` qoldiring, `python -m bot` bilan ishga tushiring va Telegramda `/start`, `/help` ni tekshiring.
   4. Bot besh daqiqa ishlaganda PowerShell oynasida `queue_length`, `updates_per_minute`, `last_tick_duration_ms` chiqishini tekshiring. Oddiy guruh xabarlari bazaga har safar yozilmaydi; faollik taxminan bir daqiqada saqlanadi.
   5. Webhookni faqat HTTPS domen va server tayyor bo‘lganda README bo‘yicha sozlang. `WEBHOOK_SECRET` ni oshkor qilmang. Hozirgi bosqichda hali guruh o‘yinlari yo‘q.
+
+### Phase 1 — Group onboarding & opt-in — 2026-11-07
+- Status: implementation done; live Telegram acceptance remains pending local credentials.
+- Commit(s): `e8da522` `phase-1: group onboarding consent and admin settings`; progress is committed separately.
+- What was built: group welcome/admin-rights guidance via `my_chat_member`, removal/re-addition state, opt-in button and `/qoshilish`, `/chiqish`, join/leave tracking, cached admin helper, admin-only inline `/sozlamalar` for all ten configurable policy fields. Reply prompts validate timezone/HH:MM/threshold input and expire after five minutes. Ordinary message activity still uses the 60-second buffer. Onboarding/settings initialize indexed due timestamps for that chat.
+- Files added/changed: group/settings handlers and keyboards, group repository, settings validation/prompt service, admin helpers, runtime wiring, command registration and Uzbek texts, README, group tests and private command-registration expectation.
+- Tests: `pytest -q`: **126 passed**; `ruff check .`: **all checks passed**. Mock Telegram integration covers non-admin add → promote → remove → re-add, opt-in persistence/opt-out, non-admin popup denial, admin settings edits, escaped prompt names and reply input. Pure tests cover membership states, every setting choice, invalid inputs, prompt ownership/expiry. No schema change.
+- Acceptance criteria:
+  - ✅ Adding/promoting the bot welcomes the group with the opt-in button; missing rights show Uzbek instructions; removal and re-addition persist correctly in mocked update flows.
+  - ✅ Opt-in registers membership; opt-out clears consent and cancels pending tasks without penalty.
+  - ✅ Non-admin settings callbacks show a private denial popup; admin callbacks/replies update policy and recompute due times. All ten configurable fields are exposed; Telegram-managed metadata is not editable.
+  - ✅ Message activity has no per-message SQL; the existing buffer/cache/limiter rules remain in use.
+  - ❌ Real test-group add/click/remove/re-add has not been exercised without a real bot token.
+- Deviations from PLAN.md and why: leaving a group clears opt-in so rejoining requires fresh consent; numeric kick thresholds accept 1–100 as a small validation bound. Explicit commands and membership/settings transitions persist immediately; ordinary messages are buffered. Button opt-in confirmation uses a private callback popup to avoid a group-message burst.
+- Open questions / decisions needed: none blocking; the owner explicitly authorized continuing through all remaining planned phases.
+- Known issues / TODO: scheduled posts/tasks/games are not implemented in this phase. Reply-prompt state is memory-only and must be reopened after a restart. Live Telegram verification remains required.
+- Manual test steps (Uzbek, simple):
+  1. Botni ishga tushiring va sinov guruhiga oddiy a'zo qilib qo‘shing. Administrator qilish bo‘yicha ko‘rsatma chiqishi kerak.
+  2. Botni administrator qiling. “O‘yinga qo‘shilish” tugmasi chiqishi kerak. Tugmani bosing; qo‘shilganingiz haqida shaxsiy oynacha chiqadi.
+  3. `/chiqish`, keyin `/qoshilish` yuboring. Chiqish va qayta qo‘shilish ishlashini tekshiring.
+  4. Guruh administratori sifatida `/sozlamalar` yuboring. Vazifalar soni va jazo turini o‘zgartiring. Kunlik vaqtni tanlab, bot savoliga `22:15` deb javob yozing.
+  5. Oddiy a'zo shu menyu tugmasini bossin: faqat administrator o‘zgartirishi mumkinligi haqida oynacha chiqishi, qiymat o‘zgarmasligi kerak.
+  6. Botni guruhdan olib tashlab, qayta administrator qilib qo‘shing. Salomlashuv va qo‘shilish tugmasi yana chiqishi kerak.
