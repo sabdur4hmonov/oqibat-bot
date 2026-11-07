@@ -2,7 +2,8 @@
 
 **Guruhda oqibat bo‘lsin.** Telegram group engagement bot for Uzbekistan.
 Python 3.12, aiogram 3, SQLAlchemy 2 async, Alembic. Phase 0 implements the foundation
-and private `/start` and `/help`; group onboarding, schedules and games are later phases.
+and private `/start` and `/help`. Phase 0.5 adds shared scale services; product behavior for
+group onboarding, scheduled posts and games remains in later phases.
 
 ## Windows PowerShell setup
 
@@ -33,6 +34,13 @@ Create a bot with Telegram **@BotFather** (`/newbot`). Set these local `.env` va
 | `INSTAGRAM_HANDLE` | Your Instagram username, without a URL |
 | `LOG_LEVEL` | `DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL` |
 | `OWNER_ID` | Your positive numeric Telegram user ID |
+| `ENVIRONMENT` | `development` (default) or `production`; production requires PostgreSQL |
+| `DB_POOL_SIZE` | 10–20 PostgreSQL connections (default 15, overflow disabled) |
+| `USE_WEBHOOK` | `false` (default) for polling; `true` for the aiohttp webhook server |
+| `WEBHOOK_URL` | Full public HTTPS URL including path, e.g. `https://bot.example.com/telegram` |
+| `WEBHOOK_SECRET` | Random private header secret: 1–256 letters/digits/`_`/`-` |
+| `WEBHOOK_HOST` | Local bind address, default `127.0.0.1` |
+| `WEBHOOK_PORT` | Local HTTP port behind a TLS reverse proxy, default `8080` |
 
 The example token is a placeholder. Do not commit `.env` or send the token in chat.
 The username is checked against Telegram's `getMe` before polling. Secrets are
@@ -46,7 +54,7 @@ python -m bot --check
 python -m bot
 ```
 
-`--check` validates configuration and checks that all initial tables exist; it does
+`--check` validates configuration, initial tables and scale columns; it does
 not contact Telegram or authenticate the token. `python -m bot` registers commands
 and runs long polling until Ctrl+C. Migrations read only `DATABASE_URL`, so they
 work before Telegram credentials are set. Startup never creates tables implicitly.
@@ -54,11 +62,14 @@ Run `alembic upgrade head` after pulling schema changes. Never change a committe
 migration; create a new revision for every later schema change.
 
 The database URL can also be `postgresql+asyncpg://user:password@localhost/oqibat`.
-The PostgreSQL driver and portable schema are included; live PostgreSQL verification
-is scheduled for Phase 9. All stored timestamps are timezone-aware UTC at the ORM
+Production requires this PostgreSQL URL and a pool size from 10 to 20 (default 15),
+with overflow disabled. SQLite remains for development and isolated tests; it is not
+the production choice for 10,000 groups. Live PostgreSQL verification still requires
+a PostgreSQL server. All stored timestamps are timezone-aware UTC at the ORM
 boundary. SQLite values are reattached to UTC when loaded; naive input is rejected.
 Chat-local clock settings default to Asia/Tashkent (daily 09:00, quiet 23:00–08:00).
-Phase 0 does not run a scheduler or apply penalties.
+The scheduler runs every 30 seconds, but Phase 0.5 registers no product job hooks:
+it sends no daily posts, assigns no challenges and applies no penalties.
 
 ## Telegram checks
 
@@ -74,10 +85,101 @@ Phase 0 does not run a scheduler or apply penalties.
 Only implemented private commands are registered. The group command scope is
 explicitly registered as empty until group commands are implemented. Polling requests
 `message`, `callback_query`, `my_chat_member`, `chat_member` and `poll_answer` updates;
-group updates have no feature handlers yet. Private messages record reachability
-without opting the user into any group. Every send uses `Sender`: a rate limit waits
-and retries once; forbidden access clears `started_private` for a user or `is_active`
-for a group; other failures are logged and return `None`. Cancellation still propagates.
+group updates have no product handlers yet. Incoming activity and private reachability
+are buffered without opting anyone into a group. The activity middleware also refreshes
+the admin cache on membership updates.
+
+## Scale services and rules for later phases
+
+Run exactly **one bot process** for this deployment. Its shared outbound queue, caches
+and chat locks are process-local. Multiple workers would require shared coordination.
+This foundation targets 10,000+ groups; the local simulation measures scheduling/DB
+overhead and does not prove end-to-end Telegram or production server capacity.
+
+- Use the runtime's **single** `sender` instance. `await sender.send(chat_id, operation,
+  priority=Priority.GAME/CHALLENGE/BULK)` queues sends/edits; do not construct a sender
+  per handler. It limits all attempts (including retries) to 25/second globally and
+  18/minute per chat in rolling windows, with at most 25 requests in flight. The waiting
+  queue caps at 20,000 items; a closed/full queue returns `None`. A failed send is not
+  a successful job. One paused chat does not block other ready chats. Priority can
+  reorder queued messages; it cannot recall an already dispatched request.
+- Retry once after `retry_after`. Telegram provides no global/chat scope indicator,
+  so an ambiguous 429 pauses the entire queue. Set `retry_scope="chat"` only for a
+  known chat-specific limit. Use `sender.answer_callback_query(bot, query_id, ...)`
+  for immediate callback acknowledgements/popups; it bypasses the message queue.
+  Forbidden sends clear private reachability or group activity; other failures log and
+  return `None`. Clean shutdown cancels pending sends and propagates cancellation.
+- `ActivityBuffer.observe` coalesces names and last-seen timestamps entirely in memory.
+  Flush runs every 60 seconds and on clean shutdown, in one transaction with one upsert
+  per affected table per 100-row chunk. Two tables require two statements, rather than
+  a write per message. It updates only known active groups and preserves opt-in flags.
+  Failed flushes retain rows, with newer observations winning. Last-seen activity is
+  eventually consistent; a crash can lose the last minute of observations.
+- `pending.contains(chat_id, user_id)` and the injected `has_pending_challenge` use a
+  startup-loaded set, with no per-message SQL. Use `runtime.challenges.create/resolve`
+  for challenge status changes so the set changes only after a successful commit.
+- `admins.get(chat_id)` caches admin IDs for 600 seconds and coalesces simultaneous
+  requests. Membership updates invalidate/refresh it. Fetch failures propagate so
+  permission checks and penalties fail closed.
+- All game/session creation and mutation must use `game_sessions.create/change`.
+  That repository holds a shared per-chat lock across the database transaction.
+  Its transformation callback is synchronous; do not send messages or perform I/O
+  while holding the state lock. Game scheduler hooks must use the same repository.
+- Onboarding/settings must call `initialize_schedule(chat, now)` when saving that
+  one chat. NULL timestamps mean disabled/uninitialized work. No startup/tick scan
+  initializes every chat. The new migration preserves existing rows with NULL due
+  timestamps; future onboarding/settings initialize them as groups are configured.
+- `Scheduler` selects only indexed due rows, ordered by due time, at most 500 per kind.
+  Job kinds progress concurrently, with up to 25 callbacks per kind; bulk callbacks
+  cannot occupy all game callback slots. The sender still enforces one global limit.
+  Register hooks for `daily`, `challenge`, `weekly`, `expire`, `game` in their product
+  phases. A chat hook returns `True` only after success; its next UTC timestamp is then
+  recomputed with a conditional bulk update. Missing/failed hooks keep due work intact.
+  Expiry/game hooks must persist their own status/deadline transition before returning
+  success. Keep the scheduled-post idempotency ledger for daily/weekly sends.
+- Daily offsets are stable BLAKE2 hash values, 0–900 seconds after the configured local
+  daily time. Sunday summaries use 0–3599 seconds after local 20:00. Local recurrence
+  is recomputed before converting to UTC, including across daylight-saving changes.
+- Every five minutes an INFO log reports `queue_length`, `updates_per_minute` (rolling
+  last minute) and `last_tick_duration_ms`. Monitor these before expanding workload.
+  Queued sends and caches are memory-only; they are not a durable message broker.
+
+## Optional production webhook
+
+Keep `USE_WEBHOOK=false` for local polling. For a production server, set
+`ENVIRONMENT=production`, the PostgreSQL URL, `USE_WEBHOOK=true`, your full HTTPS URL,
+a fresh `WEBHOOK_SECRET`, and the bind host/port. Generate a secret locally with:
+
+```powershell
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+alembic upgrade head
+python -m bot --check
+python -m bot
+```
+
+Terminate TLS at your reverse proxy and forward the URL path to
+`http://127.0.0.1:8080`, preserving `X-Telegram-Bot-Api-Secret-Token` and the request
+body. Bind to `0.0.0.0` only if your container/network setup requires it. The app checks
+the secret header before dispatching updates and waits for update processing before
+acknowledging it. Telegram registration uses the same five allowed update types.
+Webhook registration happens after the listener starts. Ctrl+C cleans up the server,
+background tasks and database pool; it leaves the webhook registered so Telegram can
+retry while the server is down. Switching back to polling removes the webhook with
+`drop_pending_updates=False`. Do not run both transports simultaneously.
+
+## Isolated scheduler load simulation
+
+```powershell
+python scripts/simulate_load.py
+python scripts/simulate_load.py --ticks 10
+```
+
+This creates and migrates a temporary SQLite database with 5,000 fake chats. Every chat
+has daily, challenge and weekly work due. A tick processes at most 500 of each (1,500
+items); ten ticks drain all 15,000 due items. The script prints duration and counts for
+each tick, then removes the test database. It ignores your application database URL
+and makes no Telegram requests. Hooks are simulated successes; delivery time and real
+content/game work are outside this measurement.
 
 ## Development checks
 
@@ -101,4 +203,6 @@ Official references used for the foundation:
 [aiogram polling](https://docs.aiogram.dev/en/latest/dispatcher/dispatcher.html),
 [aiogram errors](https://docs.aiogram.dev/en/latest/dispatcher/errors.html),
 [Telegram commands](https://core.telegram.org/bots/api#setmycommands),
-[SQLAlchemy async](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html).
+[SQLAlchemy async](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html),
+[aiogram webhook](https://docs.aiogram.dev/en/latest/dispatcher/webhook.html),
+[Telegram webhook API](https://core.telegram.org/bots/api#setwebhook).

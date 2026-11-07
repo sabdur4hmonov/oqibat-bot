@@ -4,8 +4,11 @@ from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 
 
-def create_engine(database_url: str) -> AsyncEngine:
-    engine = create_async_engine(database_url, pool_pre_ping=True)
+def create_engine(database_url: str, *, pool_size: int = 15) -> AsyncEngine:
+    options = (
+        {"pool_size": pool_size, "max_overflow": 0} if database_url.startswith("postgresql") else {}
+    )
+    engine = create_async_engine(database_url, pool_pre_ping=True, **options)
     if engine.dialect.name == "sqlite":
 
         @event.listens_for(engine.sync_engine, "connect")

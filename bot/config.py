@@ -2,10 +2,11 @@
 
 import re
 from typing import Literal
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 from aiogram.utils.token import TokenValidationError, validate_token
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 
@@ -37,6 +38,36 @@ class Settings(DatabaseSettings):
     instagram_handle: str
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     owner_id: int = Field(gt=0)
+    environment: Literal["development", "production"] = "development"
+    db_pool_size: int = Field(default=15, ge=10, le=20)
+    use_webhook: bool = False
+    webhook_url: str | None = None
+    webhook_secret: SecretStr | None = None
+    webhook_host: str = "127.0.0.1"
+    webhook_port: int = Field(default=8080, ge=1, le=65535)
+
+    @model_validator(mode="after")
+    def validate_runtime(self):
+        if self.environment == "production" and not self.database_url.get_secret_value().startswith(
+            "postgresql+asyncpg://"
+        ):
+            raise ValueError("Production requires PostgreSQL")
+        if self.use_webhook:
+            url = urlsplit(self.webhook_url or "")
+            if (
+                url.scheme != "https"
+                or not url.hostname
+                or url.username
+                or url.password
+                or url.query
+                or url.fragment
+                or url.path in {"", "/"}
+            ):
+                raise ValueError("WEBHOOK_URL must be HTTPS with a non-root path and no query")
+            secret = self.webhook_secret.get_secret_value() if self.webhook_secret else ""
+            if not re.fullmatch(r"[A-Za-z0-9_-]{1,256}", secret):
+                raise ValueError("WEBHOOK_SECRET must contain 1-256 letters, digits, _ or -")
+        return self
 
     @field_validator("bot_token")
     @classmethod

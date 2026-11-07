@@ -1,0 +1,86 @@
+"""Shared services and lifecycle for both polling and webhook transports."""
+
+import asyncio
+import logging
+
+from aiogram import BaseMiddleware
+
+from bot.db.repo.challenges import ChallengeRepository
+from bot.db.repo.games import GameSessionRepository
+from bot.services.activity import ActivityBuffer
+from bot.services.admin_cache import AdminCache
+from bot.services.locks import ChatLocks
+from bot.services.metrics import Metrics
+from bot.services.pending import PendingChallenges
+from bot.services.scheduler import Scheduler
+from bot.services.sender import Sender
+
+logger = logging.getLogger(__name__)
+
+
+class ScaleRuntime:
+    def __init__(self, sessions, bot) -> None:
+        self.activity = ActivityBuffer(sessions)
+        self.pending = PendingChallenges()
+        self.locks = ChatLocks()
+        self.admins = AdminCache(bot)
+        self.metrics = Metrics()
+        self.scheduler = Scheduler(sessions)
+        self.sender = Sender(sessions, on_forbidden=self.activity.mark_forbidden)
+        self.challenges = ChallengeRepository(sessions, self.pending, self.locks)
+        self.games = GameSessionRepository(sessions, self.locks)
+        self.sessions = sessions
+        self.tasks = []
+
+    async def __aenter__(self):
+        await self.pending.load(self.sessions)
+        self.tasks = [
+            asyncio.create_task(self.activity.run(), name="activity-flush"),
+            asyncio.create_task(self.scheduler.run(), name="scheduler-tick"),
+            asyncio.create_task(
+                self.metrics.run(self.sender, self.scheduler), name="scale-metrics"
+            ),
+        ]
+        return self
+
+    async def __aexit__(self, *args) -> None:
+        for task in self.tasks:
+            task.cancel()
+        await asyncio.gather(*self.tasks, return_exceptions=True)
+        await self.sender.close()
+        try:
+            await self.activity.flush()
+        except Exception:
+            logger.exception("Shutdown activity flush failed")
+
+    def workflow(self) -> dict:
+        return {
+            "sender": self.sender,
+            "activity": self.activity,
+            "pending": self.pending,
+            "admins": self.admins,
+            "chat_locks": self.locks,
+            "game_sessions": self.games,
+            "challenges": self.challenges,
+        }
+
+
+class ScaleMiddleware(BaseMiddleware):
+    def __init__(self, runtime: ScaleRuntime) -> None:
+        self.runtime = runtime
+
+    async def __call__(self, handler, event, data):
+        self.runtime.metrics.record_update()
+        data.update(self.runtime.workflow())
+        message = event.message
+        if message and message.from_user and not message.from_user.is_bot:
+            user = message.from_user
+            self.runtime.activity.observe(message.chat.id, user.id, user.first_name, user.username)
+            data["has_pending_challenge"] = self.runtime.pending.contains(message.chat.id, user.id)
+        membership = event.chat_member or event.my_chat_member
+        if membership:
+            try:
+                await self.runtime.admins.refresh(membership.chat.id)
+            except Exception:
+                logger.exception("Admin refresh failed for chat %s", membership.chat.id)
+        return await handler(event, data)

@@ -83,6 +83,9 @@ class Chat(Timestamps, Base):
     kick_after_misses: Mapped[int] = mapped_column(Integer, default=3)
     quiet_start: Mapped[time] = mapped_column(Time, default=time(23))
     quiet_end: Mapped[time] = mapped_column(Time, default=time(8))
+    next_daily_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
+    next_challenge_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
+    next_weekly_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
 
 
 class User(Timestamps, Base):
@@ -121,6 +124,7 @@ class Challenge(Base):
     __table_args__ = (
         CheckConstraint("kind IN ('video_note', 'voice', 'photo', 'text')", name="kind"),
         CheckConstraint("status IN ('pending', 'done', 'missed', 'cancelled')", name="status"),
+        Index("ix_challenges_status_deadline", "status", "deadline_at"),
     )
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"), index=True)
@@ -154,6 +158,7 @@ class GameSession(Timestamps, Base):
     __table_args__ = (
         CheckConstraint("game IN ('quiz', 'duel', 'krokodil', 'hyj', 'mafia')", name="game"),
         CheckConstraint("status IN ('lobby', 'running', 'finished', 'cancelled')", name="status"),
+        Index("ix_game_sessions_status_deadline", "status", "phase_deadline_at"),
         Index(
             "uq_game_sessions_active_chat",
             "chat_id",

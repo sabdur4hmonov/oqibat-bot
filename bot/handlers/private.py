@@ -1,22 +1,21 @@
 from aiogram import Bot, F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
-from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from bot import texts
 from bot.config import Settings
-from bot.db.repo.users import record_private_user
 from bot.keyboards.private import add_to_group_keyboard
+from bot.services.activity import ActivityBuffer
 from bot.services.sender import Sender
 
 
 async def start(
-    message: Message, bot: Bot, settings: Settings, sessions: async_sessionmaker, sender: Sender
+    message: Message, bot: Bot, settings: Settings, activity: ActivityBuffer, sender: Sender
 ) -> None:
     if message.from_user is None:
         return
-    await record_private_user(
-        sessions, message.from_user.id, message.from_user.first_name, message.from_user.username
+    activity.mark_private(
+        message.from_user.id, message.from_user.first_name, message.from_user.username
     )
     await sender.send(
         message.chat.id,
@@ -29,12 +28,12 @@ async def start(
 
 
 async def help_command(
-    message: Message, bot: Bot, settings: Settings, sessions: async_sessionmaker, sender: Sender
+    message: Message, bot: Bot, settings: Settings, activity: ActivityBuffer, sender: Sender
 ) -> None:
     if message.from_user is None:
         return
-    await record_private_user(
-        sessions, message.from_user.id, message.from_user.first_name, message.from_user.username
+    activity.mark_private(
+        message.from_user.id, message.from_user.first_name, message.from_user.username
     )
     await sender.send(
         message.chat.id,

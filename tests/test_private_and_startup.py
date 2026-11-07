@@ -9,7 +9,7 @@ from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.base import BaseSession
 from aiogram.enums import ParseMode
-from aiogram.methods import GetMe, SendMessage, SetMyCommands
+from aiogram.methods import DeleteWebhook, GetMe, SendMessage, SetMyCommands
 from aiogram.types import Message, Update, User
 from pydantic import SecretStr
 
@@ -17,6 +17,7 @@ from bot import texts
 from bot.__main__ import ALLOWED_UPDATES, create_dispatcher, run
 from bot.db.models import Membership
 from bot.db.models import User as DbUser
+from bot.services.activity import ActivityBuffer
 from bot.services.sender import Sender
 
 TOKEN = "123456789:local_test_token_never_used_on_telegram"
@@ -37,7 +38,7 @@ class LocalTelegram(BaseSession):
         self.methods.append(method)
         if isinstance(method, GetMe):
             return User(id=123456789, is_bot=True, first_name="Oqibat", username="OqibatBot")
-        if isinstance(method, SetMyCommands):
+        if isinstance(method, (SetMyCommands, DeleteWebhook)):
             return True
         if isinstance(method, SendMessage):
             return Message(
@@ -72,11 +73,17 @@ def update_for(command, chat_type="private"):
 @pytest.mark.parametrize("command", ["/start", "/help"])
 async def test_private_command_uzbek_footer_button_and_no_opt_in(sessions, settings, command):
     transport = LocalTelegram()
+    activity = ActivityBuffer(sessions)
     async with Bot(
         TOKEN, session=transport, default=DefaultBotProperties(parse_mode=ParseMode.HTML)
     ) as bot:
         await create_dispatcher().feed_update(
-            bot, update_for(command), settings=settings, sessions=sessions, sender=Sender(sessions)
+            bot,
+            update_for(command),
+            settings=settings,
+            sessions=sessions,
+            sender=Sender(sessions),
+            activity=activity,
         )
     sends = [method for method in transport.methods if isinstance(method, SendMessage)]
     assert len(sends) == 1
@@ -90,6 +97,7 @@ async def test_private_command_uzbek_footer_button_and_no_opt_in(sessions, setti
     assert button.url == (
         "https://t.me/OqibatBot?startgroup=add&admin=restrict_members+delete_messages+pin_messages"
     )
+    await activity.flush()
     async with sessions() as session:
         assert (await session.get(DbUser, 42)).started_private is True
         assert await session.get(Membership, (-42, 42)) is None
@@ -110,7 +118,7 @@ async def test_private_start_does_not_handle_group_messages(sessions, settings):
 
 async def test_global_handler_contains_exception(sessions, settings, caplog):
     transport = LocalTelegram()
-    with patch("bot.handlers.private.record_private_user", side_effect=RuntimeError("db failure")):
+    with patch.object(ActivityBuffer, "mark_private", side_effect=RuntimeError("buffer failure")):
         async with Bot(TOKEN, session=transport) as bot:
             await create_dispatcher().feed_update(
                 bot,
@@ -118,6 +126,7 @@ async def test_global_handler_contains_exception(sessions, settings, caplog):
                 settings=settings,
                 sessions=sessions,
                 sender=Sender(sessions),
+                activity=ActivityBuffer(sessions),
             )
     assert "Unhandled error processing update 1" in caplog.text
 

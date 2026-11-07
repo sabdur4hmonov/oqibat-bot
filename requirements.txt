@@ -1,4 +1,5 @@
 aiogram>=3.20,<4
+aiohttp>=3.9,<4
 SQLAlchemy[asyncio]>=2.0,<2.1
 alembic>=1.15,<2
 aiosqlite>=0.21,<1

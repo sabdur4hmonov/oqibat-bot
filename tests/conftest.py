@@ -1,3 +1,4 @@
+import asyncio
 import os
 import shutil
 import subprocess
@@ -12,6 +13,23 @@ from bot.db.session import create_engine, create_session_factory
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST_TOKEN = "123456789:local_test_token_never_used_on_telegram"
+
+
+class FakeClock:
+    def __init__(self):
+        self.value = 0.0
+
+    def now(self):
+        return self.value
+
+    async def sleep(self, seconds):
+        self.value += seconds
+        await asyncio.sleep(0)
+
+
+@pytest.fixture
+def fake_clock():
+    return FakeClock()
 
 
 @pytest.fixture

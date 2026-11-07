@@ -17,7 +17,9 @@ from bot.db.models import Base
 from bot.db.session import create_engine, create_session_factory
 from bot.handlers.errors import handle_error
 from bot.handlers.private import create_router
+from bot.services.runtime import ScaleMiddleware, ScaleRuntime
 from bot.services.sender import Sender
+from bot.services.webhook import serve_webhook
 from bot.utils.logging import configure_logging
 
 logger = logging.getLogger(__name__)
@@ -48,17 +50,23 @@ async def register_commands(bot: Bot, sender: Sender) -> None:
 
 
 async def run(settings: Settings, *, check_only: bool = False) -> None:
-    engine = create_engine(settings.database_url.get_secret_value())
+    engine = create_engine(
+        settings.database_url.get_secret_value(), pool_size=settings.db_pool_size
+    )
     try:
         async with engine.connect() as connection:
             tables = await connection.run_sync(lambda conn: set(inspect(conn).get_table_names()))
             if not set(Base.metadata.tables).issubset(tables):
                 raise RuntimeError("Database schema missing; run alembic upgrade head")
+            columns = await connection.run_sync(
+                lambda conn: {column["name"] for column in inspect(conn).get_columns("chats")}
+            )
+            if not {"next_daily_at", "next_challenge_at", "next_weekly_at"}.issubset(columns):
+                raise RuntimeError("Scale migration missing; run alembic upgrade head")
         if check_only:
             print(texts.CHECK_OK)
             return
         sessions = create_session_factory(engine)
-        sender = Sender(sessions)
         async with Bot(
             token=settings.bot_token.get_secret_value(),
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
@@ -66,15 +74,27 @@ async def run(settings: Settings, *, check_only: bool = False) -> None:
             identity = await bot.get_me()
             if (identity.username or "").lower() != settings.bot_username.lower():
                 raise RuntimeError("BOT_USERNAME does not match the token's bot")
-            await register_commands(bot, sender)
-            logger.info("Starting long polling")
-            await create_dispatcher().start_polling(
-                bot,
-                allowed_updates=ALLOWED_UPDATES,
-                settings=settings,
-                sessions=sessions,
-                sender=sender,
-            )
+            async with ScaleRuntime(sessions, bot) as runtime:
+                await register_commands(bot, runtime.sender)
+                dispatcher = create_dispatcher()
+                dispatcher.update.outer_middleware(ScaleMiddleware(runtime))
+                workflow = {
+                    "settings": settings,
+                    "sessions": sessions,
+                    "allowed_updates": ALLOWED_UPDATES,
+                    **runtime.workflow(),
+                }
+                if settings.use_webhook:
+                    logger.info("Starting webhook server")
+                    await serve_webhook(dispatcher, bot, settings, runtime.sender, workflow)
+                else:
+                    result = await runtime.sender.send(
+                        None, lambda: bot.delete_webhook(drop_pending_updates=False)
+                    )
+                    if result is not True:
+                        raise RuntimeError("Could not switch to polling")
+                    logger.info("Starting long polling")
+                    await dispatcher.start_polling(bot, **workflow)
     finally:
         await engine.dispose()
 
@@ -93,6 +113,7 @@ def main() -> None:
         [
             settings.bot_token.get_secret_value(),
             settings.database_url.get_secret_value(),
+            settings.webhook_secret.get_secret_value() if settings.webhook_secret else "",
         ],
     )
     try:

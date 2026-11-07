@@ -47,7 +47,7 @@ points economy with leaderboards, and runs group games (quiz, dice duel, Krokodi
 
 ## 3. Tech stack
 
-- Python 3.12, **aiogram 3.x** (long polling in dev; webhook optional in Phase 9)
+- Python 3.12, **aiogram 3.x** (long polling in dev; optional aiohttp webhook from Phase 0.5)
 - **SQLAlchemy 2.x async** + **Alembic**; SQLite (`aiosqlite`) in dev, PostgreSQL (`asyncpg`) in prod,
   selected by `DATABASE_URL`
 - **pydantic-settings** for config, `tzdata` for zoneinfo on Windows
@@ -167,6 +167,15 @@ and a documented schema.
 **Accept:** `python -m bot` runs; /start answers in Uzbek with slogan, Instagram footer and add-to-group
 button; `alembic upgrade head` creates the DB; tests for config and normalization skeleton pass.
 
+### Phase 0.5 — Scale foundation
+Implement section 10 before group features: a shared prioritized outbound queue, deterministic bulk
+spreading, indexed due timestamps and bounded scheduler hooks, buffered activity and pending-challenge
+lookup, admin cache, per-chat state locks, PostgreSQL pooling, optional authenticated aiohttp webhook,
+load simulation and operational metrics. Keep later-phase product handlers unimplemented.
+**Accept:** fake-clock global/chat limiter and spreading tests pass; migration/model consistency passes;
+5,000-chat simulation processes at most 500 due rows per kind per tick and prints timings/counts;
+normal group messages perform no database I/O; webhook authentication and lifecycle are tested locally.
+
 ### Phase 1 — Group onboarding & opt-in
 `my_chat_member`: on add → welcome message with "O‘yinga qo‘shilish" button; detect admin rights and
 explain how to grant them if missing; mark chat inactive when removed. Opt-in button, `/qoshilish`,
@@ -237,3 +246,51 @@ Telegram Mini App (leaderboards, Mafia voting screen), more Mafia roles, seasons
 Codex creates only the loaders, schemas and 3 sample items per file. Real Uzbek content (daily messages,
 challenges, quiz questions, Krokodil words, truth questions, would-you-rather pairs) is written by
 Sardorbek and Claude and dropped into `data/` later. Code must handle 3 items or 3000.
+
+## 10. Scale
+
+Target: 10,000+ groups on one server, with one bot process owning the in-memory queue/caches/locks.
+All later phases must follow these rules; this section refines the scheduling times in section 6.
+
+2. **Outbound limiter:** all sends/edits use the single async queue in `services/sender.py`.
+   Enforce rolling limits of 25 attempts/second globally and 18 attempts/minute per chat, including
+   retries. Priority: game interactions > challenges > daily/weekly posts. A paused chat must not
+   block other ready chats. Retry once after `retry_after`, pausing the chat for a known chat limit
+   or the whole queue for a global limit. Telegram supplies no scope flag: ambiguous limits default
+   to a global pause; callers can explicitly identify a known chat limit. `answer_callback_query`
+   uses the dedicated direct helper and is never queued or delayed by the message limiter.
+3. **Spread bulk posts:** use a stable hash of `chat_id` (never Python's randomized `hash()`).
+   Add 0–900 seconds to the configured local daily time. Spread Sunday summaries over local
+   20:00–20:59:59 using a stable 0–3599 second offset. Recompute in the chat timezone, store UTC.
+4. **Indexed due work:** chats have indexed UTC `next_daily_at`, `next_challenge_at`, `next_weekly_at`.
+   Tick queries only `next_x_at <= now`, ordered by that timestamp, `LIMIT 500` per kind; process
+   successfully and recompute the next time. Never read all chats to decide what is due. Add composite
+   indexes `challenges(status, deadline_at)` and `game_sessions(status, phase_deadline_at)`, and apply
+   the same bounded due-query rule to them. Onboarding/settings must initialize/recompute a chat's
+   timestamps; disabled jobs use NULL. Unimplemented hooks leave due state untouched. Future post
+   handlers must retain the `scheduled_posts` idempotency ledger and only advance on success.
+5. **Incoming activity:** no per-message database writes or lookups. Coalesce `last_seen_at` and
+   name/username changes in memory; flush every 60 seconds as one bulk operation (one upsert per
+   affected table per bounded chunk, in one transaction; SQL cannot portably upsert two tables in
+   one statement). Unknown groups must not be inserted by activity buffering. Load an in-memory set
+   of `(chat_id, user_id)` for pending challenges at startup; all challenge status changes use the
+   repository that synchronizes this set after commit. Normal message checks are set membership only.
+6. **Admins:** cache each chat's admin IDs for 10 minutes, coalesce concurrent fetches, and invalidate
+   and refresh on `chat_member` / `my_chat_member` updates. Failed refreshes must fail closed for
+   permission/penalty decisions. No per-message admin API requests.
+7. **State races:** all game/session writes use the shared per-chat `asyncio.Lock`, including creation,
+   votes, callback actions and scheduler transitions. Use the game-session repository rather than
+   direct writes. Do not hold a state lock while waiting for outbound messages. These locks are
+   process-local; do not run multiple bot workers without redesigning coordination.
+8. **Production transport/database:** production mode requires PostgreSQL, pool size 10–20 and no
+   overflow. Polling remains the local default. Optional aiohttp webhook mode is configured with
+   `USE_WEBHOOK`, HTTPS `WEBHOOK_URL`, `WEBHOOK_SECRET`, `WEBHOOK_HOST`, `WEBHOOK_PORT`; validate the
+   secret header, preserve pending updates when switching transports, and document reverse-proxy TLS.
+9. **Verification:** `scripts/simulate_load.py` creates 5,000 fake chats in an isolated test DB and
+   runs actual scheduler ticks, printing tick duration and due items processed. Include fake-clock
+   unit tests for both rate limits, priority/retry behavior and stable offset spreading. A local
+   simulation is a foundation check, not proof of production capacity or Telegram delivery throughput.
+10. **Metrics:** every five minutes log send queue length, updates in the last minute and last tick
+    duration. Start/stop these tasks with the application, flush activity on clean shutdown, and
+    cancel queued work safely. Monitor queue growth before increasing workload; memory buffers and
+    queued sends are not durable across a crash.

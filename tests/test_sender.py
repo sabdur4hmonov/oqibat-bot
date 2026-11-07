@@ -11,22 +11,20 @@ from bot.services.sender import Sender
 METHOD = SendMessage(chat_id=1, text="test")
 
 
-async def test_rate_limit_retries_exactly_once(sessions):
+async def test_rate_limit_retries_exactly_once(sessions, fake_clock):
     operation = AsyncMock(
         side_effect=[TelegramRetryAfter(method=METHOD, message="wait", retry_after=2), "sent"]
     )
-    with patch("bot.services.sender.asyncio.sleep", new_callable=AsyncMock) as sleep:
-        assert await Sender(sessions).send(1, operation) == "sent"
-    sleep.assert_awaited_once_with(2)
+    assert await Sender(sessions, clock=fake_clock).send(1, operation) == "sent"
+    assert fake_clock.now() >= 2
     assert operation.await_count == 2
 
 
-async def test_second_rate_limit_does_not_escape(sessions):
+async def test_second_rate_limit_does_not_escape(sessions, fake_clock):
     operation = AsyncMock(
         side_effect=TelegramRetryAfter(method=METHOD, message="wait", retry_after=1)
     )
-    with patch("bot.services.sender.asyncio.sleep", new_callable=AsyncMock):
-        assert await Sender(sessions).send(1, operation) is None
+    assert await Sender(sessions, clock=fake_clock).send(1, operation) is None
     assert operation.await_count == 2
 
 
@@ -44,7 +42,7 @@ async def test_forbidden_marks_target_inactive(sessions, chat_id):
         assert chat.is_active == (chat_id != -1)
 
 
-async def test_forbidden_after_retry_marks_inactive(sessions):
+async def test_forbidden_after_retry_marks_inactive(sessions, fake_clock):
     async with sessions.begin() as session:
         session.add(User(id=1, first_name="Test", started_private=True))
     operation = AsyncMock(
@@ -53,8 +51,7 @@ async def test_forbidden_after_retry_marks_inactive(sessions):
             TelegramForbiddenError(method=METHOD, message="blocked"),
         ]
     )
-    with patch("bot.services.sender.asyncio.sleep", new_callable=AsyncMock):
-        assert await Sender(sessions).send(1, operation) is None
+    assert await Sender(sessions, clock=fake_clock).send(1, operation) is None
     async with sessions() as session:
         assert (await session.get(User, 1)).started_private is False
 
