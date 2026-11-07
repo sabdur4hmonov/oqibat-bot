@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 1 implemented and locally verified; proceeding to Phase 2 under the owner's explicit request to continue through remaining PLAN phases.
+- Current phase: Phase 2 implemented and locally verified; proceeding to Phase 3 under the owner's explicit request to continue through remaining PLAN phases.
 - Last updated: 2026-11-07 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -117,7 +117,7 @@
   5. Webhookni faqat HTTPS domen va server tayyor bo‘lganda README bo‘yicha sozlang. `WEBHOOK_SECRET` ni oshkor qilmang. Hozirgi bosqichda hali guruh o‘yinlari yo‘q.
 
 ### Phase 1 — Group onboarding & opt-in — 2026-11-07
-- Status: implementation done; live Telegram acceptance remains pending local credentials.
+- Status: done for implementation/local acceptance; live Telegram acceptance remains pending local credentials.
 - Commit(s): `e8da522` `phase-1: group onboarding consent and admin settings`; progress is committed separately.
 - What was built: group welcome/admin-rights guidance via `my_chat_member`, removal/re-addition state, opt-in button and `/qoshilish`, `/chiqish`, join/leave tracking, cached admin helper, admin-only inline `/sozlamalar` for all ten configurable policy fields. Reply prompts validate timezone/HH:MM/threshold input and expire after five minutes. Ordinary message activity still uses the 60-second buffer. Onboarding/settings initialize indexed due timestamps for that chat.
 - Files added/changed: group/settings handlers and keyboards, group repository, settings validation/prompt service, admin helpers, runtime wiring, command registration and Uzbek texts, README, group tests and private command-registration expectation.
@@ -138,3 +138,28 @@
   4. Guruh administratori sifatida `/sozlamalar` yuboring. Vazifalar soni va jazo turini o‘zgartiring. Kunlik vaqtni tanlab, bot savoliga `22:15` deb javob yozing.
   5. Oddiy a'zo shu menyu tugmasini bossin: faqat administrator o‘zgartirishi mumkinligi haqida oynacha chiqishi, qiymat o‘zgarmasligi kerak.
   6. Botni guruhdan olib tashlab, qayta administrator qilib qo‘shing. Salomlashuv va qo‘shilish tugmasi yana chiqishi kerak.
+
+### Phase 2 — Scheduler & daily messages — 2026-11-07
+- Status: done for implementation/local acceptance; live Telegram checks remain pending credentials.
+- Commit(s): `4bd0e89` `phase-2: daily posts content rotation and check-ins`; progress committed separately.
+- What was built: validated UTF-8 content loader for all six banks (empty through 3,000+ items), no-repeat/oldest-used selection, escaped `{group}` rendering, indexed daily scheduler hook, quiet-hour deferral, durable per-date reservation/delivery audit, cached participant/post lookup and buffered daily +1 check-ins. Same-second replies and replies received while awaiting the send response are handled. Startup checks every modeled column.
+- Files added/changed: content, daily, check-in/participation services, UTC/quiet utilities, runtime/group cache wiring, scheduler deferral support, Uzbek rendering, README and tests. New migration `7f8830fef1b4` adds post delivery metadata and unique point-event references; old migrations preserved.
+- Tests: `pytest -q`: **142 passed**; `ruff check .`: **all checks passed**; `alembic upgrade head` and `alembic check`: passed, no schema drift. Tests cover post-once/restart, failed-send audit, quiet deferral, immediate replies, check-in deduplication after restart, empty/3,000-item banks, malformed content, rotation and quiet boundaries.
+- Acceptance criteria:
+  - ✅ A due daily job sends one escaped message; a second call or restarted service does not repost for that date.
+  - ✅ Daily check-in gives +1 once per member/local date, backed by a unique ledger reference, including after a restart.
+  - ✅ No-repeat content usage and quiet hours work; quiet daily jobs move to quiet end rather than being dropped or repeatedly selected.
+  - ✅ Incoming detection uses memory only; check-ins flush in batches every 60 seconds and on clean shutdown.
+  - ❌ Real two-minute-ahead Telegram timing not exercised without credentials. Section 10 adds 0–15 minutes of deterministic spreading, so manual waits must include that offset and the 30-second tick interval.
+- Deviations from PLAN.md and why:
+  - Added delivery status/message/time/content metadata and point-event uniqueness via a new migration, needed for auditable restart behavior and check-in boundaries.
+  - Telegram offers no send idempotency key. Reservation is committed before send; reserved/failed deliveries are not automatically replayed after an ambiguous error/crash. This prevents duplicates but can leave a day's post missing. README explains the tradeoff; this is not a claim of exactly-once delivery under every network failure.
+  - Check-ins apply to opted-in active members and are buffered with unique references, preserving the zero-query ordinary-message path. A crash can lose an unflushed check-in; a later message that day may qualify again. Future stats commands flush before reading totals.
+- Open questions / decisions needed: none blocking; ambiguous reserved/failed post rows need operator review rather than blind resend.
+- Known issues / TODO: no live token/server tests; production content remains owner-authored; challenges and game hooks remain in their next phases. `/men` and `/top` arrive in Phase 3.
+- Manual test steps (Uzbek, simple):
+  1. `alembic upgrade head` ni bajaring va botni ishga tushiring. Sinov guruhida administrator bo‘lishi, o‘zingiz `/qoshilish` bilan qo‘shilgan bo‘lishingiz kerak.
+  2. `/sozlamalar` da kunlik xabarni yoqing va vaqtini ikki daqiqa oldinga qo‘ying. 0–15 daqiqalik tarqatish oralig‘i qo‘shiladi; xabar 2–17 daqiqa va yana 30 soniyagacha kechroq kelishi mumkin.
+  3. Bitta kunlik xabar kelishini, guruh nomi to‘g‘ri ko‘rinishini tekshiring. Botni qayta ishga tushiring: shu kun uchun yana xabar yuborilmasligi kerak.
+  4. Kunlik xabardan keyin bir nechta xabar yozing. Bir daqiqa ichida faqat bitta +1 hodisasi saqlanadi; `/men` ko‘rinishi keyingi bosqichda qo‘shiladi.
+  5. Tinch vaqt ichiga tushadigan vaqtni tanlang: kunlik xabar tinch vaqt tugaguncha yuborilmasligi kerak.
