@@ -5,7 +5,7 @@ Python 3.12, aiogram 3, SQLAlchemy 2 async, Alembic. Phase 0 implements the foun
 and private `/start` and `/help`. Phase 0.5 adds shared scale services; product behavior for
 challenges and games remains in later phases. Phase 1 implements group onboarding,
 member consent and admin settings; Phase 2 adds daily posts, content rotation, quiet hours
-and daily check-in points.
+and daily check-in points. Phase 3 adds challenges, point ledgers, penalties and leaderboards.
 
 ## Windows PowerShell setup
 
@@ -70,8 +70,8 @@ the production choice for 10,000 groups. Live PostgreSQL verification still requ
 a PostgreSQL server. All stored timestamps are timezone-aware UTC at the ORM
 boundary. SQLite values are reattached to UTC when loaded; naive input is rejected.
 Chat-local clock settings default to Asia/Tashkent (daily 09:00, quiet 23:00–08:00).
-The scheduler runs every 30 seconds and currently posts daily messages. Challenges,
-penalties and games arrive in later phases. Daily timing includes the stable 0–15 minute
+The scheduler runs every 30 seconds and currently posts daily messages, assigns challenges
+and resolves expired tasks. Games arrive in later phases. Daily timing includes the stable 0–15 minute
 offset, so a time set two minutes ahead can post two to seventeen minutes later, plus
 up to one scheduler interval. Quiet hours defer daily delivery until quiet end.
 
@@ -89,7 +89,7 @@ up to one scheduler interval. Quiet hours defer daily delivery until quiet end.
 6. Botni to‘xtatish uchun PowerShell oynasida **Ctrl+C** bosing.
 
 Only implemented commands are registered. The group scope currently includes `/help`,
-`/qoshilish`, `/chiqish` and `/sozlamalar`. Polling requests
+`/qoshilish`, `/chiqish`, `/sozlamalar`, `/vazifa`, `/men` and `/top`. Polling requests
 `message`, `callback_query`, `my_chat_member`, `chat_member` and `poll_answer` updates;
 group updates track onboarding and membership. Incoming activity and private reachability
 are buffered without opting anyone into a group. The activity middleware also refreshes
@@ -151,7 +151,7 @@ overhead and does not prove end-to-end Telegram or production server capacity.
 - `Scheduler` selects only indexed due rows, ordered by due time, at most 500 per kind.
   Job kinds progress concurrently, with up to 25 callbacks per kind; bulk callbacks
   cannot occupy all game callback slots. The sender still enforces one global limit.
-  The `daily` hook is registered. Register `challenge`, `weekly`, `expire`, `game` in their product
+  The `daily`, `challenge` and `expire` hooks are registered. Register `weekly` and `game` in their product
   phases. A chat hook returns `True` only after success; its next UTC timestamp is then
   recomputed with a conditional bulk update. Missing/failed hooks keep due work intact.
   Expiry/game hooks must persist their own status/deadline transition before returning
@@ -184,6 +184,34 @@ reference prevents a duplicate award after restart. A crash can lose an unflushe
 check-in; the member's next message that day can qualify again. Future stats commands
 flush queued check-ins before reading totals. Replying in the same second as the post
 counts when the message ID is later.
+
+## Challenges and points
+
+Admins can use `/vazifa` for a random task, or select its format with `/vazifa video`
+(round video), `/vazifa ovoz`, `/vazifa surat`, `/vazifa matn`. Content must include that
+format. Forced tasks still respect quiet hours and the one-pending-task-per-chat rule.
+Automatic tasks follow the configured daily count/non-quiet slots. The weighted picker
+uses opted-in active members only, favors longer waits and excludes picks within the
+last 24 hours when rested members are available.
+
+Only the assigned user can complete a task, with the correct message kind after the
+task message and before its deadline; no reply is required. Video notes earn +15,
+voice/photo +10 and text +5. Completion resets consecutive misses. Status, streak and
+ledger entries commit atomically; duplicate media updates cannot award twice.
+Wrong kinds/unassigned users use the pending cache and perform no challenge SQL.
+
+Missed tasks deduct 5 in points/mute/kick modes; `off` applies no penalty. Points mode
+mentions up to five unannounced missed-task debtors in the next daily post. Mute/kick
+require a supergroup and the bot's restrict-members right. All administrators, the
+group creator and configured bot owner are protected; the target is checked again
+immediately before moderation, including after queue delays. Permission failures
+skip moderation. Kick starts only at the configured miss threshold, bans then unbans
+with `only_if_banned=True`; the ban also expires automatically after five minutes as
+a failsafe if unban delivery fails. No moderation runs without configured owner ID.
+
+`/men` shows the user's ledger sum and completed/missed task counts. `/top` shows
+the local Monday-based week and all-time top ten. Both flush queued check-ins first.
+Balances are always SUM over the immutable event ledger; they are never mutable counters.
 
 ## Optional production webhook
 

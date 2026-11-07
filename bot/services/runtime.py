@@ -10,13 +10,15 @@ from bot.db.repo.games import GameSessionRepository
 from bot.db.repo.groups import GroupRepository
 from bot.services.activity import ActivityBuffer
 from bot.services.admin_cache import AdminCache
+from bot.services.challenges import ChallengeService
 from bot.services.content import ContentLibrary
 from bot.services.daily import DailyService
 from bot.services.locks import ChatLocks
 from bot.services.metrics import Metrics
 from bot.services.participation import Participants
+from bot.services.penalties import Penalties
 from bot.services.pending import PendingChallenges
-from bot.services.points import CheckinBuffer
+from bot.services.points import CheckinBuffer, Points
 from bot.services.scheduler import Scheduler
 from bot.services.sender import Sender
 from bot.services.settings import SettingPrompts
@@ -25,11 +27,12 @@ logger = logging.getLogger(__name__)
 
 
 class ScaleRuntime:
-    def __init__(self, sessions, bot) -> None:
+    def __init__(self, sessions, bot, settings=None) -> None:
         self.activity = ActivityBuffer(sessions)
         self.pending = PendingChallenges()
         self.participants = Participants()
         self.checkins = CheckinBuffer(sessions)
+        self.points = Points(sessions)
         self.locks = ChatLocks()
         self.admins = AdminCache(bot)
         self.metrics = Metrics()
@@ -44,6 +47,14 @@ class ScaleRuntime:
             sessions, bot, self.sender, self.content, self.participants, self.checkins
         )
         self.scheduler.hooks["daily"] = self.daily.post
+        self.penalties = Penalties(
+            bot, self.sender, self.admins, getattr(settings, "owner_id", None)
+        )
+        self.challenge_service = ChallengeService(
+            sessions, bot, self.sender, self.challenges, self.pending, self.content, self.penalties
+        )
+        self.scheduler.hooks["challenge"] = self.challenge_service.scheduled
+        self.scheduler.hooks["expire"] = self.challenge_service.expire
         self.sessions = sessions
         self.tasks = []
 
@@ -85,6 +96,8 @@ class ScaleRuntime:
             "setting_prompts": self.setting_prompts,
             "participants": self.participants,
             "checkins": self.checkins,
+            "points": self.points,
+            "challenge_service": self.challenge_service,
         }
 
 
@@ -107,4 +120,7 @@ class ScaleMiddleware(BaseMiddleware):
                 await self.runtime.admins.refresh(membership.chat.id)
             except Exception:
                 logger.exception("Admin refresh failed for chat %s", membership.chat.id)
-        return await handler(event, data)
+        result = await handler(event, data)
+        if message and message.from_user and not message.from_user.is_bot:
+            await self.runtime.challenge_service.complete(message)
+        return result

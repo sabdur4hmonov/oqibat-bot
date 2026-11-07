@@ -24,3 +24,10 @@ def after_quiet(now: datetime, tz: str, start: time, end: time) -> datetime:
     if result.astimezone(UTC) <= now:
         result += timedelta(days=1)
     return result.astimezone(UTC)
+
+
+def week_start(now: datetime, tz: str) -> datetime:
+    zone = ZoneInfo(tz)
+    local = now.astimezone(zone)
+    monday = local.date() - timedelta(days=local.weekday())
+    return datetime.combine(monday, time(), zone).astimezone(UTC)

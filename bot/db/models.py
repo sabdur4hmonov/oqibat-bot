@@ -128,6 +128,13 @@ class Challenge(Base):
         CheckConstraint("kind IN ('video_note', 'voice', 'photo', 'text')", name="kind"),
         CheckConstraint("status IN ('pending', 'done', 'missed', 'cancelled')", name="status"),
         Index("ix_challenges_status_deadline", "status", "deadline_at"),
+        Index(
+            "uq_challenges_pending_chat",
+            "chat_id",
+            unique=True,
+            sqlite_where=text("status = 'pending'"),
+            postgresql_where=text("status = 'pending'"),
+        ),
     )
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"), index=True)
@@ -139,6 +146,7 @@ class Challenge(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utc_now)
     deadline_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
     resolved_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    miss_announced_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
 
 class ContentUsage(Base):

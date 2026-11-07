@@ -1,6 +1,7 @@
 """All bot-facing text, including command descriptions, in Uzbek Latin."""
 
 from html import escape
+from zoneinfo import ZoneInfo
 
 SLOGAN = "Guruhda oqibat bo‘lsin"
 ADD_TO_GROUP = "Botni guruhingizga qo‘shing"
@@ -44,7 +45,65 @@ GROUP_COMMANDS = {
     "qoshilish": "O‘yinga qo‘shilish",
     "chiqish": "O‘yindan chiqish",
     "sozlamalar": "Guruh sozlamalari (admin)",
+    "vazifa": "Hozir vazifa berish (admin)",
+    "men": "Mening ballarim",
+    "top": "Guruh reytingi",
 }
+QUIET_ASSIGN = "Hozir tinch vaqt. Vazifani tinch vaqt tugagach bering."
+PENDING_CHALLENGE = "Bu guruhda hali bajarilmagan vazifa bor. Avval u yakunlansin."
+NO_CHALLENGE_CANDIDATE = "Mos ishtirokchi yoki vazifa topilmadi. /qoshilish bilan qo‘shiling."
+CHALLENGE_SEND_FAILED = "Vazifani yuborib bo‘lmadi. Keyinroq qayta urinib ko‘ring."
+CHALLENGE_ARGUMENTS = "Masalan: /vazifa video, /vazifa ovoz, /vazifa surat yoki /vazifa matn."
+NO_SCORES = "Hali ballar yo‘q."
+
+
+def mention(user_id: int, name: str) -> str:
+    return f'<a href="tg://user?id={user_id}">{escape(name)}</a>'
+
+
+def challenge_post(user_id: int, name: str, prompt: str, deadline, tz: str) -> str:
+    end = deadline.astimezone(ZoneInfo(tz)).strftime("%d.%m %H:%M")
+    return f"🎯 {mention(user_id, name)}, sizga vazifa!\n{escape(prompt)}\n\nMuddati: {end}"
+
+
+def challenge_done(user_id: int, name: str, delta: int) -> str:
+    return f"Barakalla, {mention(user_id, name)}! Vazifa bajarildi. +{delta} ball! ✅"
+
+
+def challenge_missed(user_id: int, mode: str) -> str:
+    penalty = "Ball jazosi yo‘q." if mode == "off" else "−5 ball."
+    return (
+        f"{mention(user_id, 'Do‘stimiz')}, vazifa muddati tugadi. {penalty} Keyingi safar albatta!"
+    )
+
+
+def debtors_suffix(debtors) -> str:
+    if not debtors:
+        return ""
+    names = ", ".join(mention(user_id, name) for user_id, name in debtors)
+    return f"\n\n🙂 Bugungi qarzdor do‘stlarimiz: {names}. Keyingi safar birga bajaramiz!"
+
+
+def my_stats(name: str, total: int, done: int, missed: int) -> str:
+    return (
+        f"{escape(name)}\n⭐ Jami: {total} ball\n"
+        f"✅ Bajarilgan vazifalar: {done}\n⌛ O‘tkazilgan: {missed}"
+    )
+
+
+def leaderboard(weekly, overall) -> str:
+    def rows(items):
+        return (
+            "\n".join(
+                f"{i}. {mention(user_id, name)} — {points} ball"
+                for i, (user_id, name, points) in enumerate(items, 1)
+            )
+            or NO_SCORES
+        )
+
+    return f"🏆 <b>Shu hafta</b>\n{rows(weekly)}\n\n⭐ <b>Barcha vaqt</b>\n{rows(overall)}"
+
+
 SETTING_LABELS = {
     "tz": "Vaqt mintaqasi",
     "daily_enabled": "Kunlik xabar",

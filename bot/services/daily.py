@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from bot import texts
-from bot.db.models import Chat, ContentUsage, ScheduledPost
+from bot.db.models import Challenge, Chat, ContentUsage, ScheduledPost, User
 from bot.services.content import choose_content
 from bot.services.sender import Priority
 from bot.utils.time import after_quiet, is_quiet, utc_now
@@ -89,12 +89,27 @@ class DailyService:
                     set_={"used_at": now},
                 )
             )
+            debtors = (
+                await session.execute(
+                    select(Challenge.id, Challenge.user_id, User.first_name)
+                    .join(User, User.id == Challenge.user_id)
+                    .where(
+                        Challenge.chat_id == chat.id,
+                        Challenge.status == "missed",
+                        Challenge.miss_announced_at.is_(None),
+                    )
+                    .order_by(Challenge.resolved_at, Challenge.id)
+                    .limit(5)
+                )
+            ).all()
         self.in_flight[chat.id] = {}
         try:
             sent = await self.sender.send(
                 chat.id,
                 lambda: self.bot.send_message(
-                    chat.id, texts.daily_post(content["text"], chat.title)
+                    chat.id,
+                    texts.daily_post(content["text"], chat.title)
+                    + texts.debtors_suffix([(row.user_id, row.first_name) for row in debtors]),
                 ),
                 priority=Priority.BULK,
             )
@@ -121,6 +136,12 @@ class DailyService:
                     message_id=sent.message_id if sent is not None else None,
                 )
             )
+            if sent is not None and debtors:
+                await session.execute(
+                    update(Challenge)
+                    .where(Challenge.id.in_(row.id for row in debtors))
+                    .values(miss_announced_at=posted_at)
+                )
         if sent is not None:
             self.posts[chat.id] = (date, sent.message_id, posted_at, chat.tz)
         return True
