@@ -226,6 +226,7 @@ class ChatMigrationRepository:
                 for game in games:
                     if game.id in source_games:
                         state = dict(game.state)
+                        state.pop("seen", None)
                         for field in ("board_id", "poll_message_id"):
                             if state.get(field):
                                 state[f"migrated_{field}"] = state[field]

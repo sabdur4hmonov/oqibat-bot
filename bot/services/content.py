@@ -46,6 +46,13 @@ def validate_bank(kind: str, items) -> list[dict]:
             raise ValueError("Invalid correct answer index")
         if kind == "would_you_rather" and len(item["options"]) != 2:
             raise ValueError("Would-you-rather requires two choices")
+        if kind == "krokodil_words":
+            from bot.utils.text_normalize import normalize_text
+
+            if len(item["word"]) > 100 or not normalize_text(item["word"]):
+                raise ValueError(
+                    "Krokodil words must fit a private callback popup and be guessable"
+                )
         if kind == "challenges" and item["kind"] not in {"video_note", "voice", "photo", "text"}:
             raise ValueError("Invalid challenge kind")
     return items

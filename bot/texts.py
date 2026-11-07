@@ -55,6 +55,7 @@ GROUP_COMMANDS = {
     "duel": "Bot tashlaydigan zar dueli",
     "viktorina": "Besh savolli viktorina",
     "tanla": "Ikki variantdan birini tanlash",
+    "krokodil": "So‘z topish o‘yini",
     "stop": "O‘yinni to‘xtatish",
 }
 GAME_JOIN_FIRST = "O‘yin uchun bot admin bo‘lishi va siz /qoshilish bilan qo‘shilishingiz kerak."
@@ -73,6 +74,47 @@ QUIZ_START = (
 )
 WYR_START = "🤔 Qaysi birini tanlaysiz? Ovoz berish uchun 60 soniya."
 WYR_FINISHED = "Tanlov yakunlandi. Natijalar so‘rovnomada! ✅"
+KROK_START = "🐊 Krokodil boshlanmoqda! Boshlovchi so‘zni tugma orqali yashirin ko‘radi."
+KROK_NEED_PLAYERS = "Krokodil uchun kamida ikki a'zo /qoshilish bilan qo‘shilsin."
+KROK_SEE = "So‘zni ko‘rish"
+KROK_SKIP = "So‘zni almashtirish"
+KROK_HOST_ONLY = "So‘zni faqat hozirgi boshlovchi ko‘ra oladi."
+KROK_NO_SKIPS = "Bir turda faqat ikki marta so‘z almashtirish mumkin."
+KROK_SKIPPED = "So‘z almashtirilmoqda. So‘zni ko‘rish tugmasini yana bosing."
+
+
+def krok_word(word):
+    return f"Sizning so‘zingiz: {word}"
+
+
+def krok_board(game, final=False):
+    state = game.state
+    last = state.get("last_result", {})
+    lines = []
+    if last.get("kind") == "guess":
+        guesser = mention(last["guesser"], state["names"].get(str(last["guesser"]), "Ishtirokchi"))
+        lines.append(
+            f"✅ {guesser} topdi: <b>{escape(last['word'])}</b>. Topganga +5, boshlovchiga +3."
+        )
+    elif last.get("kind") == "reveal":
+        lines.append(f"Boshlovchi so‘zni yozdi: {escape(last['word'])}. −3 ball; yangi so‘z! 🙈")
+    elif last.get("kind") == "timeout":
+        lines.append(f"⏰ Vaqt tugadi. So‘z: <b>{escape(last['word'])}</b>.")
+    if final:
+        lines.append("🏆 Krokodil yakunlandi! 10 tur o‘ynaldi.")
+        scores = sorted(state.get("scores", {}).items(), key=lambda pair: (-pair[1], int(pair[0])))
+        lines.extend(
+            f"{i}. {mention(int(user), state['names'].get(user, 'Ishtirokchi'))} — {score} ball"
+            for i, (user, score) in enumerate(scores[:15], 1)
+        )
+    else:
+        host = mention(state["host"], state["names"].get(str(state["host"]), "Ishtirokchi"))
+        lines.append(
+            f"🐊 Krokodil {state['round']}/10. Boshlovchi: {host}.\n"
+            f"Topish uchun 3 daqiqa. Almashtirish qoldi: {2 - state['skips']}.\n"
+            "Boshlovchi so‘zni yozmasdan tushuntirsin, boshqalar guruhga taxmin yozsin."
+        )
+    return "\n\n".join(lines)
 
 
 def duel_lobby(game):

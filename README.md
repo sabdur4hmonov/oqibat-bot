@@ -5,7 +5,7 @@ Python 3.12, aiogram 3, SQLAlchemy 2 async, Alembic. Phase 0 implements the foun
 and private `/start` and `/help`. Phase 0.5 adds shared scale services. Phase 1 implements group onboarding,
 member consent and admin settings; Phase 2 adds daily posts, content rotation, quiet hours
 and daily check-in points. Phase 3 adds challenges, point ledgers, penalties and leaderboards.
-Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls.
+Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls. Phase 5 adds Krokodil.
 
 ## Games
 
@@ -302,3 +302,17 @@ Official references used for the foundation:
 [SQLAlchemy async](https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html),
 [aiogram webhook](https://docs.aiogram.dev/en/latest/dispatcher/webhook.html),
 [Telegram webhook API](https://core.telegram.org/bots/api#setwebhook).
+
+
+### Krokodil
+
+`/krokodil` starts ten three-minute rounds with at least two opted-in players.
+The starter hosts first; only the host's private callback popup reveals the word.
+The host may replace the word twice per round, without extending the round deadline.
+Guess in group chat: matching ignores apostrophe variants, punctuation and Uzbek
+Cyrillic/Latin spelling differences. A correct guess earns +5, the host earns +3,
+and the guesser hosts next. A timeout reveals the word and selects an opted-in host.
+A host revealing the word (including inside a longer message) loses 3 points and gets
+a new word in the same round. The board is edited; `/stop` remains available. Existing
+rounds resume after restart. Word entries must be meaningful and at most 100 characters
+to fit Telegram's private popup. Unrelated guesses use cached state without SQL.

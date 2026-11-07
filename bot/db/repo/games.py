@@ -88,9 +88,16 @@ class GameSessionRepository:
                 if expected_rev is not None and row.state.get("rev", 0) != expected_rev:
                     return None
                 row.state = deepcopy(row.state)
-                awards = transform(row)
-                if awards is False:
-                    return None
+                chat = await session.get(Chat, chat_id)
+                allowed = chat is not None and chat.is_active and chat.bot_is_admin
+                if allowed:
+                    awards = transform(row)
+                    if awards is False:
+                        return None
+                else:
+                    row.status, row.phase_deadline_at = "cancelled", None
+                    row.state["phase"] = "done"
+                    awards = []
                 row.state = {**row.state, "rev": row.state.get("rev", 0) + 1}
                 for award in awards or []:
                     await record_event(
@@ -98,7 +105,7 @@ class GameSessionRepository:
                     )
             if self.cache:
                 self.cache.sync(row)
-            return view(row)
+            return view(row) if allowed else None
 
     async def change(self, chat_id: int, game_id: int, transform) -> bool:
         """transform is synchronous and changes only this locked ORM game object."""

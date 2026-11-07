@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 4 implemented and locally verified; proceeding to Phase 5 under the owner's explicit request to continue through remaining PLAN phases.
+- Current phase: Phase 5 implemented and locally verified; proceeding to Phase 6 under the owner's explicit request to continue through remaining PLAN phases.
 - Last updated: 2026-11-07 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -230,3 +230,22 @@
   4. `/viktorina` yuboring. Besh savolga javob bering, har biriga 30 soniya ajratiladi. Yakunda o‘sha natija xabari yangilanadi; `/men` orqali ballni tekshiring.
   5. `/tanla` yuboring. Ochiq so‘rovnomada ovoz bering; u bir daqiqadan so‘ng yopiladi.
   6. O‘yin boshlovchisi yoki admin `/stop` yuborsin: o‘yin to‘xtashi kerak. Oddiy boshqa a'zo buni qila olmasligi kerak. Duel xabariga javoban `/stop` yuborib, aynan shu duelni tanlang.
+
+
+### Phase 5 — Krokodil — 2026-11-07
+- Status: done for implementation/local acceptance; live three-person Telegram game remains pending credentials.
+- Commit(s): this entry accompanies `phase-5: private Krokodil words timed rounds and scoring`; Phase 4 was pushed as `8ec22b6`.
+- What was built: private host-only word popups, two skips per round, normalized exact guessing (apostrophes/Cyrillic), ten three-minute rounds, guesser-to-host handoff, random opted-in timeout host, revealed previous word, +5/+3 awards, host reveal −3/new word, one edited board and shared stop/recovery. Ordinary unrelated messages need no SQL. Matching messages are revision-checked, deduplicated by message ID and atomically scored. Added per-chat participant indexing for host selection without scanning other groups; migration rekeys that index and resets changed message-number scopes. Game writes cancel safely when the bot loses admin/active status.
+- Files added/changed: pure Krokodil engine, orchestration and handlers, popup-safe content validation, participant/cache/migration helpers, runtime/text wiring, README and tests. No schema change or new dependency.
+- Tests: `pytest -q`: **206 passed**; `ruff check .`: **all checks passed**. Includes a ten-round three-person simulated game (80 total points, 20 ledger events), host-only popups, two-skip limit without extending deadlines, normalized variants, host reveal/deduplication, timeout/stop, zero-query unrelated guesses, and no award after admin removal. Existing migration/startup tests remain passing.
+- Acceptance criteria: ✅ complete three-person flow through mocked Telegram updates; ✅ apostrophe/Cyrillic matching; ✅ points, ten-round end, timer and stop; ❌ live Telegram testing is pending a real token.
+- Deviations from PLAN.md and why: minimum two opted-in players; the starter hosts first. Skips and host word leaks preserve the original round deadline. Host leaks are detected within longer text too, while guesses require the full normalized word. Words are capped at 100 characters to fit private popups. These are small validation/flow choices; production content was not expanded.
+- Open questions / decisions needed: none blocking.
+- Known issues / TODO: three sample words repeat after rotation; the owner/Claude should supply the production bank. Send delays can postpone board delivery, while persisted round deadlines continue independently.
+- Manual test steps (Uzbek, simple):
+  1. Botni ishga tushiring. Uch a'zo `/qoshilish` yuborsin, bittasi `/krokodil` yuborsin.
+  2. Boshlovchi “So‘zni ko‘rish” tugmasini bossin: so‘z faqat unga oynachada chiqadi. Boshqa a'zo bossa so‘z chiqmasligi kerak.
+  3. Boshlovchi so‘zni yozmasdan tushuntirsin. Boshqa a'zo javobni yozsin: unga +5, boshlovchiga +3 beriladi, topgan a'zo keyingi boshlovchi bo‘ladi.
+  4. `O‘zbekiston`, `O'zbekiston` va `Ўзбекистон` kabi yozuvlarni mos so‘z kelganda tekshiring.
+  5. Bir turda so‘zni ikki marta almashtiring; uchinchisi rad etiladi. Boshlovchi so‘zni guruhga yozsa −3 va yangi so‘z bo‘lishi kerak.
+  6. Bir turni uch daqiqa kuting: so‘z ochiladi va yangi boshlovchi tanlanadi. 10 turdan keyin o‘yin tugaydi; oldinroq `/stop` ham ishlaydi.

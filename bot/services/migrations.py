@@ -83,10 +83,11 @@ class ChatMigrations:
             canonical = new_id if chat == old_id else chat
             awards[(canonical, user, day)] = {**event, "chat_id": canonical}
         runtime.checkins.pending = awards
-        runtime.participants.members = {
-            key for key in runtime.participants.members if key[0] not in {old_id, new_id}
-        }
-        runtime.participants.members.update((new_id, user) for user in result["participants"])
+        for chat_id in (old_id, new_id):
+            for user in runtime.participants.for_chat(chat_id):
+                runtime.participants.set(chat_id, user, False)
+        for user in result["participants"]:
+            runtime.participants.set(new_id, user, True)
         for challenge_id in (*runtime.pending.for_chat(old_id), *runtime.pending.for_chat(new_id)):
             runtime.pending.remove(challenge_id)
         for challenge in result["pending"]:
