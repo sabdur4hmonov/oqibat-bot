@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phases 7–9 implemented and locally verified; preparing the final review archive/summary, then stopping. No production deployment.
+- Current phase: Phases 0–9 implemented; Phases 7–9 completed/pushed for this run. Final review archive and summary prepared. Stop here; no later work or production deployment.
 - Last updated: 2026-11-07 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -346,3 +346,24 @@
   2. Viktorina, Krokodil, bajarilgan haqiqat/jasorat va Mafia g‘oliblarini tekshiring. Ballarni `/men` bilan solishtiring. Bekor o‘yinda g‘olib rasmi bo‘lmasin.
   3. Yakshanba xulosasi bitta top-5 rasm va to‘liq izoh/tugma bilan kelsin; qayta yoqilganda takrorlanmasin. Rasmni o‘chiruvchi sozlama bilan oddiy matnlar ishlasin.
   4. LIVE_TEST 15-bo‘limini bajaring. Server kerak bo‘lsa README dagi Docker yoki systemd yo‘lini faqat sinov botida tanlang; bir vaqtda bitta bot jarayoni ishlasin. Agent haqiqiy botni joylamadi.
+
+
+### Final review summary — Phases 0–9 — 2026-11-07
+- Status: implementation/local verification complete; stopped after the authorized Phase 9 finish. No Mini App, extra Mafia roles, seasons or achievements started. No real deployment or real Telegram messages sent.
+- Commits pushed for this run: `32b6e73` Phase 7 Mafia; `3fb9dd2` Phase 8 weekly/help; `5f52453` Phase 9 result cards/deployment examples. This final documentation entry is committed/pushed separately.
+- Done: foundation and scale services, consent/admin setup, daily posts/check-ins, challenges/penalties/points/stats, duels/quiz/polls, Krokodil, truth/dare, Mafia and requested safety rules/fuzz tests, weekly reporting/full help, licensed Uzbek result cards, environment checker, Uzbek live checklist, Docker/Compose/systemd examples and deployment/backup instructions. All six Claude review notes are checked above; the heap optimization remains a later measurement-triggered note as requested.
+- Verification: **311 tests passed** on Windows with an isolated PostgreSQL server and **311 passed** in the Linux review container; Ruff passed on both. Alembic migration upgrade/schema checks passed on SQLite and PostgreSQL **16.14**. Offline startup/schema check and Uzbek PNG rendering passed in the non-root/read-only image. No `.env` was copied into that image. Default pytest without a local PostgreSQL URL has 310 passing cases and one intentionally skipped PostgreSQL test. Fake-clock limiter, scheduling offsets, independent deadlines, migration and 1,000-game Mafia invariants remain included. Details/online-build limitation are in Phase 9 above.
+- Not verified: real BotFather getMe/username with owner credentials; real Telegram game/permission/DM/photo/429 flows and Sunday/quiet-hour delivery; public HTTPS webhook/reverse proxy; actual systemd service on a server; deployment, production backup/restore/upgrade/rollback; long-running operation or 10,000-group throughput. Docker Compose was configuration-validated, not started as a production stack. PostgreSQL was tested only in a dedicated temporary container/database, not an existing owner database. The image was built using verified prefetched official wheels after this connection's normal online installation stalled.
+- Review artifact: ran `git archive --format=zip -o "..\oqibat-review-final.zip" HEAD`, verified the ZIP contains no `.env` and includes the font license. File: `D:\Coding projects\oqibat-review-final.zip`, outside the repo. It is refreshed after the final documentation commit so this summary is included; its ZIP comment records the final exact commit. The ZIP itself is not committed. The earlier `oqibat-review.zip` remains unchanged.
+- Resource scope: only the uniquely named Oqibat review image and temporary test container/databases were used. The temporary PostgreSQL container is removed after the final tests; no production bot process was launched. Other projects, containers, volumes, Docker settings and existing databases were not changed. The review image `oqibat-review:phase9-55fcb39f` is retained locally.
+- Top 5 risks before real users:
+  1. **Live Telegram behavior:** mock-based acceptance cannot establish real DM blocking/role privacy, poll updates, admin rights, moderation, callback timing or photo/caption delivery. Finish LIVE_TEST with consenting testers; Mafia needs at least five people.
+  2. **Capacity and queue growth:** 10,000 groups is a target, not measured production capacity. Global/chat limits and a single sending process can accumulate work. Monitor the five-minute metrics and profile Sender's heap if queue length exceeds 1,000 before expanding.
+  3. **Crash/delivery gaps:** queued sends, buffered activity/check-ins and reservations are not a durable outbox. A crash can lose notifications or leave reserved/failed posts/cards undelivered; ambiguous sends are deliberately not blindly replayed. Mafia cancels on restart. Operate exactly one bot worker.
+  4. **Production operations:** TLS, systemd hardening, database recovery/restore and upgrade/rollback remain unverified on the intended server. Test those with backups and a separate test bot/database; do not treat an isolated PostgreSQL smoke test as server acceptance.
+  5. **Real content and group trust:** banks still contain three illustrative items each. Owner/Claude must provide appropriate varied Uzbek content and review consent, penalty choices and game rules before public groups; tiny banks repeat quickly.
+- Manual handoff (Uzbek, simple):
+  1. `D:\Coding projects\oqibat-review-final.zip` ni Claude ga ko‘rib chiqish uchun bering. `.env` yoki tokenni yubormang.
+  2. README bo‘yicha sinov botini sozlang, migratsiya va `scripts/check_env.py` ni bajaring. Jonli sinovda `docs/LIVE_TEST.md` qadamlarini faqat haqiqatan o‘tganda belgilang.
+  3. Avval uch kishilik guruhda oddiy imkoniyatlarni, keyin kamida besh kishi bilan Mafiani tekshiring. Xatoni vaqt va maxfiy qiymatlarsiz jurnal parchasi bilan yozing.
+  4. Claude tekshiruvi va yuqoridagi ochiq sinovlar tugamaguncha haqiqiy foydalanuvchilarga ochmang. Bu ish shu yerda to‘xtaydi.
