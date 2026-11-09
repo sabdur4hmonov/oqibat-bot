@@ -1,8 +1,8 @@
 # Progress log
 
 ## Current status
-- Current phase: Phases 0–9 implemented; Phases 7–9 completed/pushed for this run. Final review archive and summary prepared. Stop here; no later work or production deployment.
-- Last updated: 2026-11-07 (Asia/Tashkent)
+- Current phase: Phase 10 preflight stopped at the owner's architecture-change gate; Phases 10–14 are planned, not implemented. Phases 0–9 remain the last completed implementation.
+- Last updated: 2026-11-09 (Asia/Tashkent)
 
 ## Review notes from Claude
 <!-- Sardorbek pastes Claude's review notes here. Codex: apply all unchecked items before the next phase,
@@ -367,3 +367,20 @@
   2. README bo‘yicha sinov botini sozlang, migratsiya va `scripts/check_env.py` ni bajaring. Jonli sinovda `docs/LIVE_TEST.md` qadamlarini faqat haqiqatan o‘tganda belgilang.
   3. Avval uch kishilik guruhda oddiy imkoniyatlarni, keyin kamida besh kishi bilan Mafiani tekshiring. Xatoni vaqt va maxfiy qiymatlarsiz jurnal parchasi bilan yozing.
   4. Claude tekshiruvi va yuqoridagi ochiq sinovlar tugamaguncha haqiqiy foydalanuvchilarga ochmang. Bu ish shu yerda to‘xtaydi.
+
+
+### Phase 10 — Preflight architecture gate (not implemented) — 2026-11-09
+- Status: stopped before implementation under the owner's explicit instruction to stop if an architecture change is needed. This is not a completed Phase 10 or a completed Phases 10–14 run.
+- Commit(s): this entry accompanies `docs: plan phases 10-14 and record durability architecture gate`.
+- What was prepared: read AGENTS/PLAN/PROGRESS and checked all Claude notes (no unchecked implementation note). Added the owner's Phase 10–14 scope/acceptance criteria to PLAN before coding. Inspected the actual Sender callable/Future heap, 60-second activity/check-in buffers and reserve-before-send post flow. Wrote a concrete durability proposal and choices in `docs/PHASE10_ARCHITECTURE.md`. No runtime code, migrations, dependencies, commands or tests were changed.
+- Blocker: top-five risk 3 is code-fixable only by changing the durability boundary. The existing sender stores non-replayable Python callables/Futures in memory; state commits and outbound effects are separate. Crash-safe business sends require serializable jobs committed with business state and recovery/ambiguity rules. Preserving ordinary-message zero SQL and 60-second bulk flush while also eliminating unflushed activity loss needs a persistent incoming journal/acknowledgement design. This is more than adding an index/retry or a routine new table, and was not silently authorized against the explicit stop condition.
+- Tests: baseline `pytest -q`: **310 passed, 1 skipped** (optional local PostgreSQL test, no verification URL set); `ruff check .`: **all checks passed**. The first restricted Python launch failed with OS permission denied; rerun in the approved execution context passed. No new logic exists to test. No current PostgreSQL, Docker, server or Telegram checks are claimed for this preflight.
+- Acceptance criteria: only planning/preflight done. `/stats`, `/maxfiylik`, confirmed self-deletion and Phase 10 risk fixes are NOT implemented. Phases 11–14 are NOT started. The existing `oqibat-review-final.zip` is unchanged; `oqibat-review-final2.zip` is not created because there is no completed new implementation to label final.
+- Risk disposition (not fixes): risk 1 requires real Telegram acceptance; offline tests can expand coverage but cannot replace it. Risk 2 allows code profiling/heap optimization but still needs representative capacity testing. Risk 3 requires the architectural choice above. Risk 4 needs actual TLS/systemd/restore acceptance on the target environment. Risk 5 needs owner/Claude-authored content; Phase 14 tooling will validate it but must not invent production content. None is marked resolved by documentation.
+- Deviations from PLAN.md and why: stopped at the explicitly allowed architecture gate before starting product implementation; added requested phase plans and a reviewable proposal rather than redesigning the delivery/storage contract. This run's sequential-phase authorization is recorded in PLAN.
+- Open questions / decision needed: approve the scoped durable outbox and choose whether to retain or replace the bounded activity-loss window, OR explicitly authorize retaining the current memory-only contract and treating that risk as an architectural limitation for this run. See the proposal for boundaries, privacy implications and required tests. No real credential or server is required merely to make this decision.
+- Known issues / TODO: all requested new features remain outstanding; no completed-phase claim, later-phase commits or final2 archive. Resume Phase 10 only once its architecture scope is decided.
+- Manual review steps (Uzbek, simple):
+  1. `docs/PHASE10_ARCHITECTURE.md` ni Claude bilan ko‘rib chiqing. Hozir yangi buyruq yoki imkoniyat qo‘shilmadi.
+  2. Bot o‘chib qolsa yuborilmagan ishlarni bazadan tiklash kerakmi, oddiy xabar faolligining oxirgi 60 soniyasi yo‘qolishi qabul qilinadimi — shuni belgilang.
+  3. Yangi saqlash tartibini tasdiqlang yoki shu safar mavjud cheklovni saqlab qolishga aniq ruxsat bering. Shundan keyin 10-bosqichdan davom etiladi; token yuborish kerak emas.

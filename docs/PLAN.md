@@ -255,8 +255,83 @@ systemd example and step-by-step deployment instructions. Do not deploy. Verify 
 locally if available, otherwise explicitly mark it unverified. Keep rendering off the event loop,
 use the shared priority sender, and retain text results if rendering is unavailable.
 
+### Phase 10 — Hardening & owner tools
+Owner-authorized continuation: run Phases 10–14 sequentially, each with tests, pytest/Ruff,
+PROGRESS entry, commit and push. Stop if an architecture change or real credentials/servers
+are necessary, or tests cannot be made to pass. All existing scale rules remain mandatory.
+
+Review every final-summary top-five risk: fix what code can fix and explain external limits.
+Add private OWNER_ID-only `/stats`: active groups, distinct opted-in users, daily active
+users, games by type over seven days, queue length and last tick duration. Define the
+activity window explicitly. Add `/maxfiylik` in simple Uzbek and self-service deletion
+`/malumotlarimni_ochir` behind a requester-bound confirmation button. Deletion must cover
+durable records, JSON game references, pending buffers/caches and queued effects so stale
+work cannot restore deleted data; explain that later new interaction can create new data.
+Do not claim Telegram messages or external backups were deleted.
+**Accept:** owner/private authorization and confirmation isolation tested; all advertised
+metrics correct; deletion/races tested; each risk resolved or explicitly justified.
+**Architecture gate:** resolving the existing crash-loss risk requires a durability decision
+before implementation. See `docs/PHASE10_ARCHITECTURE.md`. Do not silently redefine a
+documented memory-only guarantee as crash-safe or promise exactly-once Telegram delivery.
+
+### Phase 11 — Seasons, streaks & achievements
+Use calendar months in each chat's timezone. `/top` shows current season and all-time;
+filter immutable `point_events` by UTC boundaries derived from the local month. Reuse the
+existing `(chat_id, created_at)` index if it already satisfies the requirement; add a new
+migration only for actual schema changes. Never reset the ledger. On the first day, publish
+the previous season's champions with a Pillow card using indexed due work, stable spreading,
+quiet hours and restart-safe deduplication. Daily check-in streak bonuses: 7 days +3,
+30 days +10. Define threshold/repeat semantics explicitly before coding.
+Define achievements in code (first round video, ten Krokodil guesses, first Mafia win,
+seven-day streak and related milestones); `/yutuqlar` lists them. Batch short unlock
+announcements at low priority. All awards/unlocks must be idempotent.
+**Accept:** timezone/month/year boundaries, streak gaps, duplicate/concurrent awards,
+batched announcements and restart-safe champion posting tested.
+
+### Phase 12 — Extended Mafia roles
+Chat setting `extended_roles` defaults OFF, introduced by a new migration. Preserve base
+rules when OFF. Don at 8+ players: his vote breaks mafia ties; commissioner sees him as
+town. Ma'shuqa at 9+: blocks one player's night action, never the same target twice in a
+row. Manyak at 11+: solo night kill, wins alive with at most one other player. Town wins
+only with no mafia and no manyak; mafia wins at parity only with manyak dead.
+Before implementation, document role replacement/counts, Ma'shuqa alignment, night action
+ordering, simultaneous kills/doctor saves and winner precedence; do not guess big decisions.
+Extend scripted outcomes and 1,000-game fuzz invariants, private buttons/role descriptions,
+stale/dead-action rejection and score/card handling. Preserve caps and GAME priority.
+**Accept:** base mode unchanged; role thresholds, blocking, Don checks/ties, all winners,
+termination and dead-player invariants tested in both modes.
+
+### Phase 13 — Telegram Mini App
+Serve build-free HTML/CSS/vanilla JS at `/webapp` through aiohttp in the same bot process;
+adapt to Telegram themeParams. Configure HTTPS `WEBAPP_URL` in env; document the owner's
+own domain and BotFather Main Mini App setup. Polling must still work; no deployment.
+Pages: own profile, group season/all-time leaderboard, achievements and game rules.
+Read-only JSON API validates Telegram initData HMAC with the bot token on every request,
+rejecting data older than 24 hours. Verify group membership server-side before returning
+any group data; a startapp chat ID is navigation input, never authorization.
+Private chats use a web_app button; groups use a URL to the Main Mini App with
+`startapp=<chat_id>`. All visible Uzbek copy remains centralized in `bot/texts.py`.
+**Accept:** official-doc-verified signature algorithm, expiry/tampering/foreign-user/group
+authorization tests, read-only routes, frontend escaping/theme handling and local aiohttp
+lifecycle tests pass. Real HTTPS/Telegram-client acceptance is explicitly separate.
+
+### Phase 14 — Content tooling
+Add `scripts/validate_content.py` for all `data/*.json`: bank schemas, duplicate IDs/keys,
+normalized duplicate text, length limits and per-file item counts; nonzero exit on errors.
+Reuse existing normalization/schema rules. Add `docs/CONTENT_GUIDE.md` in Uzbek with
+examples for every format. Real content remains owner/Claude-authored.
+**Accept:** valid samples and empty banks handled according to existing schema; malformed
+objects, duplicate identities/normalized text and length boundaries tested; PowerShell
+instructions documented and all existing sample banks validated.
+
+### Finish for Phases 10–14
+After completing all phases, archive HEAD outside the repository as
+`..\oqibat-review-final2.zip`, verify no `.env`, write a final honest PROGRESS summary,
+commit/push and refresh the archive from that final commit, then stop. A blocked preflight
+is not a completed phase and must never be represented as the final implementation archive.
+
 ### Later (not now)
-Telegram Mini App (leaderboards, Mafia voting screen), more Mafia roles, seasons and achievements.
+Additional Mini App interactions beyond the read-only scope and further game features.
 
 ## 9. Content
 
