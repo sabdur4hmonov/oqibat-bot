@@ -21,3 +21,9 @@ and escape any substituted user/chat text. Only daily text supports `{group}`.
 
 Adding production content does not require a database migration. Changing the schema
 requires updating this document and the corresponding loader in the relevant phase.
+
+Phase 14 authoring limits: daily/challenge/truth text at most 2,000 characters;
+Krokodil word at most 100. The offline validator also rejects normalized duplicate
+primary texts/options, unsupported/repeated placeholders, repeated JSON fields and
+unknown/missing bank files. Daily text supports at most one `{group}`. Empty banks remain valid.
+Run `python scripts/validate_content.py`; see the Uzbek [content guide](../docs/CONTENT_GUIDE.md).

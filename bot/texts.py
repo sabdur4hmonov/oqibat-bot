@@ -15,6 +15,39 @@ CARD_GAME_TITLES = {
 }
 ADD_TO_GROUP = "Botni guruhingizga qo‘shing"
 OPEN_WEBAPP = "Ilovani ochish"
+CONTENT_DESCRIPTION = "Oqibat matn banklarini tekshirish (internet va .env kerak emas)."
+CONTENT_DIRECTORY = "Tekshiriladigan data papkasi"
+CONTENT_OK = "[OK] Barcha matn banklari to‘g‘ri. Namunalar jonli kontent o‘rnini bosmaydi."
+CONTENT_BAD = "[X] Xatolar bor. CONTENT_GUIDE.md bo‘yicha tuzating va qayta tekshiring."
+CONTENT_ERRORS = {
+    "schema": (
+        "Tuzilma, maydon, noyob key, tur yoki uzunlik noto‘g‘ri. Qo‘llanmadagi shaklni tekshiring."
+    ),
+    "json": (
+        "JSON yoki UTF-8 noto‘g‘ri, yoxud bir obyekt maydoni takrorlangan. UTF-8 BOMsiz saqlang."
+    ),
+    "unreadable": "Fayl yoki papka o‘qilmadi. Manzil va ruxsatni tekshiring.",
+    "missing": "Kerakli bank fayli topilmadi. Bo‘sh bank uchun [] yozing.",
+    "unknown": "Bu nomdagi bank tanilmagan. Faqat qo‘llanmadagi olti JSON fayl kerak.",
+    "duplicate_text": (
+        "Matn boshqa elementni takrorlaydi (harf/apostrof farqi ham hisobga olinadi)."
+    ),
+    "duplicate_options": "Variantlar takrorlangan yoki faqat bo‘sh joydan iborat.",
+    "placeholder": "Faqat kunlik matnda bir marta {group} ishlatish mumkin.",
+    "duplicate_key": "Bu key boshqa bankda ham bor. Barcha banklarda noyob key yozing.",
+}
+
+
+def content_count(file, count):
+    value = str(count) if count is not None else "?"
+    return f"{file}: {value} ta element"
+
+
+def content_issue(file, code, item):
+    location = f"{file}, {item}-element" if item is not None else file
+    return f"[X] {location}: {CONTENT_ERRORS[code]}"
+
+
 WEB_COPY = {
     "title": "Oqibat",
     "tagline": "Guruhingiz bilan birga",

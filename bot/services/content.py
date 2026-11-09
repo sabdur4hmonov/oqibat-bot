@@ -12,9 +12,19 @@ FIELDS = {
     "would_you_rather": {"key", "question", "options"},
     "truth_questions": {"key", "text"},
 }
+TEXT_LIMITS = {
+    "daily_messages": ("text", 2000),
+    "challenges": ("text", 2000),
+    "quiz_questions": ("question", 300),
+    "krokodil_words": ("word", 100),
+    "would_you_rather": ("question", 300),
+    "truth_questions": ("text", 2000),
+}
 
 
 def validate_bank(kind: str, items) -> list[dict]:
+    if kind not in FIELDS:
+        raise ValueError("Unknown content bank")
     if not isinstance(items, list):
         raise ValueError("Content bank must be an array")
     keys = set()
@@ -31,6 +41,9 @@ def validate_bank(kind: str, items) -> list[dict]:
         for field in FIELDS[kind] - {"options", "correct_option_id"}:
             if not isinstance(item[field], str) or not item[field].strip():
                 raise ValueError("Content fields must be nonempty strings")
+        field, limit = TEXT_LIMITS[kind]
+        if len(item[field]) > limit:
+            raise ValueError("Content text exceeds its limit")
         if "options" in item:
             options = item["options"]
             if not isinstance(options, list) or not 2 <= len(options) <= 10:

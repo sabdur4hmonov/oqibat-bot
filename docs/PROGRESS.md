@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 13 implemented and locally verified; proceeding sequentially to Phase 14 content tooling.
+- Current phase: Phase 14 implemented and locally verified; preparing final review archive and summary for completed Phases 10–14.
 - Last updated: 2026-11-09 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -460,3 +460,19 @@
   4. Mavsum/barcha vaqt, yutuqlar, qoidalar va Telegramning yorug‘/qorong‘i mavzusini tekshiring. Uzun yoki `<` belgili ism kodga aylanmay, oddiy matn bo‘lsin.
   5. Guruhdan chiqing, reytingni yangilang: ruxsat rad etilsin. Boshqa odamning ID sini havolaga yozish uning profilini ochmasin. Ilovani 24 soatdan keyin botdan qayta oching.
   6. Ilovani ochish ball yoki rozilikni o‘zgartirmasin. Xatoda vaqtni yozib, bot jurnalidagi “Mini App request failed” ni tekshiring; token/initData ni hech kimga yubormang.
+
+
+### Phase 14 — Content tooling — 2026-11-09
+- Status: implementation/local verification complete.
+- Commit(s): this entry accompanies `phase-14: offline content validation and Uzbek authoring guide`; Phase 13 pushed as `f70d11d`.
+- What was built: offline `scripts/validate_content.py` audits every data JSON file and reports per-file counts, with a nonzero failure exit. Reuses existing runtime schemas and Uzbek normalization, detects globally repeated keys, normalized primary-text duplicates per bank, normalized/blank options, unsupported/repeated named placeholders, invalid UTF-8/JSON/repeated object fields, wrong/extra fields and missing/unknown bank names. Empty arrays remain valid. Added shared runtime length caps: daily/challenge/truth 2,000, quiz/WYR questions 300, options/words 100 and keys 128. Runtime fails early on oversized content; no schema/database change.
+- Guide: simple Uzbek `docs/CONTENT_GUIDE.md` gives all six formats using existing examples, stable key rules, length table, zero-based quiz answers, normalization, consent/appropriate content, UTF-8 without BOM and Windows PowerShell validation/fix/restart steps. README/data schema link to it. Operator copy is centralized in texts.py. Original sample JSON files unchanged (three each); no production content invented and no new dependency.
+- Tests: full `pytest -q`: **419 passed, 1 skipped** (optional PostgreSQL test, separately verified in Phase 13); `ruff check .`: **all checks passed**, `git diff --check`: passed. New pure/CLI suite **39 passed**, including all six exact/oversized boundaries, apostrophe/Cyrillic/punctuation duplicates, local/cross-bank keys, normalized options, malformed fields/root shapes/answer indices, repeated JSON fields, BOM/encoding, missing/unknown files, empty banks, readonly file bytes and CLI counts/exits without .env. Actual `python scripts/validate_content.py`: all six banks **3 items**, no errors. Existing startup tests still pass; Phase 13's fresh schema/fake-config startup and isolated PostgreSQL checks remain valid because no migration/config dependency changed.
+- Acceptance criteria: all requested code/content tooling tests and existing samples pass. Human review of facts, tone, safety and production variety is NOT automated or marked done. Structural validation cannot establish factual correctness.
+- Deviations/choices: keys are the existing schema's `key`, not a new `id`; normalized duplicate primary texts are checked within each bank, keys across all banks. Named brace placeholders are limited to one daily {group}. Shared runtime length limits avoid accepting content that would overflow surrounding bot text; tool-only duplicate/style checks do not rewrite live banks. Missing banks are errors; explicit [] is valid. No architecture change or open blocker.
+- Manual test steps (Uzbek, simple):
+  1. Virtual muhitni yoqing, loyiha papkasida `python scripts/validate_content.py` yuboring. Har faylda 3 tadan va oxirida [OK] chiqsin; `$LASTEXITCODE` 0 bo‘lsin.
+  2. Asosiy data ni buzmasdan olti faylni boshqa sinov papkasiga ko‘chiring. Bir key ni takrorlang yoki so‘zni kirill/apostrof bilan qayta yozing. `--directory` bilan tekshiring: fayl/xato ko‘rinsin, kod 1 bo‘lsin.
+  3. Qo‘llanmadagi uzunlikdan oshiring, viktorina javobiga noto‘g‘ri raqam yozing yoki JSON vergulini buzing. Tekshiruv rad etsin. Tuzatib yana ishlating.
+  4. Bitta bankni [] qiling: 0 ta element bilan o‘tsin. Faylni yo‘qotsangiz kerakli bank yo‘qligi aytilsin. Hech narsa Telegramga yuborilmasin va fayllar avtomatik o‘zgarmasin.
+  5. Yangi haqiqiy matnlarni Claude bilan ko‘rib chiqing, validatorni o‘tkazing, sinov botini qayta yoqing. Namuna matnlarini tayyor katta bank deb qabul qilmang.

@@ -707,3 +707,17 @@ bajariladi; ushbu ish davomida hech narsa serverga joylanmagan.
 Rasmiy manbalar: [Mini App tasdiqlovini tekshirish](https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app),
 [asosiy Mini App](https://core.telegram.org/bots/webapps#launching-the-main-mini-app),
 [shaxsiy inline tugmalar](https://core.telegram.org/bots/webapps#inline-keyboard-mini-apps).
+
+### Matn banklarini tekshirish
+
+Olti bank uchun shakl, misollar va yozish qoidalari [CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md)
+da. Virtual muhitda, loyiha papkasida:
+
+```powershell
+python scripts/validate_content.py
+```
+
+Har `data/*.json` faylning element soni, tuzilma/uzunlik va takroriy key/matn xatolari
+chiqadi. `$LASTEXITCODE` 0 bo‘lsa shakl to‘g‘ri, 1 bo‘lsa tuzatish kerak. .env,
+Telegram yoki baza kerak emas; fayllar o‘zgarmaydi. Hozirgi uchta namuna katta,
+ko‘rib chiqilgan kontent banki o‘rnini bosmaydi. Matn o‘zgarsa botni qayta ishga tushiring.

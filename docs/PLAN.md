@@ -351,6 +351,13 @@ examples for every format. Real content remains owner/Claude-authored.
 **Accept:** valid samples and empty banks handled according to existing schema; malformed
 objects, duplicate identities/normalized text and length boundaries tested; PowerShell
 instructions documented and all existing sample banks validated.
+Implementation choices: reuse the runtime schema; cap daily/challenge/truth text at
+2,000 characters (space for mentions/deadlines), quiz/WYR questions at 300, options
+and Krokodil words at 100, keys at 128. Daily text may contain at most one {group};
+other named brace placeholders are rejected. Keys are globally unique; normalized
+primary text is unique within each bank and normalized options within each item.
+The CLI rejects unknown/missing banks and repeated JSON object fields, reports all
+files with counts, and runs without .env, Telegram or a database. Empty banks remain valid.
 
 ### Finish for Phases 10–14
 After completing all phases, archive HEAD outside the repository as
