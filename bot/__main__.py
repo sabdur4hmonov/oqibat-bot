@@ -22,6 +22,7 @@ from bot.handlers.games.krokodil import create_router as create_krokodil_router
 from bot.handlers.games.mafia import create_router as create_mafia_router
 from bot.handlers.games.truth_dare import create_router as create_truth_dare_router
 from bot.handlers.group_setup import create_router as create_group_router
+from bot.handlers.owner import create_router as create_owner_router
 from bot.handlers.private import create_router
 from bot.handlers.settings import create_router as create_settings_router
 from bot.handlers.stats import create_router as create_stats_router
@@ -36,6 +37,7 @@ ALLOWED_UPDATES = ["message", "callback_query", "my_chat_member", "chat_member",
 
 def create_dispatcher() -> Dispatcher:
     dispatcher = Dispatcher()
+    dispatcher.include_router(create_owner_router())
     dispatcher.include_router(create_router())
     dispatcher.include_router(create_group_router())
     dispatcher.include_router(create_settings_router())
@@ -53,6 +55,9 @@ async def register_commands(bot: Bot, sender: Sender) -> None:
     private = [
         BotCommand(command="start", description=texts.START_DESCRIPTION),
         BotCommand(command="help", description=texts.HELP_DESCRIPTION),
+        BotCommand(command="stats", description=texts.OWNER_STATS_DESCRIPTION),
+        BotCommand(command="maxfiylik", description=texts.PRIVACY_DESCRIPTION),
+        BotCommand(command="malumotlarimni_ochir", description=texts.ERASE_DESCRIPTION),
     ]
     for commands, scope in (
         (private, BotCommandScopeAllPrivateChats()),

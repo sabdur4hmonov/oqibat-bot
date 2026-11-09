@@ -146,7 +146,13 @@ async def test_bootstrap_registers_scopes_and_required_updates(database_url, set
         await run(config)
     registrations = [m for m in transport.methods if isinstance(m, SetMyCommands)]
     assert [r.scope.type for r in registrations] == ["all_private_chats", "all_group_chats"]
-    assert [c.command for c in registrations[0].commands] == ["start", "help"]
+    assert [c.command for c in registrations[0].commands] == [
+        "start",
+        "help",
+        "stats",
+        "maxfiylik",
+        "malumotlarimni_ochir",
+    ]
     assert {command.command for command in registrations[1].commands} == set(texts.GROUP_COMMANDS)
     assert polling.await_args.kwargs["allowed_updates"] == ALLOWED_UPDATES
     assert set(ALLOWED_UPDATES) == {

@@ -27,6 +27,7 @@ class ChallengeService:
             content,
             penalties,
         )
+        self.recovery = None
         self.early_messages = {}
         self.effects = effects or Effects()
 
@@ -64,16 +65,19 @@ class ChallengeService:
         if result is None:
             return texts.NO_CHALLENGE_CANDIDATE
         challenge, user, chat, item = result
-        sent = await self.sender.send(
-            chat_id,
-            lambda: self.bot.send_message(
+        if self.recovery:
+            sent = await self.recovery.challenge(challenge.id, now=now)
+        else:
+            sent = await self.sender.send(
                 chat_id,
-                texts.challenge_post(
-                    user.id, user.first_name, item["text"], challenge.deadline_at, chat.tz
+                lambda: self.bot.send_message(
+                    chat_id,
+                    texts.challenge_post(
+                        user.id, user.first_name, item["text"], challenge.deadline_at, chat.tz
+                    ),
                 ),
-            ),
-            priority=Priority.CHALLENGE,
-        )
+                priority=Priority.CHALLENGE,
+            )
         if sent is None:
             await self.repo.resolve(chat_id, challenge.id, "cancelled")
             self.early_messages.pop(challenge.id, None)
@@ -121,6 +125,9 @@ class ChallengeService:
         )
         if delta is None:
             return False
+        if self.recovery:
+            await self.recovery.challenge(challenge_id, result=True)
+            return True
         await self.sender.send(
             message.chat.id,
             lambda: self.bot.send_message(
@@ -137,11 +144,14 @@ class ChallengeService:
         if result is None:
             return False
         chat, user_id, misses = result
-        self.effects.start(self._notify_expiry(chat, user_id, misses))
+        self.effects.start(self._notify_expiry(chat, user_id, misses, challenge.id))
         return True
 
-    async def _notify_expiry(self, chat, user_id, misses) -> None:
+    async def _notify_expiry(self, chat, user_id, misses, challenge_id=None) -> None:
         await self.penalties.apply(chat, user_id, misses)
+        if self.recovery and challenge_id is not None:
+            await self.recovery.challenge(challenge_id, result=True)
+            return
         await self.sender.send(
             chat.id,
             lambda: self.bot.send_message(

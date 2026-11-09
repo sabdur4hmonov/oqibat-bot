@@ -24,6 +24,12 @@ class GameHub:
 
     async def board(self, game, text: str, markup=None):
         async def operation():
+            from bot.db.models import GameSession
+
+            async with self.repo.sessions() as session:
+                row = await session.get(GameSession, game.id)
+                if row is None or row.state.get("erased"):
+                    return None
             current = self.cache.get(game.id)
             if game.status in {"lobby", "running"} and (
                 current is None or current.state.get("rev") != game.state.get("rev")

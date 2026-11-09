@@ -22,10 +22,12 @@ from bot.services.locks import ChatLocks
 from bot.services.mafia import Mafia
 from bot.services.metrics import Metrics
 from bot.services.migrations import ChatMigrations
+from bot.services.owner import OwnerTools
 from bot.services.participation import Participants
 from bot.services.penalties import Penalties
 from bot.services.pending import PendingChallenges
 from bot.services.points import CheckinBuffer, Points
+from bot.services.recovery import Recovery
 from bot.services.result_cards import ResultCards
 from bot.services.scheduler import Scheduler
 from bot.services.sender import Sender
@@ -104,6 +106,11 @@ class ScaleRuntime:
         )
         self.game_hub.register(("mafia",), self.mafia_game)
         self.sessions = sessions
+        self.recovery = Recovery(self, bot, settings)
+        self.owner_tools = OwnerTools(self, getattr(settings, "owner_id", None))
+        self.challenge_service.recovery = self.recovery
+        self.scheduler.recovery = self.recovery
+        self.stopping = False
         self.tasks = []
         self.migrations = ChatMigrations(self, bot)
         self.locks.resolve = self.migrations.resolve
@@ -131,19 +138,22 @@ class ScaleRuntime:
         return self
 
     async def __aexit__(self, *args) -> None:
+        self.stopping = True
         for task in self.tasks:
             task.cancel()
         await asyncio.gather(*self.tasks, return_exceptions=True)
         await self.effects.close()
-        await self.sender.close()
         try:
             await self.activity.flush()
             await self.checkins.flush()
         except Exception:
             logger.exception("Shutdown activity flush failed")
+        await self.sender.drain(10)
+        await self.sender.close()
 
     def workflow(self) -> dict:
         return {
+            "owner_tools": self.owner_tools,
             "sender": self.sender,
             "activity": self.activity,
             "pending": self.pending,
@@ -171,6 +181,8 @@ class ScaleMiddleware(BaseMiddleware):
         self.runtime = runtime
 
     async def __call__(self, handler, event, data):
+        if self.runtime.stopping:
+            return None
         self.runtime.metrics.record_update()
         data.update(self.runtime.workflow())
         membership = event.chat_member or event.my_chat_member
@@ -207,17 +219,61 @@ class ScaleMiddleware(BaseMiddleware):
                 )
                 event = event.model_copy(update={field: replacement})
         message = event.message
+        query = event.callback_query
+        if (
+            query
+            and query.from_user.id in self.runtime.owner_tools.deleted
+            and not (query.data or "").startswith("erase:")
+        ):
+            from bot import texts
+
+            await self.runtime.sender.answer_callback_query(
+                self.runtime.game_hub.bot, query.id, text=texts.ERASE_DONE, show_alert=True
+            )
+            return None
+        answer = event.poll_answer
+        if answer and answer.user and answer.user.id in self.runtime.owner_tools.deleted:
+            return None
+        if (
+            message
+            and message.from_user
+            and message.from_user.id in self.runtime.owner_tools.deleted
+        ):
+            if (message.text or "").split(" ")[0].split("@")[0] == "/start":
+                self.runtime.owner_tools.deleted.discard(message.from_user.id)
+            elif (message.text or "").split(" ")[0] not in {
+                "/maxfiylik",
+                "/help",
+                "/malumotlarimni_ochir",
+            }:
+                return None
+            else:
+                return await handler(event, data)
         if message and message.from_user and not message.from_user.is_bot:
             user = message.from_user
             self.runtime.activity.observe(message.chat.id, user.id, user.first_name, user.username)
             data["has_pending_challenge"] = self.runtime.pending.contains(message.chat.id, user.id)
-            self.runtime.daily.observe(message)
+            if self.runtime.daily.observe(message):
+                # A qualifying award is a scoring action, not ordinary activity.
+                # Persist before acknowledging the update; the unique ledger ref deduplicates it.
+                try:
+                    await self.runtime.checkins.flush()
+                except Exception:
+                    self.runtime.daily.checked.get(message.chat.id, (None, set()))[1].discard(
+                        user.id
+                    )
+                    raise
         membership = event.chat_member or event.my_chat_member
         if membership:
             try:
                 await self.runtime.admins.refresh(membership.chat.id)
             except Exception:
                 logger.exception("Admin refresh failed for chat %s", membership.chat.id)
+        if (
+            event.chat_member
+            and event.chat_member.new_chat_member.user.id in self.runtime.owner_tools.deleted
+        ):
+            return None
         result = await handler(event, data)
         if event.chat_member:
             await self.runtime.mafia_game.membership_changed(

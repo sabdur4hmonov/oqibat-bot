@@ -539,6 +539,12 @@ class Mafia:
                 text = texts.mafia_end_dm(game, int(user))
 
                 async def send(user=user, message_id=message_id, text=text):
+                    from bot.db.models import GameSession
+
+                    async with self.sessions() as session:
+                        row = await session.get(GameSession, game.id)
+                        if row is None or row.state.get("erased"):
+                            return None
                     if message_id:
                         return await self.hub.bot.edit_message_text(
                             text, chat_id=int(user), message_id=message_id

@@ -56,13 +56,15 @@ async def merge_collisions(session, old_id: int, new_id: int) -> None:
             elif model is ContentUsage:
                 destination.used_at = max(source.used_at, destination.used_at)
             else:
-                rank = {"failed": 0, "reserved": 1, "sent": 2}
+                rank = {"failed": 0, "reserved": 1, "skipped": 2, "sent": 3}
                 if rank.get(source.status, 0) > rank.get(destination.status, 0):
                     for field in (
                         "status",
                         "message_id",
                         "origin_chat_id",
                         "posted_at",
+                        "claimed_at",
+                        "sent_at",
                         "content_key",
                     ):
                         setattr(destination, field, getattr(source, field))

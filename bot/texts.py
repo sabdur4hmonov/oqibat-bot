@@ -610,6 +610,48 @@ def weekly_summary(week, data, instagram_handle, *, compact=False):
     )
 
 
+OWNER_STATS_DESCRIPTION = "Bot egasi uchun holat"
+PRIVACY_DESCRIPTION = "Ma’lumotlar maxfiyligi"
+ERASE_DESCRIPTION = "Ma’lumotlarimni o‘chirish"
+PRIVACY = (
+    "🔐 <b>Maxfiylik</b>\n"
+    "Telegram ID, ism va username; guruh sozlamalari, qo‘shilish roziligi, oxirgi faollik, "
+    "vazifa/o‘yin natijalari va ballar saqlanadi. Ular o‘yinlar, reyting va vazifalar uchun kerak. "
+    "Oddiy yozishmalar, surat, ovoz yoki video fayllari saqlanmaydi. "
+    "Faol o‘yin holati tanlangan javoblar yoki ismlarni saqlashi mumkin.\n"
+    "Rozilikdan /chiqish bilan chiqing. Shaxsiy chatda /malumotlarimni_ochir orqali "
+    "ma’lumotlaringizni tasdiqlab o‘chiring. Avval yuborilgan Telegram xabarlari va "
+    "operatorning tashqi zaxira nusxalari bu buyruq bilan o‘chmaydi."
+)
+OWNER_ONLY = "Bu buyruq faqat bot egasi uchun."
+ERASE_CONFIRM = "Ha, ma’lumotlarimni o‘chiring"
+ERASED_NAME = "O‘chirilgan ishtirokchi"
+ERASE_WARNING = (
+    "Ballar, vazifalar, guruhlardagi qatnashish va o‘yinlardagi shaxsiy izlaringiz o‘chadi. "
+    "Bog‘liq faol o‘yinlar tugaydi; umumiy o‘yin yozuvlari shaxssizlanadi. "
+    "Qaytarib bo‘lmaydi. Tugma 5 daqiqa amal qiladi. Telegramdagi eski xabarlar va "
+    "tashqi zaxiralar alohida boshqariladi. Tasdiqlaysizmi?"
+)
+ERASE_WORKING = "So‘rov tekshirilmoqda."
+ERASE_EXPIRED = "Tasdiq eskirgan yoki sizga tegishli emas. Buyruqni qayta yuboring."
+ERASE_DONE = "Ma’lumotlaringiz o‘chirildi. Qayta foydalanish uchun /start yuboring."
+
+
+def owner_stats(data):
+    games = (
+        "\n".join(f"{escape(kind)}: {count}" for kind, count in sorted(data["games"].items()))
+        or NO_SCORES
+    )
+    return (
+        f"📊 <b>Bot holati</b>\nFaol guruhlar: {data['groups']}\n"
+        f"Rozilik bergan a’zolar: {data['opted']}\n"
+        f"Oxirgi 24 soatda faol: {data['active']}\n"
+        f"7 kunda boshlangan o‘yinlar:\n{games}\n"
+        f"Yuborish navbati: {data['queue']}\n"
+        f"Oxirgi tekshiruv: {data['tick'] * 1000:.1f} ms"
+    )
+
+
 def card_points(points):
     return f"{points} ball"
 

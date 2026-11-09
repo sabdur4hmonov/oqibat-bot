@@ -200,7 +200,7 @@ async def test_quiet_monday_deferral_and_next_sunday_are_two_different_weeks(wee
     assert weeks == [date(2026, 11, 2), date(2026, 11, 9)]
 
 
-async def test_failed_weekly_is_audited_backs_off_and_is_not_replayed(weekly_app, sessions):
+async def test_failed_weekly_is_audited_backs_off_and_recovers_once(weekly_app, sessions):
     feed, transport, runtime, due = weekly_app
     with patch.object(runtime.sender, "send", return_value=None):
         await runtime.scheduler.tick(due)
@@ -208,12 +208,14 @@ async def test_failed_weekly_is_audited_backs_off_and_is_not_replayed(weekly_app
     assert chat.next_weekly_at == due + timedelta(minutes=10)
     before = len(transport.methods)
     await runtime.scheduler.tick(chat.next_weekly_at)
-    assert len(transport.methods) == before
+    assert len(transport.methods) == before + 1
     async with sessions() as session:
         post = (
             await session.scalars(select(ScheduledPost).where(ScheduledPost.kind == "weekly"))
         ).one()
-        assert post.status == "failed"
+        assert post.status == "sent" and post.sent_at is not None
+    await runtime.recovery.tick(chat.next_weekly_at)
+    assert len(transport.methods) == before + 1
 
 
 async def test_all_group_help_commands_footer_and_private_help(weekly_app):

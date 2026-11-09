@@ -135,6 +135,18 @@ class Challenge(Base):
         Index("ix_challenges_status_deadline", "status", "deadline_at"),
         Index("ix_challenges_chat_resolved", "chat_id", "resolved_at"),
         Index(
+            "ix_challenges_assignment_recovery",
+            "assigned_announced_at",
+            "assigned_skipped_at",
+            "created_at",
+        ),
+        Index(
+            "ix_challenges_result_recovery",
+            "result_announced_at",
+            "result_skipped_at",
+            "resolved_at",
+        ),
+        Index(
             "uq_challenges_pending_chat",
             "chat_id",
             unique=True,
@@ -155,6 +167,11 @@ class Challenge(Base):
     deadline_at: Mapped[datetime] = mapped_column(UTCDateTime(), index=True)
     resolved_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     miss_announced_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    assigned_announced_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    result_announced_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    assigned_skipped_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    result_skipped_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    announce_retry_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
 
 
 class ContentUsage(Base):
@@ -175,6 +192,9 @@ class ScheduledPost(Base):
     origin_chat_id: Mapped[int | None] = mapped_column(BigInteger)
     posted_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
     content_key: Mapped[str | None] = mapped_column(String(128))
+    claimed_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utc_now, index=True)
+    sent_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
+    retry_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
 
 
 class GameSession(Timestamps, Base):
@@ -183,6 +203,7 @@ class GameSession(Timestamps, Base):
         CheckConstraint("game IN ('quiz', 'duel', 'wyr', 'krokodil', 'hyj', 'mafia')", name="game"),
         CheckConstraint("status IN ('lobby', 'running', 'finished', 'cancelled')", name="status"),
         Index("ix_game_sessions_status_deadline", "status", "phase_deadline_at"),
+        Index("ix_game_sessions_created_at", "created_at"),
         Index(
             "uq_game_sessions_active_chat",
             "chat_id",

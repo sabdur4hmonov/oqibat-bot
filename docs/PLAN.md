@@ -270,9 +270,10 @@ work cannot restore deleted data; explain that later new interaction can create 
 Do not claim Telegram messages or external backups were deleted.
 **Accept:** owner/private authorization and confirmation isolation tested; all advertised
 metrics correct; deletion/races tested; each risk resolved or explicitly justified.
-**Architecture gate:** resolving the existing crash-loss risk requires a durability decision
-before implementation. See `docs/PHASE10_ARCHITECTURE.md`. Do not silently redefine a
-documented memory-only guarantee as crash-safe or promise exactly-once Telegram delivery.
+**Approved Claude decision (2026-11-09):** keep the in-memory Sender, no general durable
+queue/journal. Follow section 10.11's bounded business-row announcement recovery and
+10-second graceful drain. The previous architecture gate is resolved; routine choices
+within this direction need no further stop. Never promise exactly-once Telegram delivery.
 
 ### Phase 11 — Seasons, streaks & achievements
 Use calendar months in each chat's timezone. `/top` shows current season and all-time;
@@ -386,3 +387,21 @@ All later phases must follow these rules; this section refines the scheduling ti
     duration. Start/stop these tasks with the application, flush activity on clean shutdown, and
     cancel queued work safely. Monitor queue growth before increasing workload; memory buffers and
     queued sends are not durable across a crash.
+
+11. **Approved crash contract/recovery:** losses of buffered last_seen/name updates,
+    low-priority daily/weekly sends queued at crash time and running-game effects are
+    accepted. Keep existing game restart cancellation/recovery policies; Mafia cancels.
+    Do not build a general persistent queue or incoming journal. Important challenge
+    assignment/result notifications use `assigned_announced_at` / `result_announced_at`
+    on their existing rows. Posts are claimed before sending and `sent_at` is set only
+    after Telegram confirmation. A bounded startup/tick pass retries unconfirmed events
+    younger than six hours; older/inapplicable events are marked skipped. Use original
+    dates/content and do not create another business row. An ambiguous lost API response
+    can cause a duplicate announcement, but never duplicate points. Points commit in the
+    state-change transaction, never in recovery/send code. Ordinary incoming activity
+    stays buffered; scoring actions can persist their own award as existing games/tasks do.
+    Stop accepting updates/new work on shutdown, flush activity/check-ins, allow accepted
+    Sender work up to ten seconds to drain, then cancel the remainder and exit. Recovery
+    never repeats moderation actions. Confirmed self-deletion removes live data and
+    invalidates pending affected chat effects; already delivered Telegram messages and
+    operator-managed backups are outside this command's deletion boundary.

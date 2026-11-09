@@ -98,10 +98,11 @@ def callback(data, user=42):
 
 
 @pytest.fixture
-async def group_app(sessions, settings):
+async def group_app(sessions, settings, fake_clock):
     transport = GroupTelegram()
     async with Bot(TOKEN, session=transport) as bot:
         async with ScaleRuntime(sessions, bot) as runtime:
+            runtime.sender.clock = fake_clock
             dispatcher = create_dispatcher()
             dispatcher.update.outer_middleware(ScaleMiddleware(runtime))
 

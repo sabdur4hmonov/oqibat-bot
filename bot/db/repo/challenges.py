@@ -193,7 +193,11 @@ class ChallengeRepository:
                 await session.execute(
                     update(Challenge)
                     .where(Challenge.id == challenge_id, Challenge.status == "pending")
-                    .values(message_id=message_id, origin_chat_id=origin_chat_id or chat_id)
+                    .values(
+                        message_id=message_id,
+                        origin_chat_id=origin_chat_id or chat_id,
+                        assigned_announced_at=utc_now(),
+                    )
                 )
             if challenge_id in self.pending.message_ids:
                 self.pending.message_ids[challenge_id] = (

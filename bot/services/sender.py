@@ -93,6 +93,7 @@ class _Item:
     retry_scope: Literal["chat", "global"] = field(compare=False, default="global")
     attempts: int = field(compare=False, default=0)
     migrations: int = field(compare=False, default=0)
+    generation: int = field(compare=False, default=0)
 
 
 class Sender:
@@ -108,19 +109,23 @@ class Sender:
         self.limiter = RateLimiter()
         self.on_forbidden = on_forbidden
         self._queue: list[_Item] = []
+        self._delayed: list[tuple[float, int, _Item]] = []
         self._sequence = itertools.count()
         self._wake = asyncio.Event()
         self._worker: asyncio.Task | None = None
         self._active: set[asyncio.Task] = set()
         self._futures: set[asyncio.Future] = set()
         self._closed = False
+        self._accepting = True
+        self.generations = {}
+        self._active_items = {}
         self.aliases = {}
         self.resolve_chat = lambda chat_id: self.aliases.get(chat_id, chat_id)
         self.on_migrate = None
 
     @property
     def queue_length(self) -> int:
-        return len(self._queue)
+        return len(self._queue) + len(self._delayed)
 
     async def send(
         self,
@@ -130,16 +135,24 @@ class Sender:
         priority: Priority = Priority.GAME,
         retry_scope: Literal["chat", "global"] = "global",
     ) -> T | None:
-        if self._closed or len(self._queue) >= 20_000:
+        if not self._accepting or self._closed or self.queue_length >= 20_000:
             logger.warning("Outbound queue closed or full; operation rejected")
             return None
         future = asyncio.get_running_loop().create_future()
         self._futures.add(future)
         future.add_done_callback(self._futures.discard)
         self._enqueue(
-            _Item(priority, next(self._sequence), chat_id, operation, future, retry_scope)
+            _Item(
+                priority,
+                next(self._sequence),
+                chat_id,
+                operation,
+                future,
+                retry_scope,
+                generation=self.generations.get(chat_id, 0),
+            )
         )
-        return await future
+        return await asyncio.shield(future)
 
     def _enqueue(self, item: _Item) -> None:
         heapq.heappush(self._queue, item)
@@ -166,7 +179,10 @@ class Sender:
         global_ready = self.limiter.ready_at(None, now)
         if global_ready > now:
             return None, global_ready - now
-        skipped = []
+        while self._delayed and self._delayed[0][0] <= now:
+            _, _, ready_item = heapq.heappop(self._delayed)
+            if not ready_item.future.done():
+                heapq.heappush(self._queue, ready_item)
         earliest = float("inf")
         selected = None
         while self._queue:
@@ -179,28 +195,30 @@ class Sender:
                 selected = item
                 break
             earliest = min(earliest, ready)
-            skipped.append(item)
-        for item in skipped:
-            heapq.heappush(self._queue, item)
+            heapq.heappush(self._delayed, (ready, item.sequence, item))
+        if self._delayed:
+            earliest = min(earliest, self._delayed[0][0])
         return selected, max(0, earliest - now)
 
     async def _run(self) -> None:
-        while self._queue or self._active:
-            if not self._queue or len(self._active) >= 25:
+        while self._queue or self._delayed or self._active:
+            if (not self._queue and not self._delayed) or len(self._active) >= 25:
                 await self._wait(None)
                 continue
             item, delay = self._take_ready()
             if item is None:
-                if self._queue:
+                if self._queue or self._delayed:
                     await self._wait(delay)
                 continue
             self.limiter.record(item.chat_id, self.clock.now())
             task = asyncio.create_task(self._execute(item))
+            self._active_items[task] = item
             self._active.add(task)
             task.add_done_callback(self._completed)
             await asyncio.sleep(0)
 
     def _completed(self, task: asyncio.Task) -> None:
+        self._active_items.pop(task, None)
         self._active.discard(task)
         self._wake.set()
 
@@ -217,7 +235,8 @@ class Sender:
     async def _execute(self, item: _Item) -> None:
         result = None
         try:
-            result = await item.operation()
+            if item.generation == self.generations.get(item.chat_id, 0):
+                result = await item.operation()
         except TelegramMigrateToChat as error:
             old_id, new_id = item.chat_id, error.migrate_to_chat_id
             logger.info("TelegramMigrateToChat: %s -> %s", old_id, new_id)
@@ -258,7 +277,8 @@ class Sender:
         except TelegramForbiddenError:
             await self._forbidden(item.chat_id)
         except asyncio.CancelledError:
-            item.future.cancel()
+            if not item.future.done():
+                item.future.cancel()
             return
         except Exception:
             logger.exception("Telegram operation failed for chat %s", item.chat_id)
@@ -280,6 +300,32 @@ class Sender:
                 return None
         return None
 
+    def discard_chats(self, chats):
+        """Invalidate pending effects during confirmed self-deletion."""
+        for chat in chats:
+            self.generations[chat] = self.generations.get(chat, 0) + 1
+        for item in [*self._queue, *(item for _, _, item in self._delayed)]:
+            if item.chat_id in chats and not item.future.done():
+                item.future.set_result(None)
+        for task, item in tuple(self._active_items.items()):
+            if item.chat_id in chats:
+                if not item.future.done():
+                    item.future.set_result(None)
+                task.cancel()
+        self._delayed = [entry for entry in self._delayed if not entry[2].future.done()]
+        heapq.heapify(self._delayed)
+        self._wake.set()
+
+    async def drain(self, seconds=10) -> None:
+        """Stop accepting new sends and allow accepted work a bounded grace period."""
+        self._accepting = False
+        try:
+            async with asyncio.timeout(seconds):
+                if self._worker:
+                    await asyncio.shield(self._worker)
+        except TimeoutError:
+            logger.warning("Outbound drain deadline reached")
+
     async def close(self) -> None:
         self._closed = True
         for future in list(self._futures):
@@ -295,3 +341,6 @@ class Sender:
         for item in self._queue:
             item.future.cancel()
         self._queue.clear()
+        for _, _, item in self._delayed:
+            item.future.cancel()
+        self._delayed.clear()

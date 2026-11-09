@@ -95,6 +95,7 @@ class Weekly:
         self.cards = None
 
     async def post(self, chat, now):
+        generation = self.sender.generations.get(chat.id, 0)
         await self.checkins.flush()
         async with self.locks.hold(chat.id) as chat_id:
             async with self.sessions.begin() as session:
@@ -115,6 +116,7 @@ class Weekly:
                         kind="weekly",
                         local_date=week,
                         status="reserved",
+                        claimed_at=now,
                     )
                     .on_conflict_do_nothing(
                         index_elements=[
@@ -130,6 +132,8 @@ class Weekly:
                     session, chat_id, since, min(until, now + timedelta(microseconds=1))
                 )
         payload = await self.cards.weekly(week, data) if self.cards else None
+        if generation != self.sender.generations.get(chat.id, 0):
+            return True
         if payload is not None:
             sent = await self.sender.send(
                 chat_id,
@@ -162,6 +166,8 @@ class Weekly:
                     )
                     .values(
                         status="sent" if sent is not None else "failed",
+                        sent_at=sent.date if sent is not None else None,
+                        retry_at=None if sent is not None else now + timedelta(minutes=10),
                         posted_at=sent.date if sent is not None else None,
                         message_id=sent.message_id if sent is not None else None,
                         origin_chat_id=getattr(getattr(sent, "chat", None), "id", chat_id),

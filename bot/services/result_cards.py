@@ -49,13 +49,22 @@ class ResultCards:
         if payload is None:
             await self.repo.record_result_card(chat_id, game.id, None)
             return
-        sent = await self.sender.send(
-            chat_id,
-            lambda: self.bot.send_photo(
+        from bot.db.models import GameSession
+
+        async def upload():
+            async with self.repo.sessions() as session:
+                row = await session.get(GameSession, game.id)
+                if row is None or row.state.get("erased"):
+                    return None
+            return await self.bot.send_photo(
                 chat_id,
                 BufferedInputFile(payload, filename="oqibat-result.png"),
                 caption=texts.game_card_caption(game),
-            ),
+            )
+
+        sent = await self.sender.send(
+            chat_id,
+            upload,
             priority=Priority.GAME,
         )
         await self.repo.record_result_card(chat_id, game.id, sent)

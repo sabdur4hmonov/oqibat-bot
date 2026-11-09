@@ -110,7 +110,8 @@ async def test_migration_moves_every_table_and_caches_and_survives_restart(group
         }
     )
     await feed(update)
-    assert (await runtime.points.stats(NEW, 1))[0] == 30
+    # The qualifying daily check-in is now durable before acknowledging this update.
+    assert (await runtime.points.stats(NEW, 1))[0] == 31
 
 
 async def test_migration_rolls_back_all_rows_and_aliases_on_failure(group_app, sessions):

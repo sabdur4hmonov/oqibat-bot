@@ -7,6 +7,25 @@ member consent and admin settings; Phase 2 adds daily posts, content rotation, q
 and daily check-in points. Phase 3 adds challenges, point ledgers, penalties and leaderboards.
 Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls. Phase 5 adds Krokodil; Phase 6 adds Haqiqat yoki jasorat. Phase 7 adds Mafia; Phase 8 adds weekly summaries and full help. Phase 9 adds shareable result cards and deployment examples.
 
+## Owner tools and privacy
+
+Phase 10 adds `/maxfiylik` (stored-data explanation), private
+`/malumotlarimni_ochir` (five-minute requester-bound confirmation) and private
+OWNER_ID-only `/stats`. Stats count unique consenting users, unique active users over
+the last 24 hours and games started over seven days, plus queue/tick metrics.
+Confirmed deletion removes the user's live rows, anonymizes linked shared game records and clears cached
+references; it cancels affected pending chat effects. Delivered Telegram messages and
+operator backups are not removed. Start again with `/start` to deliberately create new data.
+The running process retains a temporary deletion guard to prevent stale work recreating data.
+
+The approved crash contract keeps the Sender in memory. Recent challenge assignment/result
+notifications and unconfirmed posts recover from their existing rows for six hours; old
+ones are skipped. An unannounced old assignment cancels without penalty. Moderation is
+never replayed by recovery. Telegram can show a repeated message after a lost confirmation;
+points remain transactionally idempotent. Buffered activity and queued low-priority work
+can be lost on a crash. Clean shutdown rejects new work, flushes buffers, then allows
+accepted queued sends ten seconds to finish. No general durable queue/journal is used.
+
 ## Games
 
 Participants must opt in with `/qoshilish` and the bot must be a group admin.
@@ -171,7 +190,8 @@ overhead and does not prove end-to-end Telegram or production server capacity.
   known chat-specific limit. Use `sender.answer_callback_query(bot, query_id, ...)`
   for immediate callback acknowledgements/popups; it bypasses the message queue.
   Forbidden sends clear private reachability or group activity; other failures log and
-  return `None`. Clean shutdown cancels pending sends and propagates cancellation.
+  return `None`. Clean shutdown first drains accepted sends for up to ten seconds,
+  then cancels leftovers and propagates cancellation.
 - `ActivityBuffer.observe` coalesces names and last-seen timestamps entirely in memory.
   Flush runs every 60 seconds and on clean shutdown, in one transaction with one upsert
   per affected table per 100-row chunk. Two tables require two statements, rather than
@@ -215,20 +235,20 @@ overhead and does not prove end-to-end Telegram or production server capacity.
 
 Daily delivery reserves a unique `(chat_id, kind, local_date)` row before sending and
 records `sent`/`failed`, Telegram message ID, post time and content key afterward.
-Restarting never automatically replays a reserved/failed row: Telegram has no send
-idempotency key, so a lost response cannot establish whether delivery happened. This
-chooses duplicate prevention over retrying an ambiguous delivery. Review reserved/failed
-rows and logs manually; a crash between reservation and send can leave that day's post
-undelivered. Content is not repeated in a group until all current items have been used;
+Unconfirmed reserved/failed rows are retried by the bounded recovery pass for six hours;
+older ones are marked skipped. A lost Telegram response can cause a duplicate message,
+but the original business row is retained and sending never awards points again.
+Content is not repeated in a group until all current items have been used;
 then the oldest-used item is eligible again. Empty banks skip cleanly. Restart to reload
 edited UTF-8 JSON banks.
 
 An opted-in active member's first message after the daily post earns +1 for that local
-date. Normal messages check cached post/consent data only; rewards are coalesced and
-flushed to the point ledger every 60 seconds and on clean shutdown. A unique event
-reference prevents a duplicate award after restart. A crash can lose an unflushed
-check-in; the member's next message that day can qualify again. Future stats commands
-flush queued check-ins before reading totals. Replying in the same second as the post
+date. Ordinary messages check cached post/consent data only. A first qualifying
+check-in is a scoring action and flushes its award before the update is acknowledged;
+unique event references prevent a duplicate award after restart. Buffered observations
+made while the daily send itself awaits confirmation are reconciled after confirmation;
+until then there is no confirmed daily-post boundary. Periodic/shutdown flush and stats
+commands also flush pending check-ins. Replying in the same second as the post
 counts when the message ID is later.
 
 ## Challenges and points
@@ -402,9 +422,9 @@ writes or an additional activity counter.
 Quiet hours defer delivery. Monday catch-up keeps the original Sunday week;
 a later Sunday's summary belongs to the next week. A migrated chat keeps that week
 identity even if its hash offset changes. Reservations use the existing post ledger
-with the local Monday date as the weekly key. As with daily posts, ambiguous
-reserved/failed sends are not replayed automatically; a day's/week's delivery may
-be missing after a crash, while duplicate prevention is preserved. Large outages
+with the local Monday date as the weekly key. As with daily posts, unconfirmed sends
+are retried only within the six-hour recovery window; a lost confirmation can cause
+a repeated message, but never repeated points. Older deliveries are skipped. Large outages
 produce one report for the stored due week, not a burst for every missed week.
 Chat/date indexes bound point and resolved-task reporting queries. All scheduling
 still uses the indexed 500-row batches, never a scan of chats.

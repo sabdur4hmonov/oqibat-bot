@@ -1,6 +1,9 @@
 # Phase 10 durability decision — 2026-11-09
 
-Status: proposal only; no runtime, schema or dependency changes implemented.
+Status: historical proposal, superseded by the approved Claude decision on 2026-11-09.
+Do NOT implement the general outbox/journal below. PLAN section 10.11 now authorizes
+existing-row announcement flags, a six-hour recovery window and a ten-second drain.
+The architecture gate is resolved. The original proposal is retained only as history.
 
 The owner explicitly asked to stop if an architecture change is needed. Phase 10's
 instruction to fix code-fixable top-five risks reaches the final summary's risk 3:

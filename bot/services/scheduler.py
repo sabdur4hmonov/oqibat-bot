@@ -37,6 +37,7 @@ class Scheduler:
         self.sessions = sessions
         self.hooks = hooks or {}
         self.last_tick_duration = 0.0
+        self.recovery = None
         self._lock = asyncio.Lock()
         self._deadline_lock = asyncio.Lock()
         self.last_deadline_tick_duration = 0.0
@@ -130,6 +131,8 @@ class Scheduler:
                             )
                             tasks[kind] = group.create_task(operation(kind, now))
                 counts.update({kind: task.result() for kind, task in tasks.items()})
+                if self.recovery:
+                    await self.recovery.tick(now)
                 return counts
             finally:
                 self.last_tick_duration = time.perf_counter() - started

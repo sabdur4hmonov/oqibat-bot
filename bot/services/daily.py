@@ -81,6 +81,7 @@ class DailyService:
                     local_date=date,
                     content_key=content["key"],
                     status="reserved",
+                    claimed_at=now,
                 )
                 result = await session.execute(
                     statement.on_conflict_do_nothing(
@@ -160,6 +161,8 @@ class DailyService:
                     )
                     .values(
                         status="sent" if sent is not None else "failed",
+                        sent_at=posted_at,
+                        retry_at=None if sent is not None else now + timedelta(minutes=10),
                         posted_at=posted_at,
                         origin_chat_id=origin,
                         message_id=sent.message_id if sent is not None else None,
@@ -203,3 +206,5 @@ class DailyService:
         if message.from_user.id not in users:
             users.add(message.from_user.id)
             self.checkins.add(chat_id, message.from_user.id, post[0])
+            return True
+        return False
