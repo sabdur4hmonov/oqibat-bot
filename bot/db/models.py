@@ -86,6 +86,7 @@ class Chat(Timestamps, Base):
     next_daily_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
     next_challenge_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
     next_weekly_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
+    next_season_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
     migrated_to_chat_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
     mafia_delete_dead_messages: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default=text("false")
@@ -183,7 +184,7 @@ class ContentUsage(Base):
 
 class ScheduledPost(Base):
     __tablename__ = "scheduled_posts"
-    __table_args__ = (CheckConstraint("kind IN ('daily', 'weekly')", name="kind"),)
+    __table_args__ = (CheckConstraint("kind IN ('daily', 'weekly', 'season')", name="kind"),)
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"), primary_key=True)
     kind: Mapped[str] = mapped_column(String(10), primary_key=True)
     local_date: Mapped[date] = mapped_column(Date, primary_key=True)
@@ -195,6 +196,17 @@ class ScheduledPost(Base):
     claimed_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utc_now, index=True)
     sent_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
     retry_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
+
+
+class Achievement(Base):
+    __tablename__ = "achievements"
+    __table_args__ = (Index("ix_achievements_unclaimed", "claimed_at", "unlocked_at"),)
+    chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True, index=True)
+    key: Mapped[str] = mapped_column(String(32), primary_key=True)
+    unlocked_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=utc_now)
+    claimed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    announced_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
 
 class GameSession(Timestamps, Base):

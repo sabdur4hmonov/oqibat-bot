@@ -6,6 +6,7 @@ from sqlalchemy import and_, select, update
 from sqlalchemy.orm import aliased
 
 from bot.db.models import (
+    Achievement,
     Challenge,
     Chat,
     ContentUsage,
@@ -16,7 +17,15 @@ from bot.db.models import (
 )
 from bot.utils.time import utc_now
 
-CHILDREN = (Membership, PointEvent, Challenge, ContentUsage, ScheduledPost, GameSession)
+CHILDREN = (
+    Membership,
+    PointEvent,
+    Challenge,
+    ContentUsage,
+    ScheduledPost,
+    GameSession,
+    Achievement,
+)
 
 
 class MigrationConflict(ValueError):
@@ -26,6 +35,7 @@ class MigrationConflict(ValueError):
 async def merge_collisions(session, old_id: int, new_id: int) -> None:
     for model, keys in (
         (Membership, ("user_id",)),
+        (Achievement, ("user_id", "key")),
         (ContentUsage, ("content_key",)),
         (ScheduledPost, ("kind", "local_date")),
     ):
@@ -53,6 +63,15 @@ async def merge_collisions(session, old_id: int, new_id: int) -> None:
                     setattr(destination, field, max(values) if values else None)
                 if not destination.opted_in:
                     destination.opted_in_at = None
+            elif model is Achievement:
+                destination.unlocked_at = min(source.unlocked_at, destination.unlocked_at)
+                for field in ("claimed_at", "announced_at"):
+                    values = [
+                        value
+                        for value in (getattr(source, field), getattr(destination, field))
+                        if value
+                    ]
+                    setattr(destination, field, min(values) if values else None)
             elif model is ContentUsage:
                 destination.used_at = max(source.used_at, destination.used_at)
             else:
@@ -191,6 +210,7 @@ class ChatMigrationRepository:
                 destination.migrated_to_chat_id = None
                 old.is_active, old.bot_is_admin = False, False
                 old.next_daily_at = old.next_challenge_at = old.next_weekly_at = None
+                old.next_season_at = None
                 old.migrated_to_chat_id = new_id
                 old.updated_at = utc_now()
                 await session.flush()

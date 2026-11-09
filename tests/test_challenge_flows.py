@@ -122,7 +122,7 @@ async def test_men_and_top_show_ledger_totals_with_escaped_names(challenge_app):
     assert "Jami: 15 ball" in transport.methods[-1].text
     assert "&lt;Sinov&gt;" in transport.methods[-1].text
     await feed(command_update("/top", 111))
-    assert "Shu hafta" in transport.methods[-1].text and "15 ball" in transport.methods[-1].text
+    assert "Joriy mavsum" in transport.methods[-1].text and "15 ball" in transport.methods[-1].text
 
 
 async def test_assignment_command_cannot_complete_its_own_text_task(challenge_app, sessions):

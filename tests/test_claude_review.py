@@ -13,6 +13,7 @@ from test_group_flows import group_app as group_app
 
 from bot import texts
 from bot.db.models import (
+    Achievement,
     Challenge,
     Chat,
     ContentUsage,
@@ -34,6 +35,7 @@ async def seed(runtime, sessions):
     async with sessions.begin() as session:
         session.add_all(
             [
+                Achievement(chat_id=-1, user_id=1, key="first_task"),
                 PointEvent(chat_id=-1, user_id=1, delta=15, reason="test", ref_id="a"),
                 ContentUsage(chat_id=-1, content_key="sample", used_at=now),
                 ScheduledPost(

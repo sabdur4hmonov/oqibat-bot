@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 10 implemented and locally verified; proceeding sequentially to Phase 11. The earlier architecture gate is resolved.
+- Current phase: Phase 11 implemented and locally verified; proceeding sequentially to Phase 12 extended Mafia roles. The earlier architecture gate is resolved.
 - Last updated: 2026-11-09 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -404,3 +404,21 @@
   3. Sinov a’zosi ball olib, o‘yinda qatnashsin. Shaxsiy chatda `/malumotlarimni_ochir` yuborib tasdiqlasin. Ballari/roziligi/ismli yozuvlari tozalansin, bog‘liq o‘yinlar tugasin; boshqalarning ballari saqlansin.
   4. Eski qo‘shilish tugmasi va xabarlar ma’lumotni qaytarmasin. `/start`, keyin yangi rozilik bilan boshlasa yangi ma’lumot yaratilsin; eski ballari qaytmasin.
   5. `pytest tests/test_hardening.py` bilan avariya/tiklashni tekshiring: olti soat ichida xabar tiklanadi, ball ikki marta yozilmaydi, eskisi yuborilmaydi. Ctrl+C da navbat ko‘pi bilan o‘n soniya kutilsin. Jonli tekshiruvda faqat sinov botidan foydalaning.
+
+
+### Phase 11 — Seasons, streaks & achievements — 2026-11-09
+- Status: implementation/local verification complete.
+- Commit(s): this entry accompanies `phase-11: monthly seasons streak bonuses and achievements`; Phase 10 pushed as `1715674`.
+- What was built: calendar-month UTC bounds derived from chat timezone; `/top` current season plus all-time without any ledger reset; indexed `next_season_at`, bounded scheduling, claimed-once previous-month champion cards (Pillow/text fallback), stable first-day 09:00–09:15 spreading, quiet hours and six-hour recovery. New migration `c111a5aa0011` initializes existing active/admin chats in 500-row keyset batches; runtime does not enumerate chats. Existing point-events `(chat_id, created_at)` index reused, not duplicated.
+- Streaks/achievements: pure streak calculation; +3 at exactly day 7 and +10 at exactly day 30 of each consecutive local-date sequence. Bonus/base/unlock are in one transaction; duplicate inserts do not invoke milestones again. Bonus uses the base check-in reference so weekly activity is not inflated. Six per-chat/user code-defined achievements (first task/video, ten Krokodil guesses, first Mafia win, streak 7/30), `/yutuqlar`, on-demand historical reconciliation without retroactive points, and short claimed/batched BULK announcements. Added privacy deletion and supergroup migration/merge support for unlocks. Check-in flush resolves aliases and holds one chat lock at a time, protecting state/ledger from migration/erasure races.
+- Files added/changed: achievements and season services, models/new migration, point/check-in integration, bounded scheduler/runtime/recovery integration, group stats command/texts, privacy and migration repositories, README/PLAN and tests. No new dependency; existing Pillow/font reused.
+- Tests: `pytest -q`: **333 passed, 1 skipped** (optional local PostgreSQL test); `ruff check .`: **all checks passed**; fresh SQLite Alembic upgrade/check: passed, no drift. Targeted season/streak/achievement suite **10 passed**. Covers month/year/DST UTC boundaries, invalid naive time, sequence gaps/duplicates/month crossing, exact/repeated bonuses, rollback of base+bonus+unlock, task/video/Krokodil/Mafia milestones, batched priority/deduplication, real PNG season delivery once, retained ledger, monthly/all-time filtering and erasure. Updated explicit schema/table and migration fixtures for the new table.
+- Acceptance criteria: offline implementation and targeted flows pass; live first-day Telegram delivery and multi-day user testing remain unverified. No real credentials/server needed for implementation.
+- Deviations/choices: thresholds occur once per unbroken sequence (not every 7/30 days); season boundaries do not reset streaks. Only new qualifying check-ins earn bonuses; `/yutuqlar` may discover old achievements but never rewrites historical awards. Achievement announcements are low-priority claimed-before-send batches and may be lost, while permanent unlocks remain. Shared anonymous game tombstones from Phase 10 remain for ledger-reference safety; explicit user erasure is separate from monthly non-reset semantics. Long outages do not replay every missed month.
+- Open questions / known limits: no blocker. Real Telegram/monthly scheduling, production PostgreSQL/load and owner-authored content remain external acceptance work. No claimed 10,000-group throughput.
+- Manual test steps (Uzbek, simple):
+  1. Migratsiyani bajaring. Guruhda `/top` yuboring: “Joriy mavsum” shu mahalliy oyning ballari, “Barcha vaqt” barcha ballarni ko‘rsatsin. Oy almashsa eski ballar o‘chmasin.
+  2. `/yutuqlar` yuboring. Davra videosini bajaring: ilk vazifa va ilk video ochilsin. O‘nta Krokodil topishi yoki Mafia g‘alabasini tekshiring; xabarlar bitta qisqa to‘plamda kelsin.
+  3. Har kuni kunlik xabardan keyin qatnashing. 7-kuni odatdagi +1 bilan yana +3, 30-kuni yana +10 bo‘lsin. Bir kun qoldirilsa seriya qayta boshlansin, oy almashishi esa uzmasin. Tez tekshiruv uchun `pytest tests/test_seasons_achievements.py` ishlating.
+  4. Oyning 1-kuni 09:00–09:15 yoki tinch vaqt tugagach oldingi oy chempionlari rasmi kelsin. Qayta yoqilganda yana mukofot/ball yozilmasin; rasm o‘chirilgan sozlamada matn ishlasin.
+  5. Tasdiqli o‘chirish yutuqlarni ham tozalasin; guruh superguruhga o‘tganda ular saqlansin.

@@ -119,6 +119,8 @@ PENALTY_NAMES = {
     "kick": "Guruhdan chiqarish",
 }
 GROUP_COMMANDS = {
+    "maxfiylik": "Ma’lumotlar maxfiyligi",
+    "yutuqlar": "Mening yutuqlarim",
     "help": HELP_DESCRIPTION,
     "qoshilish": "O‘yinga qo‘shilish",
     "chiqish": "O‘yindan chiqish",
@@ -498,7 +500,7 @@ def leaderboard(weekly, overall) -> str:
             or NO_SCORES
         )
 
-    return f"🏆 <b>Shu hafta</b>\n{rows(weekly)}\n\n⭐ <b>Barcha vaqt</b>\n{rows(overall)}"
+    return f"🏆 <b>Joriy mavsum</b>\n{rows(weekly)}\n\n⭐ <b>Barcha vaqt</b>\n{rows(overall)}"
 
 
 SETTING_LABELS = {
@@ -579,6 +581,8 @@ def start_text(first_name: str, instagram_handle: str) -> str:
 def help_text(instagram_handle: str) -> str:
     return (
         "/start — bot bilan tanishish\n/help — yordam\n\n"
+        "/maxfiylik — ma’lumotlar haqida\n/malumotlarimni_ochir — shaxsiy chatda o‘chirish\n"
+        "/stats — faqat bot egasi uchun\n\n"
         "Botni guruhga administrator qilib qo‘shing. Guruh buyruqlari:\n\n"
         + group_help(instagram_handle)
     )
@@ -649,6 +653,50 @@ def owner_stats(data):
         f"7 kunda boshlangan o‘yinlar:\n{games}\n"
         f"Yuborish navbati: {data['queue']}\n"
         f"Oxirgi tekshiruv: {data['tick'] * 1000:.1f} ms"
+    )
+
+
+SEASON_TITLE = "Mavsum chempionlari"
+ACHIEVEMENTS = {
+    "first_task": "Ilk bajarilgan vazifa",
+    "first_video": "Ilk davra videosi",
+    "ten_krok": "10 ta Krokodil topish",
+    "first_mafia_win": "Ilk Mafia g‘alabasi",
+    "streak7": "7 kunlik qatnashish",
+    "streak30": "30 kunlik qatnashish",
+}
+
+
+def season_month(day):
+    return f"{day.year}-yil {day.month}-oy"
+
+
+def season_result(day, rows):
+    winners = (
+        "\n".join(
+            f"{index}. {mention(user, name[:32])} — {points} ball"
+            for index, (user, name, points) in enumerate(rows[:5], 1)
+        )
+        or NO_SCORES
+    )
+    return f"🏆 <b>{SEASON_TITLE}</b> — {season_month(day)}\n{winners}"
+
+
+def achievement_list(rows):
+    unlocked = {row.key for row in rows}
+    return "🏅 <b>Yutuqlarim</b>\n" + "\n".join(
+        ("✅ " if key in unlocked else "🔒 ") + label for key, label in ACHIEVEMENTS.items()
+    )
+
+
+def achievement_batch(items):
+    grouped = {}
+    for user, name, key in items:
+        if key in ACHIEVEMENTS:
+            grouped.setdefault((user, name), []).append(ACHIEVEMENTS[key])
+    return "🏅 <b>Yangi yutuqlar!</b>\n" + "\n".join(
+        f"{mention(user, name[:32])}: {', '.join(labels)}"
+        for (user, name), labels in grouped.items()
     )
 
 

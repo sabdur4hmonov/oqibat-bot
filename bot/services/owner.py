@@ -9,7 +9,7 @@ from datetime import timedelta
 from sqlalchemy import delete, func, select
 
 from bot import texts
-from bot.db.models import Challenge, Chat, GameSession, Membership, PointEvent, User
+from bot.db.models import Achievement, Challenge, Chat, GameSession, Membership, PointEvent, User
 from bot.utils.time import utc_now
 
 
@@ -171,6 +171,7 @@ class OwnerTools:
                             )
                         )
                     await session.execute(delete(Challenge).where(Challenge.user_id == user))
+                    await session.execute(delete(Achievement).where(Achievement.user_id == user))
                     await session.execute(delete(PointEvent).where(PointEvent.user_id == user))
                     await session.execute(delete(Membership).where(Membership.user_id == user))
                     await session.execute(delete(User).where(User.id == user))

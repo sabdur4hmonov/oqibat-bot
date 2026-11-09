@@ -42,7 +42,12 @@ async def record_event(
             ]
         )
     )
-    return result.rowcount == 1
+    if result.rowcount == 1:
+        from bot.services.achievements import on_event
+
+        await on_event(session, chat_id, user_id, delta, reason, ref_id)
+        return True
+    return False
 
 
 class Points:
@@ -78,7 +83,7 @@ class Points:
             )
             return points, counts.get("done", 0), counts.get("missed", 0)
 
-    async def top(self, chat_id: int, since=None):
+    async def top(self, chat_id: int, since=None, until=None):
         chat_id = self.locks.resolve(chat_id)
         query = (
             select(User.id, User.first_name, func.sum(PointEvent.delta).label("points"))
@@ -87,6 +92,8 @@ class Points:
         )
         if since is not None:
             query = query.where(PointEvent.created_at >= since)
+        if until is not None:
+            query = query.where(PointEvent.created_at < until)
         query = (
             query.group_by(User.id, User.first_name)
             .order_by(func.sum(PointEvent.delta).desc(), User.id)
@@ -97,8 +104,9 @@ class Points:
 
 
 class CheckinBuffer:
-    def __init__(self, sessions) -> None:
+    def __init__(self, sessions, locks=None) -> None:
         self.sessions = sessions
+        self.locks = locks or ChatLocks()
         self.pending: dict[tuple, dict] = {}
         self._lock = asyncio.Lock()
 
@@ -118,23 +126,38 @@ class CheckinBuffer:
             if not pending:
                 return
             try:
-                async with self.sessions.begin() as session:
-                    insert = (
-                        pg_insert if session.bind.dialect.name == "postgresql" else sqlite_insert
-                    )
-                    rows = list(pending.values())
-                    for start in range(0, len(rows), 100):
-                        statement = insert(PointEvent).values(rows[start : start + 100])
-                        await session.execute(
-                            statement.on_conflict_do_nothing(
-                                index_elements=[
-                                    PointEvent.chat_id,
-                                    PointEvent.user_id,
-                                    PointEvent.reason,
-                                    PointEvent.ref_id,
-                                ]
+                grouped = {}
+                for row in pending.values():
+                    grouped.setdefault(row["chat_id"], []).append(row)
+                for source, rows in grouped.items():
+                    async with self.locks.hold(source) as chat_id:
+                        async with self.sessions.begin() as session:
+                            insert = (
+                                pg_insert
+                                if session.bind.dialect.name == "postgresql"
+                                else sqlite_insert
                             )
-                        )
+                            rows = [{**row, "chat_id": chat_id} for row in rows]
+                            for start in range(0, len(rows), 100):
+                                statement = insert(PointEvent).values(rows[start : start + 100])
+                                result = await session.execute(
+                                    statement.on_conflict_do_nothing(
+                                        index_elements=[
+                                            PointEvent.chat_id,
+                                            PointEvent.user_id,
+                                            PointEvent.reason,
+                                            PointEvent.ref_id,
+                                        ]
+                                    ).returning(
+                                        PointEvent.chat_id, PointEvent.user_id, PointEvent.ref_id
+                                    )
+                                )
+                                from bot.services.achievements import checkin_milestones
+
+                                for row in result.all():
+                                    await checkin_milestones(
+                                        session, row.chat_id, row.user_id, row.ref_id
+                                    )
             except BaseException:
                 self.pending = pending | self.pending
                 raise

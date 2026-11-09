@@ -5,7 +5,31 @@ Python 3.12, aiogram 3, SQLAlchemy 2 async, Alembic. Phase 0 implements the foun
 and private `/start` and `/help`. Phase 0.5 adds shared scale services. Phase 1 implements group onboarding,
 member consent and admin settings; Phase 2 adds daily posts, content rotation, quiet hours
 and daily check-in points. Phase 3 adds challenges, point ledgers, penalties and leaderboards.
-Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls. Phase 5 adds Krokodil; Phase 6 adds Haqiqat yoki jasorat. Phase 7 adds Mafia; Phase 8 adds weekly summaries and full help. Phase 9 adds shareable result cards and deployment examples.
+Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls. Phase 5 adds Krokodil; Phase 6 adds Haqiqat yoki jasorat. Phase 7 adds Mafia; Phase 8 adds weekly summaries and full help. Phase 9 adds shareable result cards and deployment examples. Phase 10 adds recovery/owner/privacy tools; Phase 11 adds monthly seasons, streak bonuses and achievements.
+
+## Monthly seasons, streaks and achievements
+
+`/top` uses calendar months in the group's timezone, with all-time totals alongside.
+The ledger is never reset by a season change. On the first day, the previous month's
+top five post from local 09:00 with a stable 0–15 minute offset; quiet hours defer it.
+Cards honor `RESULT_CARDS_ENABLED` and fall back to text. Claims/recovery use the same
+six-hour policy as other posts. An outage produces one report for the stored due month,
+not a burst for every missed month. Existing chats are initialized in bounded migration
+batches; runtime only selects indexed `next_season_at` rows that are due.
+
+Daily check-ins award +3 on day 7 and +10 on day 30 of each unbroken sequence, in
+addition to that day's +1. A missed calendar day resets the sequence; a month change
+does not. Bonuses are not retroactively added to old ledger entries and are not repeated
+at days 14/60 of the same sequence. Their daily reference keeps scored activity counted
+once. Base points, bonus and unlock commit atomically; duplicate updates cannot repeat them.
+
+Group `/yutuqlar` lists six milestones: first completed task, first round video, ten
+Krokodil guesses, first Mafia game win, seven-day streak and thirty-day streak.
+Unlocks add no extra points. The command can reconcile already-earned historical
+milestones without rewriting the ledger. Short announcements are grouped at BULK
+priority (up to ten unlocks per chat/message); claims prevent repeated batches.
+Announcement loss is accepted on a crash; the unlock remains visible in `/yutuqlar`.
+Self-deletion removes these records, and supergroup migration preserves/merges them.
 
 ## Owner tools and privacy
 
@@ -276,7 +300,7 @@ with `only_if_banned=True`; the ban also expires automatically after five minute
 a failsafe if unban delivery fails. No moderation runs without configured owner ID.
 
 `/men` shows the user's ledger sum and completed/missed task counts. `/top` shows
-the local Monday-based week and all-time top ten. Both flush queued check-ins first.
+the current calendar-month season in the chat timezone and all-time top ten. Both flush queued check-ins first.
 Balances are always SUM over the immutable event ledger; they are never mutable counters.
 
 ## Optional production webhook

@@ -19,6 +19,7 @@ CHAT_JOBS = {
     "daily": Chat.next_daily_at,
     "challenge": Chat.next_challenge_at,
     "weekly": Chat.next_weekly_at,
+    "season": Chat.next_season_at,
 }
 
 
@@ -38,6 +39,7 @@ class Scheduler:
         self.hooks = hooks or {}
         self.last_tick_duration = 0.0
         self.recovery = None
+        self.maintenance = []
         self._lock = asyncio.Lock()
         self._deadline_lock = asyncio.Lock()
         self.last_deadline_tick_duration = 0.0
@@ -124,7 +126,7 @@ class Scheduler:
                 tasks = {}
                 # Bulk work has its own loop/lock, entirely separate from deadline progression.
                 async with asyncio.TaskGroup() as group:
-                    for kind in ("challenge", "daily", "weekly"):
+                    for kind in ("challenge", "daily", "weekly", "season"):
                         if kind in self.hooks:
                             operation = (
                                 self._chat_batch if kind in CHAT_JOBS else self._deadline_batch
@@ -133,6 +135,8 @@ class Scheduler:
                 counts.update({kind: task.result() for kind, task in tasks.items()})
                 if self.recovery:
                     await self.recovery.tick(now)
+                for operation in self.maintenance:
+                    await operation(now)
                 return counts
             finally:
                 self.last_tick_duration = time.perf_counter() - started

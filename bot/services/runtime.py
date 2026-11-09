@@ -8,6 +8,7 @@ from aiogram import BaseMiddleware
 from bot.db.repo.challenges import ChallengeRepository
 from bot.db.repo.games import GameSessionRepository
 from bot.db.repo.groups import GroupRepository
+from bot.services.achievements import Achievements
 from bot.services.activity import ActivityBuffer
 from bot.services.admin_cache import AdminCache
 from bot.services.challenges import ChallengeService
@@ -30,6 +31,7 @@ from bot.services.points import CheckinBuffer, Points
 from bot.services.recovery import Recovery
 from bot.services.result_cards import ResultCards
 from bot.services.scheduler import Scheduler
+from bot.services.seasons import Seasons
 from bot.services.sender import Sender
 from bot.services.settings import SettingPrompts
 from bot.services.truth_dare import TruthDare
@@ -43,8 +45,8 @@ class ScaleRuntime:
         self.activity = ActivityBuffer(sessions)
         self.pending = PendingChallenges()
         self.participants = Participants()
-        self.checkins = CheckinBuffer(sessions)
         self.locks = ChatLocks()
+        self.checkins = CheckinBuffer(sessions, self.locks)
         self.points = Points(sessions, self.locks)
         self.admins = AdminCache(bot)
         self.metrics = Metrics()
@@ -108,6 +110,10 @@ class ScaleRuntime:
         self.sessions = sessions
         self.recovery = Recovery(self, bot, settings)
         self.owner_tools = OwnerTools(self, getattr(settings, "owner_id", None))
+        self.achievements = Achievements(self)
+        self.seasons = Seasons(self)
+        self.scheduler.hooks["season"] = self.seasons.post
+        self.scheduler.maintenance.append(self.achievements.announce)
         self.challenge_service.recovery = self.recovery
         self.scheduler.recovery = self.recovery
         self.stopping = False
@@ -154,6 +160,7 @@ class ScaleRuntime:
     def workflow(self) -> dict:
         return {
             "owner_tools": self.owner_tools,
+            "achievements": self.achievements,
             "sender": self.sender,
             "activity": self.activity,
             "pending": self.pending,

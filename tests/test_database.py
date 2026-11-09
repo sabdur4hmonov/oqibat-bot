@@ -28,6 +28,7 @@ async def test_all_tables_exist(database_url):
         async with engine.connect() as conn:
             tables = await conn.run_sync(lambda c: set(inspect(c).get_table_names()))
         assert tables == {
+            "achievements",
             "chats",
             "users",
             "memberships",

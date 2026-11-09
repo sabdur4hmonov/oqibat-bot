@@ -120,6 +120,9 @@ class Recovery:
             return sent
 
     async def post(self, row, now):
+        if row.kind == "season":
+            await self.runtime.seasons.recover(row, now)
+            return
         generation = self.sender.generations.get(row.chat_id, 0)
         key = (self.runtime.locks.resolve(row.chat_id), row.kind, row.local_date)
         async with self.sessions() as session:

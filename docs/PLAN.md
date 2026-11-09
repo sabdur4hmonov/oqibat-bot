@@ -288,6 +288,14 @@ seven-day streak and related milestones); `/yutuqlar` lists them. Batch short un
 announcements at low priority. All awards/unlocks must be idempotent.
 **Accept:** timezone/month/year boundaries, streak gaps, duplicate/concurrent awards,
 batched announcements and restart-safe champion posting tested.
+Implementation choices: milestones apply once at exactly day 7 and day 30 in each
+unbroken daily-check-in sequence; a gap starts a new sequence, a calendar month does not.
+Only newly committed qualifying check-ins earn bonuses (no retroactive ledger rewrite).
+The existing daily date reference also identifies its bonus so activity is counted once.
+Achievements are per chat/user and can reconcile past qualifying ledger history on
+`/yutuqlar`; unlocks never themselves award extra points. Monthly champions post from
+09:00 on the first, with stable 0–15-minute spreading and quiet-hour deferral. Migration
+initializes existing chats in bounded batches; ticks query indexed due rows only.
 
 ### Phase 12 — Extended Mafia roles
 Chat setting `extended_roles` defaults OFF, introduced by a new migration. Preserve base

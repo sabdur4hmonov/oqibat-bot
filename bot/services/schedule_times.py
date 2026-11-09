@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 
 def stable_offset(chat_id: int, kind: str) -> int:
-    maximum = {"daily": 901, "weekly": 3600}[kind]
+    maximum = {"daily": 901, "weekly": 3600, "season": 901}[kind]
     digest = hashlib.blake2b(f"oqibat:{kind}:{chat_id}".encode(), digest_size=8).digest()
     return int.from_bytes(digest, "big") % maximum
 
@@ -64,6 +64,10 @@ def next_for_chat(kind: str, chat, now: datetime) -> datetime | None:
         return next_daily(chat.id, chat.tz, chat.daily_time, now) if chat.daily_enabled else None
     if kind == "weekly":
         return next_weekly(chat.id, chat.tz, now)
+    if kind == "season":
+        from bot.services.seasons import next_season
+
+        return next_season(chat.id, chat.tz, now)
     if kind == "challenge":
         return next_challenge(
             chat.tz, chat.challenges_per_day, chat.quiet_start, chat.quiet_end, now
