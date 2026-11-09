@@ -17,6 +17,10 @@ def create_webhook_app(dispatcher, bot, settings, workflow: dict) -> web.Applica
         **workflow,
     ).register(app, path=urlsplit(settings.webhook_url).path)
     setup_application(app, dispatcher, bot=bot, **workflow)
+    if settings.webapp_url:
+        from bot.services.webapp import install_webapp
+
+        install_webapp(app, workflow["runtime"], bot, settings)
     return app
 
 

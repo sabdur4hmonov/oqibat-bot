@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>__TITLE__</title>
+  <link rel="stylesheet" href="/webapp/style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+  <script src="/webapp/labels.js" defer></script>
+  <script src="/webapp/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><div class="brand-mark" aria-hidden="true">O</div><div><h1 id="title">__TITLE__</h1><p id="tagline"></p></div></header>
+    <p class="read-only" id="read-only"></p>
+    <nav id="tabs"></nav>
+    <section class="controls">
+      <label id="group-label" for="group"></label><select id="group"></select>
+      <p id="group-hint" class="muted"></p>
+    </section>
+    <section id="content" class="panel" aria-live="polite"><p>__LOADING__</p></section>
+    <div class="footer"><button id="refresh" type="button"></button><p id="privacy-note" class="muted"></p></div>
+  </main>
+</body>
+</html>

@@ -14,6 +14,57 @@ CARD_GAME_TITLES = {
     "mafia": "Mafia g‘oliblari",
 }
 ADD_TO_GROUP = "Botni guruhingizga qo‘shing"
+OPEN_WEBAPP = "Ilovani ochish"
+WEB_COPY = {
+    "title": "Oqibat",
+    "tagline": "Guruhingiz bilan birga",
+    "read_only": "Bu ilova faqat ko‘rish uchun. O‘zgartirishlar bot orqali qilinadi.",
+    "group": "Guruh",
+    "group_hint": (
+        "Faqat bot biladigan guruhlar chiqadi. Boshqa guruh uchun undagi /help tugmasini oching."
+    ),
+    "refresh": "Yangilash",
+    "privacy": "Ma’lumot va o‘chirish haqida botdagi /maxfiylik buyrug‘ini o‘qing.",
+    "profile": "Profilim",
+    "leaderboard": "Reyting",
+    "achievements": "Yutuqlarim",
+    "rules_title": "Qoidalar",
+    "rules": (
+        "Ishtirok etish ixtiyoriy: /qoshilish bilan qo‘shiling, /chiqish bilan chiqing.\n\n"
+        "Kunlik xabardan keyingi ilk qatnashuv +1 ball. Ketma-ket 7 kun +3, 30 kun +10 bonus. "
+        "Video vazifasi +15, ovoz yoki rasm +10, matn +5. O‘tkazilgan vazifa odatda −5; "
+        "admin tanlagan boshqa jazo ham bo‘lishi mumkin. /sozlamalar ni tekshiring.\n\n"
+        "Viktorinada to‘g‘ri javob +3, birinchi javobga yana +2. Duel g‘olibiga +2. "
+        "Krokodilda topuvchiga +5, boshlovchiga +3; boshlovchi so‘zni yozsa −3. "
+        "Haqiqat javobiga +5, jasoratga vazifa bo‘yicha ball, rad etishga −2.\n\n"
+        "Mafia 5–15 kishi bilan: rollar shaxsiy chatda, tunda harakat, kunduzi muhokama va ovoz. "
+        "O‘lganlar ovoz bermaydi. G‘olibga +10, tirik qolishga +3. Kengaytirilgan rejimda "
+        "8 kishidan Don teng mafia ovozini hal qiladi va komissarga tinch ko‘rinadi; "
+        "9 kishidan Ma’shuqa bir harakatni to‘sadi, bir odamni ketma-ket tanlamaydi; "
+        "11 kishidan Manyak alohida o‘ynaydi va o‘zi bilan ko‘pi bilan ikki kishi qolsa yutadi. "
+        "20 tur yoki 60 daqiqada durang. /stop ni boshlovchi yoki admin ishlatadi.\n\n"
+        "Mavsum guruhning mahalliy kalendar oyi bo‘yicha. Eski ballar o‘chmaydi. "
+        "Ilovani ochish ball bermaydi va rozilikni o‘zgartirmaydi."
+    ),
+    "period": "Davr",
+    "season": "Joriy mavsum",
+    "all_time": "Barcha vaqt",
+    "total_points": "Jami ball",
+    "achievement_count": "Ochilgan yutuqlar",
+    "loading": "Yuklanmoqda…",
+    "no_scores": "Hozircha ball yo‘q.",
+    "points": "ball",
+    "choose_group": "Avval guruhni tanlang.",
+    "link_group": "Havoladagi guruh",
+    "telegram_only": "Ilovani Telegram ichida botdagi tugma orqali oching.",
+    "auth_error": "Telegram tasdiqlovi noto‘g‘ri. Ilovani botdan qayta oching.",
+    "expired": "Tasdiqlov eskirgan. Ilovani botdan qayta oching.",
+    "bad_request": "So‘rov noto‘g‘ri. Guruh va davrni qayta tanlang.",
+    "forbidden": "Bu guruhga ruxsat yo‘q. Guruh a’zosi ekaningizni va bot adminligini tekshiring.",
+    "not_found": "Sahifa topilmadi.",
+    "busy": "Hozir band. Birozdan keyin qayta urinib ko‘ring.",
+    "error": "Ma’lumot yuklanmadi. Keyinroq qayta urinib ko‘ring.",
+}
 START_DESCRIPTION = "Bot bilan tanishish"
 HELP_DESCRIPTION = "Yordam va qo‘llanma"
 CONFIG_ERROR = "Sozlamalarda xato bor. .env faylini README bo‘yicha tekshiring."
@@ -26,6 +77,7 @@ ENV_FILE_UNREADABLE = (
 ENV_SETTINGS_OK = "[OK] .env va PowerShell muhitidagi sozlamalar to‘g‘ri o‘qildi."
 ENV_INVALID_HEADER = "[X] Sozlamalarni tuzating (maxfiy qiymatlar ko‘rsatilmaydi):"
 ENV_FIELD_HINTS = {
+    "webapp_url": "WEBAPP_URL: o‘z domeningizdagi https://domen.uz/webapp yoki bo‘sh qiymat kerak.",
     "bot_token": "BOT_TOKEN: BotFather bergan tokenni raqam:kalit shaklida to‘liq nusxalang.",
     "bot_username": "BOT_USERNAME: botning Username qiymati kerak, havola emas; oxiri bot bo‘lsin.",
     "instagram_handle": "INSTAGRAM_HANDLE: Instagram nomini yozing, havola emas.",

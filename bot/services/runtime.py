@@ -159,6 +159,7 @@ class ScaleRuntime:
 
     def workflow(self) -> dict:
         return {
+            "runtime": self,
             "owner_tools": self.owner_tools,
             "achievements": self.achievements,
             "sender": self.sender,

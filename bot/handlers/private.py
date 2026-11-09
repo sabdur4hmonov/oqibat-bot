@@ -4,7 +4,7 @@ from aiogram.types import Message
 
 from bot import texts
 from bot.config import Settings
-from bot.keyboards.private import add_to_group_keyboard
+from bot.keyboards.private import private_keyboard
 from bot.services.activity import ActivityBuffer
 from bot.services.sender import Priority, Sender
 
@@ -40,7 +40,7 @@ async def start(
         lambda: bot.send_message(
             message.chat.id,
             texts.start_text(message.from_user.first_name, settings.instagram_handle),
-            reply_markup=add_to_group_keyboard(settings.bot_username),
+            reply_markup=private_keyboard(settings),
         ),
     )
 
@@ -58,7 +58,7 @@ async def help_command(
         lambda: bot.send_message(
             message.chat.id,
             texts.help_text(settings.instagram_handle),
-            reply_markup=add_to_group_keyboard(settings.bot_username),
+            reply_markup=private_keyboard(settings),
         ),
     )
 

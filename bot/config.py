@@ -46,6 +46,26 @@ class Settings(DatabaseSettings):
     webhook_host: str = "127.0.0.1"
     webhook_port: int = Field(default=8080, ge=1, le=65535)
     result_cards_enabled: bool = True
+    webapp_url: str | None = None
+
+    @field_validator("webapp_url", mode="before")
+    @classmethod
+    def validate_webapp_url(cls, value):
+        if value is None or not str(value).strip():
+            return None
+        value = str(value).strip()
+        url = urlsplit(value)
+        if (
+            url.scheme != "https"
+            or not url.hostname
+            or url.username
+            or url.password
+            or url.query
+            or url.fragment
+            or url.path not in {"/webapp", "/webapp/"}
+        ):
+            raise ValueError("WEBAPP_URL must be HTTPS with /webapp and no credentials/query")
+        return value
 
     @model_validator(mode="after")
     def validate_runtime(self):
@@ -68,6 +88,8 @@ class Settings(DatabaseSettings):
             secret = self.webhook_secret.get_secret_value() if self.webhook_secret else ""
             if not re.fullmatch(r"[A-Za-z0-9_-]{1,256}", secret):
                 raise ValueError("WEBHOOK_SECRET must contain 1-256 letters, digits, _ or -")
+            if self.webapp_url and url.path.startswith("/webapp"):
+                raise ValueError("Webhook path must not overlap the Mini App namespace")
         return self
 
     @field_validator("bot_token")

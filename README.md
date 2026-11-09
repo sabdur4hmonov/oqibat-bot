@@ -659,3 +659,51 @@ yuboradi. Haqiqiy Telegram, TLS webhook, systemd va 10,000 guruh yuki alohida te
 Rasmiy qo‘llanmalar: [Compose loyiha nomlari](https://docs.docker.com/compose/how-tos/environment-variables/envvars/),
 [PostgreSQL nusxa/tiklash](https://www.postgresql.org/docs/16/backup-dump.html),
 [systemd xizmat muhiti](https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html).
+
+### Telegram Mini App (ixtiyoriy, faqat ko‘rish uchun)
+
+Ilovada profil, guruhning oylik/barcha vaqt reytingi, shaxsiy yutuqlar va qoidalar bor.
+Ilovani ochish rozilik bermaydi, ball yozmaydi, o‘yin yoki sozlamani o‘zgartirmaydi.
+Mafia rollari va o‘yin holati API orqali berilmaydi. Guruh ro‘yxati faqat bot biladigan
+faol a’zoliklardan tuziladi; Telegram barcha guruhlarni ro‘yxat qilib bermaydi.
+
+1. O‘zingiz boshqaradigan domen/subdomen tayyorlang, masalan `bot.sizning-domen.uz`.
+   DNS ni bot ishlaydigan serverga yo‘naltiring. Domeningiz uchun haqiqiy HTTPS
+   sertifikatini sozlang; Telegram uchun `http://localhost` havolasi yaramaydi.
+2. `.env` da `WEBAPP_URL=https://bot.sizning-domen.uz/webapp` yozing. Mahalliy oddiy
+   polling uchun bo‘sh qoldiring. `WEBHOOK_HOST=127.0.0.1`, `WEBHOOK_PORT=8080`
+   bilan reverse proxy shu lokal portga yo‘nalsin. Compose ichida mavjud
+   `WEBHOOK_HOST=0.0.0.0` qiymatini saqlang; tashqariga faqat reverse proxy ochilsin.
+3. Reverse proxy `/webapp` va `/webapp/…` yo‘llarini o‘zgartirmasdan shu portga
+   uzatsin. `X-Telegram-Init-Data` sarlavhasini saqlasin, uni jurnalga yozmasin;
+   `/webapp/api/` javoblarini keshlamasin. Alohida frontend jarayoni yoki build kerak emas.
+   Pollingda bot shu portni o‘zi ochadi; webhook rejimida Mini App mavjud aiohttp
+   serveriga qo‘shiladi. Webhook yo‘li `/webapp` bilan boshlanmasin.
+4. `alembic upgrade head`, `python -m bot --check`, keyin `python -m bot` ni bajaring.
+   HTTPS manzil ochilsin. Oddiy brauzerda profil o‘rniga Telegram ichidan ochish
+   so‘ralishi to‘g‘ri: haqiqiy tasdiqlov faqat Telegramdan keladi.
+5. BotFather da o‘z botingiz profilini tanlang, **Bot Settings → Configure Mini App**
+   (yoki **Main Mini App**) orqali asosiy Mini App ni yoqing va shu HTTPS manzilni
+   kiriting. Telegram mijoziga qarab menyu nomi farq qilishi mumkin. Bot profilidagi
+   ilovani ochish tugmasini tekshiring. Ixtiyoriy shaxsiy menyu tugmasi uchun
+   `/setmenubutton` dan foydalanish mumkin; bu asosiy Mini App sozlamasi o‘rnini bosmaydi.
+6. Shaxsiy chatda `/start` yoki `/help` → “Ilovani ochish” tugmasi `web_app` bo‘lsin.
+   Guruhda `/help` shu tugmani `https://t.me/BOT_USERNAME?startapp=<chat_id>` orqali
+   asosiy ilovaga ochadi. Guruh ichida `web_app` turi ishlatilmaydi.
+7. Guruh a’zosi bilan mavsum/barcha vaqtni, yutuqlarni, yorug‘/qorong‘i mavzuni
+   tekshiring. Guruhdan chiqqach uning sahifasi rad etilsin. 24 soatdan so‘ng ilovani
+   botdan qayta oching. Guruh ro‘yxatda bo‘lmasa o‘sha guruhdagi `/help` havolasini oching.
+
+Har JSON so‘rovda xom `initData` `X-Telegram-Init-Data` sarlavhasida keladi. Server
+bot-token usulidagi HMAC-SHA256 ni, 24 soatlik muddatni va ko‘pi bilan 30 soniya
+oldinga vaqt farqini tekshiradi. Imzodagi foydalanuvchi ID ishlatiladi; URL dagi
+`user_id`, `startapp` yoki `initDataUnsafe` ruxsat bermaydi. Guruh sahifasida har safar
+Telegram `getChatMember` bilan joriy a’zolik tekshiriladi; bot admin bo‘lishi kerak.
+Bir vaqtning o‘zida ko‘pi bilan beshta API so‘rovi, har biri ko‘pi bilan o‘n soniya;
+Telegram band bo‘lsa keyinroq qayta urinish xabari chiqadi. Ilova javoblari saqlanmaydi.
+Haqiqiy domen/TLS, BotFather va Telegram mobil/desktop sinovlari egasi tomonidan
+bajariladi; ushbu ish davomida hech narsa serverga joylanmagan.
+
+Rasmiy manbalar: [Mini App tasdiqlovini tekshirish](https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app),
+[asosiy Mini App](https://core.telegram.org/bots/webapps#launching-the-main-mini-app),
+[shaxsiy inline tugmalar](https://core.telegram.org/bots/webapps#inline-keyboard-mini-apps).

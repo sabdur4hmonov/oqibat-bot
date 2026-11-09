@@ -28,6 +28,7 @@ from bot.handlers.settings import create_router as create_settings_router
 from bot.handlers.stats import create_router as create_stats_router
 from bot.services.runtime import ScaleMiddleware, ScaleRuntime
 from bot.services.sender import Sender
+from bot.services.webapp import polling_webapp
 from bot.services.webhook import serve_webhook
 from bot.utils.logging import configure_logging
 
@@ -126,7 +127,8 @@ async def run(settings: Settings, *, check_only: bool = False) -> None:
                     if result is not True:
                         raise RuntimeError("Could not switch to polling")
                     logger.info("Starting long polling")
-                    await dispatcher.start_polling(bot, **workflow)
+                    async with polling_webapp(runtime, bot, settings):
+                        await dispatcher.start_polling(bot, **workflow)
     finally:
         await engine.dispose()
 

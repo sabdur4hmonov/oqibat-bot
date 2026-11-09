@@ -107,10 +107,10 @@ class User(Timestamps, Base):
 class Membership(Base):
     __tablename__ = "memberships"
     chat_id: Mapped[int] = mapped_column(ForeignKey("chats.id"), primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True, index=True)
     opted_in: Mapped[bool] = mapped_column(Boolean, default=False)
     opted_in_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
-    last_seen_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    last_seen_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), index=True)
     last_picked_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
     consecutive_misses: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)

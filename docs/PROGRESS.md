@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 12 implemented and locally verified; proceeding sequentially to Phase 13 read-only Telegram Mini App.
+- Current phase: Phase 13 implemented and locally verified; proceeding sequentially to Phase 14 content tooling.
 - Last updated: 2026-11-09 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -441,3 +441,22 @@
   4. 11+ kishida Manyak yakka nishon tanlasin. Mafia bilan bir kechada ikki xil qurbon bo‘lishi mumkin; doktor saqlagan bitta nishon har ikkala hujumdan himoyalansin.
   5. Tinch/Mafia/Manyak g‘alabalarini tekshiring. Chiqqan odamlar va eski tur tugmalari ishlamasin. O‘yin paytida sozlamani almashtirish hozirgi rollarni o‘zgartirmasin.
   6. `pytest tests/test_mafia_engine.py tests/test_mafia_extended.py tests/test_mafia_flows.py` bilan ikkala ming o‘yinli tekshiruv va barcha ssenariylarni tez bajaring.
+
+
+### Phase 13 — Telegram Mini App — 2026-11-09
+- Status: implementation/local verification complete.
+- Commit(s): this entry accompanies `phase-13: authenticated read-only Telegram Mini App`; Phase 12 pushed as `70502aa`.
+- What was built: build-free Uzbek HTML/CSS/vanilla JS at `/webapp`, with Telegram themeParams/themeChanged handling, profile, season/all-time group rankings, own achievements and rules. User text uses DOM textContent, never HTML insertion. Optional HTTPS WEBAPP_URL adds private web_app buttons and group Main Mini App startapp URL buttons; blank keeps ordinary polling. Polling hosts aiohttp in the bot process; webhook mode shares its existing listener. Explicit static allowlist, no repository file serving, no-store/CSP headers and five concurrent, ten-second API requests.
+- Security/data: every JSON route validates raw initData HMAC using the bot token and only its signed user ID, with constant-time comparison, duplicate-field/type checks, 24-hour expiry and 30-second future tolerance. Bot-token canonicalization excludes hash only (signature, if supplied, remains signed); this is distinct from third-party Ed25519 verification. No cookies/client-ID trust. Each group page checks live getChatMember with admin-capable bot and fails closed for departed users/unknown groups; startapp only selects a page. Global 429 pauses the shared Sender. Read-only projections expose no game JSON/roles and never create users, opt in, reconcile achievements or award points. Known-own-group and last-seen queries receive indexes in new migration `c113a5aa0013`.
+- Files added/changed: auth/data/hosting services, thin HTTP handlers, static frontend, keyboards/private/group/runtime transport integration, config/.env.example/texts, migration/models, README domain/reverse-proxy/BotFather instructions and tests. No new dependencies or architecture change.
+- Tests: full `pytest -q`: **380 passed, 1 skipped** (optional PostgreSQL URL unset in that run); `ruff check .`: **all checks passed**; `node --check bot/webapp/app.js`: passed. New suite **27 passed**, covering signature/signature-field tampering, wrong token, duplicate/malformed fields, identity types, exact expiry/future boundaries, all membership statuses, local HTTP auth/read-only/foreign-user and group access, departure after a prior successful request, unchanged DB counts, unknown user not created, static allowlist/headers, 429 pause, URL validation and private/group buttons/shared webhook routes. Frontend escaping/theme hooks are checked in delivered assets; actual browser/Telegram rendering is not claimed. One aiohttp advisory warns about string request-state keys; compatibility is retained with supported aiohttp 3.9+.
+- Database/startup verification: fresh SQLite upgrade/check passed (no model drift); `python -m bot --check` passed using explicit fake credentials. An initial no-credential check correctly rejected absent settings, then the isolated fake-config check passed. Docker was available: separately ran the PostgreSQL integration test against a new empty, loopback-only PostgreSQL 16 Alpine container with tmpfs, **1 passed**, verifying migrations through Phase 13, schema drift, UTC, bulk upserts, ledger deduplication, game constraints, pool size and bounded due work. Only the uniquely named Oqibat test container was created/stopped/automatically removed; no other project resource changed.
+- Acceptance criteria: requested source/auth/read-only routes/local tests implemented; actual own-domain HTTPS, BotFather configuration and Telegram mobile/desktop acceptance remain NOT verified. No deployment, real bot token or messages used.
+- Deviations/choices: reuse existing HTTP bind host/port, strict /webapp URL path, live group membership rather than stale consent; profile's group picker is limited to 500 known active memberships, with group-link navigation for other groups. All runtime copy remains in texts.py. No blocker/open architecture question.
+- Manual test steps (Uzbek, simple):
+  1. Migratsiyani bajaring. Avval WEBAPP_URL bo‘shligida oddiy bot ishlashini tekshiring.
+  2. README bo‘yicha o‘z domeningizda HTTPS va /webapp yo‘lini tayyorlang, WEBAPP_URL ni yozing, BotFather da asosiy Mini App ni yoqing. Bu sozlash hali avtomatik bajarilmagan.
+  3. Shaxsiy /start → “Ilovani ochish”: o‘z profilingiz, ball va yutuqlar soni chiqsin. Guruh /help tugmasi o‘sha guruh reytingini ochsin.
+  4. Mavsum/barcha vaqt, yutuqlar, qoidalar va Telegramning yorug‘/qorong‘i mavzusini tekshiring. Uzun yoki `<` belgili ism kodga aylanmay, oddiy matn bo‘lsin.
+  5. Guruhdan chiqing, reytingni yangilang: ruxsat rad etilsin. Boshqa odamning ID sini havolaga yozish uning profilini ochmasin. Ilovani 24 soatdan keyin botdan qayta oching.
+  6. Ilovani ochish ball yoki rozilikni o‘zgartirmasin. Xatoda vaqtni yozib, bot jurnalidagi “Mini App request failed” ni tekshiring; token/initData ni hech kimga yubormang.

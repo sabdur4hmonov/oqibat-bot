@@ -334,6 +334,14 @@ Private chats use a web_app button; groups use a URL to the Main Mini App with
 **Accept:** official-doc-verified signature algorithm, expiry/tampering/foreign-user/group
 authorization tests, read-only routes, frontend escaping/theme handling and local aiohttp
 lifecycle tests pass. Real HTTPS/Telegram-client acceptance is explicitly separate.
+Implementation choices: blank WEBAPP_URL disables the optional HTTP Mini App in polling
+mode. When enabled, polling starts the same-process aiohttp listener; webhook mode adds
+the routes to its existing listener. Use the existing bind host/port. Every JSON API
+request receives raw initData in `X-Telegram-Init-Data`, verifies HMAC/age (24 hours,
+maximum 30 seconds future clock skew), and uses only the signed user ID. Verify current
+group membership with getChatMember, not start_param or stale DB consent. No cookies,
+tokens in URLs, API writes or Mafia-state/role endpoints. Bound API concurrency and
+queries; HTTPS/public-domain and real Telegram client acceptance remain manual.
 
 ### Phase 14 — Content tooling
 Add `scripts/validate_content.py` for all `data/*.json`: bank schemas, duplicate IDs/keys,
