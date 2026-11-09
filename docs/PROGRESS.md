@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 11 implemented and locally verified; proceeding sequentially to Phase 12 extended Mafia roles. The earlier architecture gate is resolved.
+- Current phase: Phase 12 implemented and locally verified; proceeding sequentially to Phase 13 read-only Telegram Mini App.
 - Last updated: 2026-11-09 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -422,3 +422,22 @@
   3. Har kuni kunlik xabardan keyin qatnashing. 7-kuni odatdagi +1 bilan yana +3, 30-kuni yana +10 bo‘lsin. Bir kun qoldirilsa seriya qayta boshlansin, oy almashishi esa uzmasin. Tez tekshiruv uchun `pytest tests/test_seasons_achievements.py` ishlating.
   4. Oyning 1-kuni 09:00–09:15 yoki tinch vaqt tugagach oldingi oy chempionlari rasmi kelsin. Qayta yoqilganda yana mukofot/ball yozilmasin; rasm o‘chirilgan sozlamada matn ishlasin.
   5. Tasdiqli o‘chirish yutuqlarni ham tozalasin; guruh superguruhga o‘tganda ular saqlansin.
+
+
+### Phase 12 — Extended Mafia roles — 2026-11-09
+- Status: implementation/local verification complete.
+- Commit(s): this entry accompanies `phase-12: opt-in Don blocker and solo Mafia roles`; Phase 11 pushed as `34d7055`.
+- What was built: new OFF-by-default per-chat `extended_roles` setting and migration `c112a5aa0012`; mode is snapshotted in the lobby and shown to players. Pure distributions add Don at 8+, town Ma'shuqa at 9+, solo Manyak at 11+, replacing existing roles without increasing mafia team size. Don participates in private mafia teammate lists/live tally, decides vote ties and reads non-mafia to the commissioner. Ma'shuqa blocks one actor, with consecutive-target prevention. Manyak selects a private night kill and wins alive with at most one other player. Town/mafia winner checks and scores/cards include all sides correctly.
+- Night resolution: block first, simultaneous attackers, one doctor save covering both attacks; a killed doctor still saves and a blocked doctor has not successfully self-saved. Commissioner choices in blocker layouts resolve privately at dawn, including a blocked/no-result outcome; no immediate information leak through a callback. Multiple victims/roles are announced. New private buttons include session/round and existing stale/dead/context guards, per-chat locks, caps and GAME priority. Opt-out clears new role actions too. Default mode retains its original rules.
+- Files added/changed: pure role/engine logic, Mafia service/keyboards/texts, settings/models/new migration, winner-card side handling, README/PLAN and new extended tests. No dependency/architecture change.
+- Tests: full `pytest -q`: **353 passed, 1 skipped** (optional PostgreSQL); `ruff check .`: **all checks passed**; clean SQLite Alembic upgrade/check: passed, no drift. Original Mafia engine/flow suite **28 passed**; extended suite **20 passed**. Includes three complete scripted games (town, mafia, Manyak), all 5–15-player thresholds, tie/block interactions, simultaneous saves/deaths, doctor and repeated-block guards, commissioner/Don privacy, winner precedence, forfeits, setting snapshot/private callback/stale-round integration. Existing 1,000 base-mode random games plus 1,000 extended random games check valid distributions/outcomes, termination, no resurrection and rejected dead actions/votes.
+- Acceptance criteria: all requested role behavior is implemented/tested offline; real 8/9/11-person play and private Telegram timing remain unverified. No deployment/real credentials used.
+- Deviations/choices: Ma'shuqa is town; Don replaces one mafia, other new roles replace plain town. Setting changes affect the next lobby, not live roles. Simultaneous outcomes and Manyak precedence are specified in PLAN. A dead commissioner receives no new private result. These conservative game-rule details were documented before implementation; Claude may review balance, but they require no architecture redesign or implementation stop.
+- Open questions / known limits: no blocker. Live balance/usability of the chosen extended layout, Telegram delivery pressure and real permissions still need consenting testers; local fuzzing is not a throughput benchmark.
+- Manual test steps (Uzbek, simple):
+  1. Migratsiyani bajaring. `/sozlamalar` dagi kengaytirilgan rollar dastlab o‘chiq bo‘lsin. Oddiy besh kishilik Mafia avvalgidek ishlasin.
+  2. Rejimni yoqing. Kamida 8 kishi bilan Don chiqsin; mafia sheriklari uni shaxsiy chatda bilsin. Teng ovozda Don tanlovi hal qilsin, komissarga Don mafia emas bo‘lib ko‘rinsin.
+  3. 9+ kishida Ma’shuqa bir harakatni to‘ssin. Bir xil odamni ketma-ket ikki kecha tanlay olmasin. Komissar tanlovi to‘silsa tongdagi shaxsiy doskada natija berilmasin.
+  4. 11+ kishida Manyak yakka nishon tanlasin. Mafia bilan bir kechada ikki xil qurbon bo‘lishi mumkin; doktor saqlagan bitta nishon har ikkala hujumdan himoyalansin.
+  5. Tinch/Mafia/Manyak g‘alabalarini tekshiring. Chiqqan odamlar va eski tur tugmalari ishlamasin. O‘yin paytida sozlamani almashtirish hozirgi rollarni o‘zgartirmasin.
+  6. `pytest tests/test_mafia_engine.py tests/test_mafia_extended.py tests/test_mafia_flows.py` bilan ikkala ming o‘yinli tekshiruv va barcha ssenariylarni tez bajaring.

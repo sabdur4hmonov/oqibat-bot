@@ -418,7 +418,7 @@ nobody. The doctor cannot self-save on consecutive nights. The commissioner chec
 once per night and gets a private popup. Dead/stale/wrong-context callbacks are rejected;
 every action identifies both session and round. Group and private boards are edited.
 
-Town wins with no mafia; mafia wins at parity. Winning-side members earn +10 and
+In the default base mode, town wins with no mafia; mafia wins at parity. Winning-side members earn +10 and
 survivors +3 (a draw awards only survivors); opt-out/leave forfeits participation and
 awards no points to that player. At 20 completed rounds or 60 minutes from lobby
 creation the game is a draw; an unstarted preparation earns no points. `/stop` is
@@ -430,6 +430,26 @@ changed during play; actual deletion checks the bot's delete right fresh. This i
 best effort through the same limited GAME queue; Telegram failures do not crash play.
 All Mafia sends/edits/deletes use GAME priority. Deadlines commit independently of
 queued delivery. Keep one bot process: user reservations and state locks are local.
+
+#### Extended Mafia roles (Phase 12, default OFF)
+
+Admins can enable `extended_roles` in `/sozlamalar`; the lobby snapshots it, so changes
+apply to the next game. The lobby announces the mode. The original mode stays unchanged.
+Don appears at 8+ (replaces one mafia, preserving team size), Ma'shuqa at 9+ (replaces
+plain town and belongs to town), Manyak at 11+ (replaces plain town and plays alone).
+Don's vote resolves mafia ties and the commissioner sees him as non-mafia. Teammates
+learn Don's identity privately. Ma'shuqa blocks one night action, never the same target
+two nights in a row. Manyak selects one night victim and wins alive with at most one
+other player. Town needs both mafia and Manyak eliminated; mafia parity wins only
+after Manyak dies. Manyak's win check has precedence.
+
+Blocks resolve first, then simultaneous mafia/Manyak attacks. The doctor protects one
+target from both attackers and still saves if killed that night. A blocked self-save
+does not consume the next night's self-save allowance. With Ma'shuqa in the layout,
+the commissioner selects once at night and receives the result privately at dawn;
+blocking yields no result. A dead commissioner gets no further private action/result.
+Day votes, caps, deep-link joins, private-context checks and GAME priority remain.
+Draws give only survivor points; Manyak's victory gives the usual +10 plus +3 survival.
 
 
 ### Weekly summary and help (Phase 8)

@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 CHOICES = {
     "daily_enabled": ("1", "0"),
     "mafia_delete_dead_messages": ("1", "0"),
+    "extended_roles": ("1", "0"),
     "challenges_per_day": ("0", "1", "2", "3"),
     "challenge_hours": ("2", "6", "10", "24"),
     "penalty_mode": ("off", "points", "mute", "kick"),
@@ -23,7 +24,11 @@ def parse_setting(field: str, raw: str):
             raise ValueError("Invalid setting choice")
         if field == "penalty_mode":
             return raw
-        return raw == "1" if field in {"daily_enabled", "mafia_delete_dead_messages"} else int(raw)
+        return (
+            raw == "1"
+            if field in {"daily_enabled", "mafia_delete_dead_messages", "extended_roles"}
+            else int(raw)
+        )
     if field == "tz":
         try:
             ZoneInfo(raw)

@@ -309,6 +309,17 @@ Extend scripted outcomes and 1,000-game fuzz invariants, private buttons/role de
 stale/dead-action rejection and score/card handling. Preserve caps and GAME priority.
 **Accept:** base mode unchanged; role thresholds, blocking, Don checks/ties, all winners,
 termination and dead-player invariants tested in both modes.
+Implementation choices: Don replaces one existing mafia (team size unchanged); Ma'shuqa
+is a town blocker replacing a plain town role; Manyak replaces a plain town role. Roles
+are snapshotted at lobby creation, so setting changes affect the next game. Resolve the
+block first, then both killers simultaneously; the doctor's one saved target is protected
+from either/both attacks, even if the doctor is killed that night. A blocked doctor has
+not successfully self-saved. With a blocker in the role layout, commissioner checks are
+selected immediately but revealed privately at dawn, so blocking cannot leak a result.
+Don is mafia-aligned but reads non-mafia to the commissioner. Manyak's alive-with-at-most-
+one-other win has precedence, then town elimination victory, then mafia parity with no
+living Manyak. A night with zero survivors meets the town elimination condition. The
+existing 20-round/60-minute draw remains the ultimate safety cap.
 
 ### Phase 13 — Telegram Mini App
 Serve build-free HTML/CSS/vanilla JS at `/webapp` through aiohttp in the same bot process;

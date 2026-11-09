@@ -9,7 +9,7 @@ from bot import texts
 from bot.db.models import Chat
 from bot.db.repo.games import Award, GameBusy
 from bot.games.mafia import engine
-from bot.games.mafia.roles import MAFIA, assign
+from bot.games.mafia.roles import MAFIA, MISTRESS, assign, is_mafia
 from bot.keyboards import mafia as keyboards
 from bot.services.locks import ChatLocks
 from bot.services.sender import Priority
@@ -67,6 +67,7 @@ class Mafia:
             "started_at": now.isoformat(),
             "hard_deadline": (now + timedelta(minutes=60)).isoformat(),
             "delete_dead": bool(chat and chat.mafia_delete_dead_messages),
+            "extended_roles": bool(chat and chat.extended_roles),
             "removed": [],
             "setup_attempt": 0,
             "chat_title": chat.title if chat else "",
@@ -155,7 +156,7 @@ class Mafia:
                             [
                                 user
                                 for user in game.state["alive"]
-                                if game.state["roles"][user] == MAFIA
+                                if is_mafia(game.state["roles"][user])
                             ]
                             if "mafia" in modes
                             else []
@@ -290,7 +291,7 @@ class Mafia:
             current = await self.repo.transition(current.chat_id, current.id, attempt)
             if current is None:
                 return
-            proposed = assign(users)
+            proposed = assign(users, extended=current.state.get("extended_roles", False))
             deliveries = {}
             forbidden = []
             for user in users:
@@ -360,7 +361,7 @@ class Mafia:
         game = self.cache.get(session)
         if (
             prefix != "mf"
-            or operation not in {"m", "d", "c", "v"}
+            or operation not in {"m", "d", "c", "v", "b", "s"}
             or game is None
             or game.game != "mafia"
             or game.state["round"] != round_number
@@ -374,9 +375,10 @@ class Mafia:
         elif query.message.chat.type != "private" or query.message.chat.id != user:
             return texts.MAFIA_STALE
         checked = None
+        deferred = False
 
         def choose(row):
-            nonlocal checked
+            nonlocal checked, deferred
             if (
                 row.state["round"] != round_number
                 or row.phase_deadline_at <= utc_now()
@@ -389,7 +391,9 @@ class Mafia:
                 return False
             row.state = changed
             if operation == "c":
-                checked = changed["roles"][str(target)] == MAFIA
+                deferred = MISTRESS in changed["roles"].values()
+                if not deferred:
+                    checked = changed["roles"][str(target)] == MAFIA
 
         updated = await self.repo.transition(game.chat_id, game.id, choose)
         if updated is None:
@@ -398,6 +402,10 @@ class Mafia:
             self.refresh(game.id, "mafia")
         elif operation == "v":
             self.refresh(game.id, "group")
+        else:
+            self.refresh(game.id, "private")
+        if deferred:
+            return texts.MAFIA_CHECK_AT_DAWN
         if checked is not None:
             return texts.MAFIA_IS_MAFIA if checked else texts.MAFIA_NOT_MAFIA
         return texts.MAFIA_CHOICE_SAVED

@@ -30,7 +30,11 @@ def setting_choices(field: str) -> InlineKeyboardMarkup:
         value = (
             raw
             if field == "penalty_mode"
-            else (raw == "1" if field in {"daily_enabled", "mafia_delete_dead_messages"} else raw)
+            else (
+                raw == "1"
+                if field in {"daily_enabled", "mafia_delete_dead_messages", "extended_roles"}
+                else raw
+            )
         )
         rows.append(
             [

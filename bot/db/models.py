@@ -91,6 +91,9 @@ class Chat(Timestamps, Base):
     mafia_delete_dead_messages: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default=text("false")
     )
+    extended_roles: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=text("false")
+    )
 
 
 class User(Timestamps, Base):
