@@ -40,6 +40,7 @@ from bot.services.scheduler import Scheduler
 from bot.services.seasons import Seasons
 from bot.services.sender import Sender
 from bot.services.settings import SettingPrompts
+from bot.services.telephone import Telephone
 from bot.services.truth_dare import TruthDare
 from bot.services.weekly import Weekly
 
@@ -91,6 +92,8 @@ class ScaleRuntime:
         self.game_hub.register(("secret",), self.private_games)
         self.guess_games = GuessGames(self.private_games)
         self.game_hub.register(("kim",), self.guess_games)
+        self.telephone = Telephone(self.private_games)
+        self.game_hub.register(("telephone",), self.telephone)
         self.groups.on_membership_changed = self.membership_changed
         self.easy_games = EasyGames(self.game_hub, self.content, sessions)
         self.game_hub.register(("duel", "quiz", "wyr"), self.easy_games)
@@ -334,7 +337,7 @@ class ScaleMiddleware(BaseMiddleware):
             member = event.my_chat_member.new_chat_member
             if not member_is_active(member) or not member_is_admin(member):
                 for game in self.runtime.game_cache.for_chat(event.my_chat_member.chat.id):
-                    if game.game in {"secret", "kim"}:
+                    if game.game in {"secret", "kim", "telephone"}:
                         await self.runtime.game_hub.cancel(game, defer=True)
         if event.chat_member:
             await self.runtime.mafia_game.membership_changed(

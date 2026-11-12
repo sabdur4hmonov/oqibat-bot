@@ -930,7 +930,9 @@ PRIVACY = (
     "vazifa/o‘yin natijalari va ballar saqlanadi. Ular o‘yinlar, reyting va vazifalar uchun kerak. "
     "Oddiy yozishmalar, surat, ovoz yoki video fayllari saqlanmaydi. "
     "O‘yin holati tanlangan javoblar va ismlarni, rozilik bilan yuborgan o‘yin "
-    "javobingizni saqlashi mumkin; muallifni ochish va admin yashirishi uchun kerak.\n"
+    "javobingizni hamda ovozning Telegram file_id sini saqlashi mumkin; "
+    "muallifni ochish, ovozni qayta yuborish va admin yashirishi uchun kerak. "
+    "Media faylini yuklab olib saqlamaymiz.\n"
     "Rozilikdan /chiqish bilan chiqing. Shaxsiy chatda /malumotlarimni_ochir orqali "
     "ma’lumotlaringizni tasdiqlab o‘chiring. Avval yuborilgan Telegram xabarlari va "
     "operatorning tashqi zaxira nusxalari bu buyruq bilan o‘chmaydi."
@@ -1097,7 +1099,32 @@ SECRET_WORD_DM = (
     "Uni o‘zingiz oshkor qilmang. Nishon guruhda aytsa +10 (ko‘pi bilan 3 marta)."
 )
 SECRET_NO_MORE = "Uchta muvaffaqiyatga erishdingiz. Endi yangi so‘z berilmaydi."
-PRIVATE_GAME_NAMES = {"secret": "Yashirin topshiriq", "kim": "Kim aytdi?"}
+PRIVATE_GAME_NAMES = {
+    "secret": "Yashirin topshiriq",
+    "kim": "Kim aytdi?",
+    "telephone": "Ovozli buzilgan telefon",
+}
+PRIVATE_GAME_NEED_DELETE = (
+    "Bu media o‘yini uchun botga xabarlarni o‘chirish huquqini bering. "
+    "Huquq keyin yo‘qolsa, yashirish belgisi media faylini olib tashlamaydi; admin o‘chirsin."
+)
+PRIVATE_GAME_DELIVERY_FAILED = (
+    "O‘yin xabarini yetkazib bo‘lmadi. Bot huquqlari, tarmoq va logni tekshiring. "
+    "O‘yin bekor qilindi."
+)
+TELEPHONE_FIRST = (
+    "☎️ Asl jumla: <b>{phrase}</b>\nIkki daqiqada uni ovozli xabar qilib ayting "
+    "(ko‘pi bilan 30 soniya). Ovozlar o‘yin oxirida guruhda ochiladi."
+)
+TELEPHONE_REPEAT = (
+    "☎️ Faqat shu ovozni eshitib, ikki daqiqada o‘z ovozingizda takrorlang (ko‘pi bilan 30 soniya)."
+)
+TELEPHONE_LAST = (
+    "☎️ Siz oxirgi odamsiz. Faqat shu ovozni eshitib, ikki daqiqada "
+    "eshitganingizni matn qilib yozing (1–300 belgi, havola va @eslatmasiz)."
+)
+TELEPHONE_ORIGINAL = "☎️ Asl jumla: <b>{phrase}</b>"
+TELEPHONE_MISSING = "Yakuniy matn kelmadi. Kelgan ovozlar ketma-ket ochiladi."
 KIM_QUESTION = (
     "💬 Kim aytdi? Savol: <b>{question}</b>\nBir yangi matnli javob yuboring "
     "(1–300 belgi, havola va @eslatmasiz). Tayyorlashdan so‘ng 5 daqiqa bor. "
@@ -1113,6 +1140,13 @@ def private_game_board(game):
     title = PRIVATE_GAME_NAMES[game.game]
     names = ", ".join(escape(name) for name in state.get("players", {}).values()) or "—"
     if state["phase"] == "lobby":
+        if game.game == "telephone":
+            return (
+                "☎️ <b>Ovozli buzilgan telefon</b> · lobby 3 daqiqa, 4–10 kishi\n"
+                "Navbatda shaxsiy ovozni takrorlaysiz; oxirgi odam matn yozadi. "
+                "Asl jumla, yakuniy matn va ovozlar ismlar bilan guruhga chiqariladi. "
+                "Faqat shaxsiy havoladan rozilik bilan qo‘shiling.\n" + names
+            )
         if game.game == "kim":
             return (
                 "💬 <b>Kim aytdi?</b> · lobby 3 daqiqa, 4–12 kishi\n"
@@ -1151,3 +1185,11 @@ def private_answer(game, reveal=False):
         author = escape(state["players"][str(item["user_id"])])
         return text + f"\n\nMuallif: <b>{author}</b>. Raund yakunlandi."
     return text + "\n\nKim yozgan? 30 soniyada bitta taxmin tanlang."
+
+
+def telephone_item(game, item_id):
+    item = game.state["items"][item_id]
+    name = escape(game.state["players"][item_id])
+    if item["kind"] == "text":
+        return f"📝 Yakuniy matn — {name}:\n{escape(item['text'])}"
+    return f"🎙 {item['turn'] + 1}. {name}"

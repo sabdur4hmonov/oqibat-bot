@@ -225,6 +225,7 @@ class GuessGames:
             if row.state["phase"] != "answer_sending" or row.state["round"] != game.state["round"]:
                 return False
             row.state["items"][item_id]["message_id"] = sent.message_id
+            row.state["items"][item_id]["origin_chat_id"] = row.chat_id
             row.state["phase"] = "guess"
             row.phase_deadline_at = utc_now() + timedelta(seconds=30)
 

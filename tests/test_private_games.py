@@ -40,7 +40,7 @@ def group_message(text, user=1, message_id=300, **values):
 
 async def lobby(app, kind="secret", users=(1, 2, 3)):
     feed, _, runtime = app
-    command = {"secret": "yashirin", "kim": "kimaytdi"}.get(kind, kind)
+    command = {"secret": "yashirin", "kim": "kimaytdi", "telephone": "telefon"}.get(kind, kind)
     await feed(command_update(f"/{command}"))
     game = next(game for game in runtime.game_cache.for_chat(-1) if game.game == kind)
     for user in users:

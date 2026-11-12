@@ -1,6 +1,7 @@
 """Atomic Telegram chat-ID migration; aliases retain the inactive source row."""
 
 from contextlib import AsyncExitStack
+from copy import deepcopy
 
 from sqlalchemy import and_, select, update
 from sqlalchemy.orm import aliased
@@ -234,6 +235,23 @@ class ChatMigrationRepository:
                         select(GameSession.id).where(GameSession.chat_id == old_id)
                     )
                 ).all()
+                # Telegram message IDs change scope at migration. Preserve the
+                # content's origin even for finished/private-game history, so an
+                # old hide button cannot delete a different supergroup message.
+                content_games = await session.stream_scalars(
+                    select(GameSession)
+                    .where(
+                        GameSession.chat_id == old_id, GameSession.game.in_(["kim", "telephone"])
+                    )
+                    .execution_options(yield_per=100)
+                )
+                async for game in content_games:
+                    state = deepcopy(game.state)
+                    for item in state.get("items", {}).values():
+                        if item.get("message_id") is not None:
+                            item.setdefault("origin_chat_id", old_id)
+                    game.state = state
+                await session.flush()
                 for model in CHILDREN:
                     await session.execute(
                         update(model).where(model.chat_id == old_id).values(chat_id=new_id)

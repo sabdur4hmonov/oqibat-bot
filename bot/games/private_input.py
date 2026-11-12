@@ -6,7 +6,7 @@ import re
 from bot.utils.text_normalize import normalize_text
 
 PRIVATE_GAMES = {"mafia", "secret", "kim", "telephone", "memory"}
-LOBBY_LIMITS = {"secret": (3, 20, 5), "kim": (4, 12, 3)}
+LOBBY_LIMITS = {"secret": (3, 20, 5), "kim": (4, 12, 3), "telephone": (4, 10, 3)}
 PREFIXES = {
     "mafia": "mafia",
     "secret": "yashirin",

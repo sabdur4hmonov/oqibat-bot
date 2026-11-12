@@ -520,6 +520,37 @@ before/after award, concurrent/no-double points, all lifecycle paths, regression
 pytest/Ruff/offline startup; PROGRESS, commit/push before Phase 20. Live play needs
 four real participants; a three-person group can only verify minimum cancellation.
 
+### Phase 20 — Ovozli buzilgan telefon
+`/telefon`, main slot, three-minute consent lobby, 4–10 people. Deep-link-only
+join `telefon_<session_id>` and shared one-private-context admission, media/input
+validation, admin hide, sender and lifecycle rules from Phase 18 apply. Require
+bot delete permission before starting and before posting group media; if permission
+is lost later, caption marking is explicitly not physical media removal.
+Shuffle the player order. First speaker receives a bank phrase privately as text;
+each subsequent speaker receives only the previous valid voice re-sent by file_id,
+with generic instructions, never the original phrase or previous person's identity.
+Each turn has two minutes after confirmed prompt delivery. Speakers submit one new
+voice <=30 seconds; the last player submits heard text (1–300 characters). No file
+downloads, forwarded content, links/@mentions, wrong media, stale or duplicate input.
+Accept prompt-delivery-race input for the current turn only. On timeout or failed DM,
+skip and pass the last valid voice; before any voice exists the next non-last speaker
+receives the original phrase. With no voice at the last turn, end without invented
+audio; missing final text is identified plainly. Cancel if nobody submitted.
+Reveal original phrase, final text (or missing-text notice), then voices in turn order.
+Every user-text/voice post has its own author-bound admin hide. Keep group file IDs
+and message IDs in bounded session JSON for moderation, not media bytes. Award each
+non-hidden submitter +3 once, transactionally when the reveal completes; no points
+on cancellation, and later hide compensates author points once. Keep confirmed
+progress/reveal stages and 90-second watchdogs in game state; no new send journal.
+All I/O uses GAME Sender; deadlines only transition/schedule effects. Shared stop,
+restart, migration, erasure and withdrawal cancel/release contexts and suppress late
+queued media. Extend CHECK with `telephone` in a new migration, old migrations unchanged.
+**Accept:** full voice chain/final text, previous-voice-only privacy, shuffled order,
+voice/text boundaries, timeout/DM-failure skips, no-response end, consent/context,
+admin-only hide/no double points, stale/foreign/bot callbacks and all lifecycle paths;
+populated migration, pytest/Ruff/offline startup; PROGRESS entry, commit/push before
+Phase 21. Full live play requires four humans; no deployment or review ZIP.
+
 ### Later (not now)
 Additional Mini App interactions beyond the read-only scope and further game features.
 

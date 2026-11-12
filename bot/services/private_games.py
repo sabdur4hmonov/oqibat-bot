@@ -1,8 +1,11 @@
 """Bounded private-input sessions, using the existing game repository and sender."""
 
+import logging
 import random
 from datetime import datetime, timedelta
 from html import escape
+
+from aiogram.exceptions import TelegramRetryAfter
 
 from bot import texts
 from bot.db.models import GameSession
@@ -13,6 +16,8 @@ from bot.services.game_cache import view
 from bot.services.points import record_event
 from bot.services.sender import Priority
 from bot.utils.time import utc_now
+
+logger = logging.getLogger(__name__)
 
 
 class PrivateGames:
@@ -39,6 +44,8 @@ class PrivateGames:
         user = message.from_user
         if not user or user.is_bot:
             return texts.GAME_JOIN_FIRST
+        if kind == "telephone" and not await self.can_delete(message.chat.id):
+            return texts.PRIVATE_GAME_NEED_DELETE
         state = {
             "phase": "lobby",
             "round": 0,
@@ -66,6 +73,25 @@ class PrivateGames:
         )
         await self.hub.attach_board(game, sent)
         return None
+
+    async def can_delete(self, chat_id):
+        try:
+            member = await self.hub.bot.get_chat_member(chat_id, self.hub.bot.id)
+            return member.status == "creator" or (
+                member.status == "administrator"
+                and bool(getattr(member, "can_delete_messages", False))
+            )
+        except TelegramRetryAfter as error:
+            self.hub.sender.limiter.pause(None, self.hub.sender.clock.now() + error.retry_after)
+            logger.warning(
+                "Media permission rate limit chat=%s retry_after=%s", chat_id, error.retry_after
+            )
+            return False
+        except Exception as error:
+            logger.warning(
+                "Media permission lookup failed chat=%s type=%s", chat_id, type(error).__name__
+            )
+            return False
 
     async def join(self, game_id, user, kind):
         async with self.contexts.lock:
@@ -416,7 +442,7 @@ class PrivateGames:
     async def membership_changed(self, chat_id, user):
         for game in self.cache.for_chat(chat_id):
             if (
-                game.game in {"kim"}
+                game.game in {"kim", "telephone"}
                 and str(user) in game.state.get("players", {})
                 and not self.hub.participants.contains(chat_id, user)
             ):
@@ -502,6 +528,7 @@ class PrivateGames:
                 if (
                     not item
                     or item.get("message_id") != query.message.message_id
+                    or item.get("origin_chat_id", row.chat_id) != row.chat_id
                     or item.get("hidden")
                 ):
                     return texts.PRIVATE_GAME_CLOSED
