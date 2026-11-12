@@ -173,5 +173,21 @@ async def test_postgres_migrations_utc_bulk_upserts_ledger_games_and_due_queries
             assert (await games.transition(chat_id, quick.id, finish_quick)).status == "finished"
             assert await games.transition(chat_id, quick.id, finish_quick) is None
         assert (await points.stats(chat_id, 42))[0] == 19
+        # Final private-game head: independent background/main slots, all new
+        # CHECK values, and no weakening of the partial unique constraints.
+        async with sessions.begin() as session:
+            for kind, status in (
+                ("secret", "running"),
+                ("memory", "lobby"),
+                ("kim", "finished"),
+                ("telephone", "finished"),
+            ):
+                session.add(GameSession(chat_id=chat_id, started_by=42, game=kind, status=status))
+        for kind in ("secret", "kim", "telephone", "memory"):
+            with pytest.raises(IntegrityError):
+                async with sessions.begin() as session:
+                    session.add(
+                        GameSession(chat_id=chat_id, started_by=42, game=kind, status="running")
+                    )
     finally:
         await engine.dispose()

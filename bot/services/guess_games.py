@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from bot import texts
 from bot.db.repo.games import Award
-from bot.games.private_input import guess_rewards, safe_submission
+from bot.games.private_input import LOBBY_LIMITS, guess_rewards, safe_submission
 from bot.keyboards import private_games as keyboards
 from bot.services.sender import Priority
 from bot.utils.time import utc_now
@@ -45,7 +45,7 @@ class GuessGames:
     async def advance(self, game, now):
         phase = game.state["phase"]
         if phase == "lobby":
-            if len(game.state["players"]) < 4:
+            if len(game.state["players"]) < LOBBY_LIMITS[game.game][0]:
                 await self.hub.cancel(game, texts.PRIVATE_GAME_NOT_ENOUGH, defer=True)
                 return
 
@@ -80,7 +80,7 @@ class GuessGames:
                 if item.get("resolved"):
                     return False
                 author = str(item["user_id"])
-                rewards = guess_rewards(author, state["votes"], item.get("hidden", False))
+                rewards = guess_rewards(author, state["votes"], item.get("hidden", False), row.game)
                 item["resolved"] = True
                 item["author_points"] = rewards.get(author, 0)
                 for user, points in rewards.items():
@@ -91,7 +91,7 @@ class GuessGames:
                     Award(
                         int(user),
                         points,
-                        "private_author" if user == author else "kim_correct",
+                        "private_author" if user == author else f"{row.game}_correct",
                         f"game:{row.id}:{state['item']}",
                     )
                     for user, points in rewards.items()
@@ -106,10 +106,15 @@ class GuessGames:
             await self.hub.cancel(game, defer=True)
 
     async def prepare(self, game):
-        async with self.repo.locks.hold(game.chat_id) as chat_id:
-            question = await self.base.content.draw(
-                self.repo.sessions, chat_id, "kim_aytdi_questions", utc_now()
-            )
+        question = {"text": ""}
+        if game.game == "kim":
+            async with self.repo.locks.hold(game.chat_id) as chat_id:
+                question = await self.base.content.draw(
+                    self.repo.sessions, chat_id, "kim_aytdi_questions", utc_now()
+                )
+        elif not await self.base.can_delete(game.chat_id):
+            await self.hub.cancel(game, texts.PRIVATE_GAME_NEED_DELETE, defer=True)
+            return
         if question is None:
             await self.hub.cancel(game, texts.GAME_NO_CONTENT, defer=True)
             return
@@ -128,7 +133,11 @@ class GuessGames:
             return
         for user in game.state["players"]:
             if not await self.base.dm(
-                game, user, texts.KIM_QUESTION.format(question=texts.escape(question["text"]))
+                game,
+                user,
+                texts.KIM_QUESTION.format(question=texts.escape(question["text"]))
+                if game.game == "kim"
+                else texts.MEMORY_PROMPT,
             ):
                 current = self.cache.get(game.id)
                 if current:
@@ -158,12 +167,20 @@ class GuessGames:
             or message.chat.type != "private"
             or message.chat.id != user.id
             or not safe_submission(message)
-            or not message.text
-            or not message.text.strip()
-            or message.photo
-            or message.voice
         ):
             return texts.PRIVATE_GAME_INVALID
+        if game.game == "memory":
+            if not message.photo or not message.photo[-1].file_id or message.voice or message.text:
+                return texts.PRIVATE_GAME_INVALID
+            item = {
+                "kind": "photo",
+                "file_id": message.photo[-1].file_id,
+                "caption": (message.caption or "").strip(),
+            }
+        else:
+            if not message.text or not message.text.strip() or message.photo or message.voice:
+                return texts.PRIVATE_GAME_INVALID
+            item = {"kind": "text", "text": message.text.strip()}
         if game.state["phase"] not in {"collect", "prompting"}:
             return texts.PRIVATE_GAME_INPUT_WAIT
         key = str(user.id)
@@ -181,9 +198,8 @@ class GuessGames:
             ):
                 return False
             state["items"][key] = {
+                **item,
                 "user_id": user.id,
-                "kind": "text",
-                "text": message.text.strip(),
                 "author_points": 0,
                 "input_message_id": message.message_id,
             }
@@ -208,6 +224,16 @@ class GuessGames:
                 or current.state["round"] != game.state["round"]
             ):
                 return None
+            if current.game == "memory":
+                if not await self.base.can_delete(game.chat_id):
+                    return None
+                return await self.hub.bot.send_photo(
+                    game.chat_id,
+                    current.state["items"][item_id]["file_id"],
+                    caption=texts.private_answer(current),
+                    has_spoiler=True,
+                    reply_markup=keyboards.guesses(current, item_id),
+                )
             return await self.hub.bot.send_message(
                 game.chat_id,
                 texts.private_answer(current),
@@ -218,7 +244,7 @@ class GuessGames:
         if not sent:
             current = self.cache.get(game.id)
             if current:
-                await self.hub.cancel(current, defer=True)
+                await self.hub.cancel(current, texts.PRIVATE_GAME_DELIVERY_FAILED, defer=True)
             return
 
         def delivered(row):
@@ -241,7 +267,7 @@ class GuessGames:
         user = str(query.from_user.id)
         if (
             not game
-            or game.game != "kim"
+            or game.game not in {"kim", "memory"}
             or prefix != "pg"
             or action != "v"
             or query.from_user.is_bot
@@ -291,6 +317,13 @@ class GuessGames:
             item = current.state["items"][item_id]
             if item.get("hidden"):
                 return True
+            if current.game == "memory":
+                return await self.hub.bot.edit_message_caption(
+                    chat_id=game.chat_id,
+                    message_id=item["message_id"],
+                    caption=texts.private_answer(current, reveal=True),
+                    reply_markup=keyboards.hide(game.id, item_id),
+                )
             return await self.hub.bot.edit_message_text(
                 texts.private_answer(current, reveal=True),
                 chat_id=game.chat_id,

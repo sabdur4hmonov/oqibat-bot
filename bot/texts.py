@@ -85,6 +85,23 @@ WEB_COPY = {
         "9 kishidan Ma’shuqa bir harakatni to‘sadi, bir odamni ketma-ket tanlamaydi; "
         "11 kishidan Manyak alohida o‘ynaydi va o‘zi bilan ko‘pi bilan ikki kishi qolsa yutadi. "
         "20 tur yoki 60 daqiqada durang. /stop ni boshlovchi yoki admin ishlatadi.\n\n"
+        "Yashirin topshiriq (/yashirin): 3–20 kishi, 2/6/24 soatlik fon o‘yini. "
+        "Nishon maxfiy so‘zni guruhda aytsa ovchiga +10 (ko‘pi bilan 3 marta); "
+        "/fosh javob bilan: to‘g‘ri +5, xato −2 va 1 soat kutish, jami 3 gumon.\n"
+        "Kim aytdi? (/kimaytdi): 4–12 kishi, shaxsiy javob <=300 belgi, 5 daqiqa. "
+        "Anonim javobga 30 soniya taxmin; to‘g‘ri +3, hech kim topmasa muallifga +3.\n"
+        "Telefon (/telefon): 4–10 kishi; navbatda 2 daqiqa, ovoz <=30 soniya. "
+        "Keyingi odamga faqat oldingi ovoz, oxirgi odamdan matn; yakunda zanjir ochiladi. "
+        "Topshirgan, materiali yashirilmagan odamga +3.\n"
+        "Eslaysizmi? (/eslaysizmi): 3–10 kishi, 5 daqiqada bitta shaxsiy surat. "
+        "Guruhda spoiler, 30 soniya taxmin, keyin yuboruvchi va izoh ochiladi. "
+        "To‘g‘ri topuvchiga +3; kamida bir kishi topsa yuboruvchiga +2.\n"
+        "Bu o‘yinlarga lobbydagi shaxsiy havola bilan rozilik berib kirasiz. "
+        "Mafia bilan birga faqat bitta faol shaxsiy o‘yinda bo‘lish mumkin. "
+        "Admin materialni yashirsa muallifning shu material bali bekor qilinadi. "
+        "Media o‘chirish huquqi yo‘qolsa admin uni qo‘lda o‘chirishi kerak. "
+        "Asosiy o‘yin bilan Yashirin birga yuradi; fon o‘yinini to‘xtatish uchun "
+        "uning doskasiga /stop bilan javob bering.\n\n"
         "Mavsum guruhning mahalliy kalendar oyi bo‘yicha. Eski ballar o‘chmaydi. "
         "Ilovani ochish ball bermaydi va rozilikni o‘zgartirmaydi."
     ),
@@ -232,6 +249,11 @@ GROUP_COMMANDS = {
     "krokodil": "So‘z topish o‘yini",
     "hyj": "Haqiqat yoki jasorat",
     "mafia": "Mafia: 5–15 kishilik o‘yin",
+    "yashirin": "Yashirin topshiriq: fon o‘yini",
+    "fosh": "Gumondagi ovchiga javoban fosh qilish",
+    "kimaytdi": "Anonim javob muallifini topish",
+    "telefon": "Ovozli buzilgan telefon",
+    "eslaysizmi": "Suratni kim yuborganini topish",
     "stop": "O‘yinni to‘xtatish",
 }
 GAME_JOIN_FIRST = "O‘yin uchun bot admin bo‘lishi va siz /qoshilish bilan qo‘shilishingiz kerak."
@@ -257,9 +279,17 @@ GAME_CATALOG = (
     "🤔 /tanla — ikki variantli umumiy tanlov.\n"
     "🐊 /krokodil — yashirin so‘zni toping.\n"
     "🎭 /hyj — haqiqat yoki jasorat.\n"
-    "🌙 /mafia — 5–15 kishi, rollar shaxsiy chatda.\n\n"
+    "🌙 /mafia — 5–15 kishi, rollar shaxsiy chatda.\n"
+    "🕵️ /yashirin — 3–20 kishi, 2/6/24 soatlik fon o‘yini; topish +10. "
+    "/fosh ni gumondagi ovchiga javoban: to‘g‘ri +5, xato −2.\n"
+    "💬 /kimaytdi — 4–12 kishi, shaxsiy matn va anonim muallif taxmini.\n"
+    "☎️ /telefon — 4–10 kishi, <=30 soniyalik ovozlar zanjiri va yakuniy matn.\n"
+    "📸 /eslaysizmi — 3–10 kishi, shaxsiy suratlar, spoiler va yuboruvchi taxmini.\n\n"
     "Guruhda bot admin bo‘lsin, avval /qoshilish bilan qo‘shiling. "
-    "Bir vaqtda bitta asosiy o‘yin; zar dueli alohida bo‘lishi mumkin. "
+    "Bitta asosiy o‘yin, alohida Yashirin fon o‘yini va zar duellari yurishi mumkin. "
+    "Yangi o‘yinlarga faqat lobbydagi shaxsiy havoladan rozilik bilan kiring. "
+    "Mafia bilan birga bir odamga bitta faol shaxsiy kontekst. "
+    "Materiallar guruhga chiqadi; media uchun botning o‘chirish huquqi kerak. "
     "Boshlovchi yoki admin /stop bilan to‘xtatadi. /help da batafsil yordam."
 )
 QUICK_RESET = (
@@ -839,7 +869,15 @@ def group_help(instagram_handle=None) -> str:
         "🎭 /hyj: haqiqatga 30 daqiqa, jasoratga 1 soat; rad etish −2.\n"
         "🌙 /mafia: 5–15 kishi, 90 soniyalik havola orqali qo‘shilish. "
         "Hamma botni shaxsiy chatda ochishi kerak.\n"
-        "🛑 /stop: boshlovchi yoki admin. Duelni tanlash uchun doskasiga javob bering.\n"
+        "🕵️ /yashirin: 3–20 kishi, 2/6/24 soatlik fon o‘yini; /fosh ni javob bilan ishlating.\n"
+        "💬 /kimaytdi: 4–12 kishi, shaxsiy matn, 30 soniyalik anonim taxmin.\n"
+        "☎️ /telefon: 4–10 kishi, 2 daqiqalik navbat, ovoz <=30 soniya.\n"
+        "📸 /eslaysizmi: 3–10 kishi, bitta surat, izoh taxmindan keyin ochiladi.\n"
+        "Shaxsiy havoladan rozilik bilan kiring; Mafia bilan birga bir odamga bitta "
+        "faol shaxsiy o‘yin. Admin yashirgan material uchun muallif ball olmaydi. "
+        "Media uchun botning o‘chirish huquqi kerak.\n"
+        "🛑 /stop: boshlovchi yoki admin. Duel yoki fon o‘yinini tanlash uchun "
+        "doskasiga javob bering.\n"
         "⏰ Kunlik xabar 0–15 daqiqaga tarqatiladi; haftalik xulosa yakshanba 20:00–21:00. "
         "Tinch vaqtda avtomatik xabar/vazifalar kutiladi."
     )
@@ -930,7 +968,7 @@ PRIVACY = (
     "vazifa/o‘yin natijalari va ballar saqlanadi. Ular o‘yinlar, reyting va vazifalar uchun kerak. "
     "Oddiy yozishmalar, surat, ovoz yoki video fayllari saqlanmaydi. "
     "O‘yin holati tanlangan javoblar va ismlarni, rozilik bilan yuborgan o‘yin "
-    "javobingizni hamda ovozning Telegram file_id sini saqlashi mumkin; "
+    "javobingizni hamda ovoz/suratning Telegram file_id sini saqlashi mumkin; "
     "muallifni ochish, ovozni qayta yuborish va admin yashirishi uchun kerak. "
     "Media faylini yuklab olib saqlamaymiz.\n"
     "Rozilikdan /chiqish bilan chiqing. Shaxsiy chatda /malumotlarimni_ochir orqali "
@@ -953,7 +991,10 @@ ERASE_DONE = "Ma’lumotlaringiz o‘chirildi. Qayta foydalanish uchun /start yu
 
 def owner_stats(data):
     games = (
-        "\n".join(f"{escape(kind)}: {count}" for kind, count in sorted(data["games"].items()))
+        "\n".join(
+            f"{escape(PRIVATE_GAME_NAMES.get(kind, kind))}: {count}"
+            for kind, count in sorted(data["games"].items())
+        )
         or NO_SCORES
     )
     return (
@@ -1103,7 +1144,14 @@ PRIVATE_GAME_NAMES = {
     "secret": "Yashirin topshiriq",
     "kim": "Kim aytdi?",
     "telephone": "Ovozli buzilgan telefon",
+    "memory": "Eslaysizmi?",
 }
+MEMORY_PROMPT = (
+    "📸 Bitta yangi surat yuboring. Ixtiyoriy izoh: qachon/qayerda (<=300 belgi). "
+    "Havola, @eslatma, uzatilgan rasm yoki hujjat qabul qilinmaydi. "
+    "Tayyorlashdan so‘ng 5 daqiqa bor. Surat guruhga spoiler bilan chiqadi; "
+    "taxmindan keyin ismingiz va izoh ochiladi."
+)
 PRIVATE_GAME_NEED_DELETE = (
     "Bu media o‘yini uchun botga xabarlarni o‘chirish huquqini bering. "
     "Huquq keyin yo‘qolsa, yashirish belgisi media faylini olib tashlamaydi; admin o‘chirsin."
@@ -1131,7 +1179,7 @@ KIM_QUESTION = (
     "Javob anonim guruhga chiqadi, taxmindan keyin muallif ochiladi."
 )
 PRIVATE_GAME_NO_ANSWERS = "Hech kim javob yubormadi. O‘yin bekor qilindi."
-PRIVATE_GUESS_DENIED = "Faqat o‘yinchi taxmin qiladi; muallif o‘z javobiga ovoz bera olmaydi."
+PRIVATE_GUESS_DENIED = "Faqat o‘yinchi taxmin qiladi; yuboruvchi o‘z materialiga ovoz bera olmaydi."
 PRIVATE_GUESS_SAVED = "Taxmin saqlandi. Natija raund oxirida ochiladi."
 
 
@@ -1140,6 +1188,13 @@ def private_game_board(game):
     title = PRIVATE_GAME_NAMES[game.game]
     names = ", ".join(escape(name) for name in state.get("players", {}).values()) or "—"
     if state["phase"] == "lobby":
+        if game.game == "memory":
+            return (
+                "📸 <b>Eslaysizmi?</b> · lobby 5 daqiqa, 3–10 kishi\n"
+                "Bitta suratni shaxsiy yuborasiz. Guruhga spoiler bilan chiqadi; "
+                "30 soniya taxmindan keyin ismingiz va ixtiyoriy izohingiz ochiladi. "
+                "Faqat shaxsiy havoladan rozilik bilan qo‘shiling.\n" + names
+            )
         if game.game == "telephone":
             return (
                 "☎️ <b>Ovozli buzilgan telefon</b> · lobby 3 daqiqa, 4–10 kishi\n"
@@ -1168,8 +1223,10 @@ def private_game_board(game):
         f"{escape(name)}: {scores.get(user, 0)} ball"
         for user, name in state.get("players", {}).items()
     )
+    icon = {"secret": "🕵️", "kim": "💬", "telephone": "☎️", "memory": "📸"}[game.game]
     return (
-        f"🕵️ <b>{title}</b> · {'tugadi' if game.status == 'finished' else 'davom etmoqda'}\n{table}"
+        f"{icon} <b>{title}</b> · "
+        f"{'tugadi' if game.status == 'finished' else 'davom etmoqda'}\n{table}"
     )
 
 
@@ -1180,6 +1237,13 @@ def private_guess_name(index, name):
 def private_answer(game, reveal=False):
     state = game.state
     item = state["items"][state["item"]]
+    if game.game == "memory":
+        text = f"📸 {state['round']}/{len(state['order'])}"
+        if reveal:
+            author = escape(state["players"][str(item["user_id"])])
+            caption = escape(item.get("caption", ""))
+            return text + f"\nYuboruvchi: <b>{author}</b>\n{caption}"
+        return text + "\nKim yuborgan? 30 soniyada bitta taxmin tanlang. Izoh keyin ochiladi."
     text = f"💬 {state['round']}/{len(state['order'])}\n{escape(item['text'])}"
     if reveal:
         author = escape(state["players"][str(item["user_id"])])

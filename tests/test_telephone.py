@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from aiogram.exceptions import TelegramForbiddenError, TelegramRetryAfter
-from aiogram.methods import EditMessageCaption, GetChatMember, SendMessage, SendVoice
+from aiogram.methods import EditMessageCaption, GetChatMember, SendMessage, SendPhoto, SendVoice
 from aiogram.types import ChatMemberMember, Message
 from sqlalchemy import func, select
 from test_challenge_flows import command_update
@@ -28,7 +28,7 @@ async def media_app(guess_app):
 
     async def request(bot, method, timeout=None):  # noqa: ASYNC109
         nonlocal sequence
-        if isinstance(method, (SendVoice, EditMessageCaption)):
+        if isinstance(method, (SendVoice, SendPhoto, EditMessageCaption)):
             transport.methods.append(method)
             sequence += 1
             return Message(

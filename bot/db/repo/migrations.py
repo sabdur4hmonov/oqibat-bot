@@ -241,7 +241,8 @@ class ChatMigrationRepository:
                 content_games = await session.stream_scalars(
                     select(GameSession)
                     .where(
-                        GameSession.chat_id == old_id, GameSession.game.in_(["kim", "telephone"])
+                        GameSession.chat_id == old_id,
+                        GameSession.game.in_(["kim", "telephone", "memory"]),
                     )
                     .execution_options(yield_per=100)
                 )

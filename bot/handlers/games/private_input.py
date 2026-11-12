@@ -6,7 +6,12 @@ from bot.services.sender import Priority
 
 
 async def start(message, private_games, sender, bot, command: CommandObject):
-    kind = {"yashirin": "secret", "kimaytdi": "kim", "telefon": "telephone"}[command.command]
+    kind = {
+        "yashirin": "secret",
+        "kimaytdi": "kim",
+        "telefon": "telephone",
+        "eslaysizmi": "memory",
+    }[command.command]
     error = await private_games.start(message, kind)
     if error:
         await sender.send(
@@ -67,7 +72,9 @@ async def private(message, private_contexts, private_games, sender, bot):
 def create_router():
     router = Router(name="private_input_games")
     router.message.register(
-        start, F.chat.type.in_({"group", "supergroup"}), Command("yashirin", "kimaytdi", "telefon")
+        start,
+        F.chat.type.in_({"group", "supergroup"}),
+        Command("yashirin", "kimaytdi", "telefon", "eslaysizmi"),
     )
     router.message.register(accuse, F.chat.type.in_({"group", "supergroup"}), Command("fosh"))
     router.callback_query.register(button, F.data.startswith("pg:"))

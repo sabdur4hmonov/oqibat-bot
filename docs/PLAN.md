@@ -141,6 +141,11 @@ Any completed challenge resets `consecutive_misses`.
 | Krokodil: host writes the word in chat | −3 |
 | Truth answered / dare done (same as challenge kinds) / refused | +5 / by kind / −2 |
 | Mafia: winning side / survived to the end | +10 / +3 |
+| Yashirin target says secret word / correct expose / wrong expose | +10 (max 3) / +5 / −2 |
+| Kim aytdi: correct guesser / unguessed author | +3 / +3 |
+| Telephone: visible submitter after complete reveal | +3 |
+| Eslaysizmi: correct guesser / sender if someone guessed | +3 / +2 |
+| Admin hides a submitted item | no author bonus; compensate an already committed bonus once |
 
 ### 6.6 Uzbek text normalization (`utils/text_normalize.py`)
 Used for guessing games. Lowercase; unify all apostrophe variants (ʻ ʼ ’ ‘ ` ') to `'`; transliterate
@@ -550,6 +555,40 @@ voice/text boundaries, timeout/DM-failure skips, no-response end, consent/contex
 admin-only hide/no double points, stale/foreign/bot callbacks and all lifecycle paths;
 populated migration, pytest/Ruff/offline startup; PROGRESS entry, commit/push before
 Phase 21. Full live play requires four humans; no deployment or review ZIP.
+
+### Phase 21 — Eslaysizmi? and final game discovery
+`/eslaysizmi`, main slot, five-minute consent lobby, 3–10 opted-in people.
+Deep-link join `eslaysizmi_<session_id>`, global private context (Mafia included),
+bot delete permission, shared validation, admin hide and lifecycle rules apply.
+Each person sends one new photo privately within five minutes, with an optional
+caption (when/where, <=300 characters). Photos only; retain only the Telegram
+file_id for media, plus the consented caption/author/phase/message metadata in
+bounded existing session JSON; never download/store image bytes, sizes or URLs.
+Reject forwards/edits, links/@mentions, wrong media, old/duplicate submissions.
+Accept early replies during prompt delivery. Shuffle received photos; missing
+submitters may still guess, play received photos after collection timeout, cancel
+if none. Post one at a time via sendPhoto(has_spoiler=True); caption stays hidden
+until the 30-second guessing period ends. Named buttons, one final vote per joined
+human per round, no self-photo vote. Reveal sender/caption by editing that photo's
+caption, not resending the image. Correct guesser +3; sender +2 if at least one
+other player guessed, zero sender bonus if hidden. Transactional idempotent awards;
+late hide compensates sender bonus once. Never restore hidden photos/captions.
+Require current delete permission before posting media; caption fallback honestly
+warns that the image still needs human removal if deletion fails or rights vanish.
+Reuse independent indexed deadlines and 90-second send watchdogs; all sends GAME
+priority. Stop/restart/migration/erasure/withdrawal cancel/release private context
+and suppress pending disclosures. Preserve item origin to reject migrated message
+ID reuse; privacy erasure clears file IDs and captions. New `memory` CHECK migration,
+old migrations unchanged. Extend existing anonymous-guess engine rather than create
+a different game architecture or a durable outbound journal.
+**Accept:** full games with guessed/unguessed/hidden bonuses; actual photo/spoiler/
+caption calls, safe stored shape, input limits, consent/context, stale/foreign/bot/
+self callbacks, no double points, collection/lobby/send timeouts, all lifecycle and
+privacy/migration paths; populated SQLite migration, final PostgreSQL head if local,
+pytest/Ruff/offline startup. Update /oyinlar, /help, group commands, Mini App rules,
+README and complete Uzbek LIVE_TEST checklist for Phases 0–21 (four people needed
+for Kim/Telephone, extra Mafia participants as before). Write PROGRESS entry and
+final honest summary, commit/push, stop. No Phase 22, deployment or review ZIP.
 
 ### Later (not now)
 Additional Mini App interactions beyond the read-only scope and further game features.

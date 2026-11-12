@@ -217,7 +217,7 @@ class GameSession(Timestamps, Base):
     __table_args__ = (
         CheckConstraint(
             "game IN ('quiz', 'duel', 'wyr', 'krokodil', 'hyj', 'mafia', 'rps',"
-            " 'number', 'math', 'secret', 'kim', 'telephone')",
+            " 'number', 'math', 'secret', 'kim', 'telephone', 'memory')",
             name="game",
         ),
         CheckConstraint("status IN ('lobby', 'running', 'finished', 'cancelled')", name="status"),

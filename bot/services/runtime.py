@@ -91,7 +91,7 @@ class ScaleRuntime:
         )
         self.game_hub.register(("secret",), self.private_games)
         self.guess_games = GuessGames(self.private_games)
-        self.game_hub.register(("kim",), self.guess_games)
+        self.game_hub.register(("kim", "memory"), self.guess_games)
         self.telephone = Telephone(self.private_games)
         self.game_hub.register(("telephone",), self.telephone)
         self.groups.on_membership_changed = self.membership_changed
@@ -337,7 +337,7 @@ class ScaleMiddleware(BaseMiddleware):
             member = event.my_chat_member.new_chat_member
             if not member_is_active(member) or not member_is_admin(member):
                 for game in self.runtime.game_cache.for_chat(event.my_chat_member.chat.id):
-                    if game.game in {"secret", "kim", "telephone"}:
+                    if game.game in {"secret", "kim", "telephone", "memory"}:
                         await self.runtime.game_hub.cancel(game, defer=True)
         if event.chat_member:
             await self.runtime.mafia_game.membership_changed(

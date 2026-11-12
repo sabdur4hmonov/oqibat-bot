@@ -1,4 +1,4 @@
-# Oqibat: to‘liq jonli sinov ro‘yxati (0–16-bosqichlar)
+# Oqibat: to‘liq jonli sinov ro‘yxati (0–21-bosqichlar)
 
 Faqat alohida **sinov botida va sinov guruhida** bajaring. Uch odam: **A** — bot egasi
 va guruh admini, **B** va **C** — oddiy a’zolar. Har qadamni faqat o‘tgach belgilang.
@@ -10,6 +10,9 @@ Don 8, Ma’shuqa 9, Manyak 11 qatnashuvchi talab qiladi. Uchlikda kamlik sababl
 bekor bo‘lish va sozlamalar sinaladi. Quyidagi alohida Mafia bo‘limi uchun yetarli
 haqiqiy a’zo qo‘shilmasa, qadamlarni belgilamang — “jonli tekshirilmagan” deb yozing.
 Avtomatik testlar haqiqiy odamlar bilan sinov o‘rnini bosmaydi.
+Kim aytdi? va Telefonning to‘liq sinovi uchun **D — to‘rtinchi haqiqiy odam** kerak.
+Yashirin topshiriq va Eslaysizmi? uch kishi bilan to‘liq sinaladi. Yashirin uchun
+kamida 4 ta turli so‘z tayyorlang: repodagi uchta namuna formatni ko‘rsatadi.
 
 ## 1. Tayyorlash: BotFather, muhit va ishga tushirish (0, 0.5)
 
@@ -282,7 +285,103 @@ Avtomatik testlar haqiqiy odamlar bilan sinov o‘rnini bosmaydi.
 - [ ] README bo‘yicha backup va yangi bo‘sh bazaga restore qiling.
   **Natija:** kundalik custom dump, 14 kun saqlash, yangi bazada tekshiruv; ishlab turgan baza o‘zgarmaydi.
 
-## 14. Xato bo‘lsa jurnalni qanday topish
+## 14. Yangi o‘yinlarga umumiy rozilik va himoya (18–21)
+
+- [ ] Botga xabarlarni o‘chirish huquqini bering, A/B/C /qoshilish qilsin.
+  **Natija:** /telefon va /eslaysizmi shu huquqsiz boshlanmaydi; sinov uchun zararsiz surat/ovoz tanlanadi.
+- [ ] /oyinlar, guruhdagi va shaxsiy /help, Mini App qoidalarini oching.
+  **Natija:** /yashirin, /fosh, /kimaytdi, /telefon, /eslaysizmi bor; ishtirokchi soni va nima ochilishi tushunarli.
+- [ ] Lobby matnini o‘qing va uning shaxsiy havolasini bosib Start qiling.
+  **Natija:** lobbyda guruhga nima chiqarilishi aytilgan; faqat shu havoladan rozilik bilan qo‘shilasiz.
+- [ ] Bitta shaxsiy o‘yinda qatnashib turib boshqasining havolasini bosing (Mafia ham kiradi).
+  **Natija:** shaxsiy chatda bandlik tushuntiriladi, ikkinchi o‘yinga kirmaysiz. Birinchi tugagach qo‘shilish mumkin.
+- [ ] Shaxsiy topshiriqqa havola, @eslatma, uzatilgan xabar yoki talabga mos bo‘lmagan media yuboring.
+  **Natija:** rad etiladi, ball berilmaydi. To‘g‘ri yangi javob qabul qilinadi; takroriy javob materialni almashtirmaydi.
+- [ ] Guruhdagi foydalanuvchi materialida oddiy B yashirish tugmasini bossin, so‘ng admin A bossin.
+  **Natija:** B yashira olmaydi. A materialni o‘chiradi yoki matnda yashirish belgisi chiqadi; muallifning shu material bali yo‘q.
+- [ ] O‘yin tugagach bonusli materialni yashiring va qayta bosing.
+  **Natija:** bonus bir marta bekor bo‘ladi, /top va yakuniy jadval yangilanadi. Boshqa odamning topish bali bekor bo‘lmaydi.
+- [ ] Faqat sinovda, media chiqarilgach botning o‘chirish huquqini olib, admin yashirishni bossin; keyin huquqni tiklang.
+  **Natija:** izoh belgilanishi surat/ovozni o‘chirmaydi; bot bu cheklovni aniq aytadi. Admin mediani qo‘lda o‘chirsin.
+  Telegram o‘chirishni boshqa sabab bilan rad etsa ham qo‘lda tekshiring; belgini to‘liq o‘chirish deb hisoblamang.
+- [ ] Har yangi o‘yinda alohida /stop, /chiqish, qayta yoqish va /malumotlarimni_ochir tasdig‘ini sinang.
+  **Natija:** faol o‘yin bekor bo‘ladi, shaxsiy joy bo‘shaydi, kechikkan material chiqmaydi; oldin yozilgan ball takrorlanmaydi.
+  Ma’lumotni o‘chirish fayl identifikatori/izohni ham tozalaydi; yetkazilgan Telegram xabarlari va tashqi backup alohida.
+- [ ] Eski raund, boshqa o‘yin va migratsiyadan oldingi tugmalarni sinang.
+  **Natija:** eski taxmin ishlamaydi; eski guruhdagi material ID si yangi guruhning boshqa xabarini o‘chirmaydi.
+  Migratsiyadan qolgan material kerak bo‘lsa admin qo‘lda o‘chiradi. Xavfli migratsiyani asosiy guruhda majburlamang.
+
+## 15. Yashirin topshiriq — A/B/C bilan (18)
+
+- [ ] CONTENT_GUIDE bo‘yicha secret_words.json ga kamida 4 turli so‘z qo‘ying, validatorni ishga tushiring.
+  **Natija:** bank to‘g‘ri. Faqat 3 namuna qolsa uch kishilik o‘yin yetishmaslikni aytib bekor bo‘ladi.
+- [ ] A /yashirin yuborsin, 2 soatni tanlasin; B boshqa muddatni bosib ko‘rsin, uchlik shaxsiy havoladan qo‘shilsin.
+  **Natija:** muddatni faqat A o‘zgartiradi; odatiy muddat 24 soat, boshqa tanlov 6 soat; lobby 5 daqiqa.
+- [ ] Lobbydan keyin har kim o‘z nishoni va maxfiy so‘zini shaxsiy ko‘rsin.
+  **Natija:** har kim bitta odamni ovlaydi va bitta odam uni ovlaydi; faol so‘zlar takrorlanmaydi.
+- [ ] Nishon so‘zni guruhga yangi matn/rasm izohida yozsin; palov so‘zi bo‘lsa palovni/palovdan ni ham sinang.
+  **Natija:** ovchi +10, so‘z guruhda ochiladi va yangi so‘z keladi; 3 muvaffaqiyatdan keyin yangi topshiriq berilmaydi.
+- [ ] So‘zli eski xabarni uzating yoki tahrirlang; aloqasiz oddiy xabar ham yozing.
+  **Natija:** ular uchun yutuq yo‘q. Apostrof/kirill bir xil so‘z sifatida taniladi; qisqa so‘z faqat to‘liq token bilan moslashadi.
+- [ ] /fosh ni haqiqiy ovchining xabariga javoban, keyin alohida holatda noto‘g‘ri gumon bilan yuboring.
+  **Natija:** to‘g‘ri +5, so‘z ochilib yangilanadi; xato −2 va 1 soat kutish. Jami 3 gumondan oshmaydi.
+- [ ] Yashirin davomida /sontop yoki boshqa asosiy o‘yinni boshlang; fon doskasiga /stop bilan javob bering.
+  **Natija:** asosiy joy alohida; javobli /stop faqat fon o‘yinini to‘xtatadi. Oddiy /stop asosiy o‘yinni tanlaydi.
+- [ ] To‘rt odam bilan boshlang, bittasi /chiqish qilsin; so‘ng ikkinchisi ham chiqsin.
+  **Natija:** uchlikda nishonlar tuzatiladi, ikki kishi qolganda bekor bo‘ladi. Tabiiy 2/6/24 soat oxirida natija jadvali chiqadi.
+
+## 16. Kim aytdi? — A/B/C/D bilan (19)
+
+- [ ] To‘rtinchi odam D /qoshilish qilsin; /kimaytdi va shaxsiy havolalar orqali kiring.
+  **Natija:** lobby 3 daqiqa, 4–12 kishi; uch odam qolsa to‘liq o‘yin boshlanmaydi.
+- [ ] Har kim bir xil shaxsiy savolga 5 daqiqada bitta 1–300 belgili matn yuborsin.
+  **Natija:** erta javob ham qabul qilinadi; ikkinchi javob, 301 belgi, link, ovoz va surat rad etiladi.
+- [ ] Guruhda javoblarni birma-bir ko‘ring, nomli tugmalardan taxmin tanlang.
+  **Natija:** tartib tasodifiy, muallif avval yashirin. Muallif o‘z javobiga ovoz bera olmaydi, har odam bir marta tanlaydi.
+- [ ] Bir raundda ikki odam to‘g‘ri topsin, boshqasida hech kim topmasin.
+  **Natija:** 30 soniyadan keyin o‘sha xabar tahrirlanib muallif ochiladi; to‘g‘ri topganlarning har biri +3,
+  hech kim topmagan javob muallifi +3. Eski tugma qo‘shimcha ball bermaydi.
+- [ ] Bir o‘yinda hech kim javob yubormasin, boshqasida faqat ayrimlar javob bersin.
+  **Natija:** 5 daqiqada javobsiz o‘yin bekor; qisman javoblar bilan kelgan materiallar o‘ynaladi, qolganlar ham taxmin qiladi.
+
+## 17. Ovozli buzilgan telefon — A/B/C/D bilan (20)
+
+- [ ] /telefon ni boshlang, to‘rtlik havoladan kirsin; lobbydan keyin birinchi ovozli topshiriqni kuting.
+  **Natija:** lobby 3 daqiqa, 4–10 kishi, navbat tasodifiy; birinchi odamga matnli jumla keladi.
+- [ ] Birinchi odam yangi ovoz yuborsin, keyingi odamlar eshitib o‘z ovozida qaytarsin.
+  **Natija:** navbat 2 daqiqa, ovoz ko‘pi bilan 30 soniya. Keyingiga faqat oxirgi ovoz, asl jumla yoki oldingi ism kelmaydi.
+- [ ] Navbati kelmagan odam, 31 soniyalik/uzatilgan ovoz va oddiy audio fayl bilan urinib ko‘ring.
+  **Natija:** qabul qilinmaydi; yangi Telegram voice xabari kerak. Oxirgi odam ovoz o‘rniga eshitganini matn yozadi.
+- [ ] O‘rtadagi odam javob bermasin; keyin alohida o‘yinda oxirgi odam matn yozmasin.
+  **Natija:** kechikkan odam o‘tkaziladi va oxirgi yaxshi ovoz keyingiga o‘tadi; yakuniy matn yo‘q bo‘lsa aniq aytiladi.
+  Hali ovoz bo‘lmasa keyingi so‘zlovchiga asl jumla beriladi; hech kim topshirmasa o‘yin bekor.
+- [ ] Zanjirni oxirigacha tugating va guruhdagi natijani tinglang.
+  **Natija:** asl jumla, yakuniy matn, keyin ovozlar navbat bilan chiqadi. Har materialda hide tugmasi,
+  yashirilmagan material topshirgan har odamga +3; to‘rt topshiruvchi uchun +12 bir marta.
+
+## 18. Eslaysizmi? — A/B/C bilan (21)
+
+- [ ] /eslaysizmi yuboring, uchlik havoladan qo‘shilsin va rozilikni o‘qisin.
+  **Natija:** lobby 5 daqiqa, 3–10 kishi; surat guruhga chiqishi va izoh keyin ochilishi aniq.
+- [ ] Har kim 5 daqiqada bittadan oddiy sinov surati yuborsin; ixtiyoriy qachon/qayerda izoh qo‘shing.
+  **Natija:** yangi photo qabul qilinadi; hujjat qilib yuborilgan rasm, ovoz, matn, link/@eslatmali izoh,
+  uzatilgan surat, 301 belgili izoh va ikkinchi surat rad etiladi.
+- [ ] Suratlarni guruhda kuzating va tugmalardan taxmin tanlang.
+  **Natija:** har surat bir marta spoiler bilan chiqadi; izoh va yuboruvchi avval ochilmaydi.
+  Har odam bir taxmin qiladi; o‘z suratiga ovoz berib bepul ball olib bo‘lmaydi.
+- [ ] Bir suratni ikki kishi to‘g‘ri topsin; boshqa suratda hech kim topmasin.
+  **Natija:** 30 soniyadan keyin o‘sha suratning izohi tahrirlanadi, yuboruvchi va yashirin izoh ochiladi;
+  surat qayta yuborilmaydi. Har topuvchiga +3, kamida bir topuvchi bo‘lsa yuboruvchiga +2; hech kim topmasa yuboruvchiga 0.
+- [ ] Admin suratni raundda yoki bonus berilgach yashirsin.
+  **Natija:** yashirilgan surat/izoh qayta ochilmaydi, yuboruvchining shu +2 bonusi yo‘q yoki bir marta qaytariladi;
+  to‘g‘ri topuvchilarning boshqa ballari saqlanadi. Huquq yo‘qolsa rasmni admin qo‘lda o‘chirsin.
+- [ ] Hech kim surat yubormaydigan va faqat bittasi yuboradigan o‘yinlarni sinang.
+  **Natija:** javobsiz o‘yin bekor; kelgan bitta surat bilan bitta raund o‘ynaladi, keyin shaxsiy joylar bo‘shaydi.
+- [ ] Suratlar hali chiqarilmasidan /malumotlarimni_ochir ni tasdiqlang va boshqa o‘yinda botni qayta yoqing.
+  **Natija:** o‘yin bekor, fayl identifikatori/izoh o‘chiriladi yoki restartda yangi topshiriq talab qilinadi;
+  kechikkan surat yuborilmaydi, eski tugmalar ishlamaydi. Avval yetkazilgan Telegram suratlari avtomatik o‘chmaydi.
+
+## 19. Xato bo‘lsa jurnalni qanday topish
 
 - [ ] Muammo vaqtini va qadam raqamini yozing, so‘ng tegishli satrlarni toping:
 
@@ -311,7 +410,7 @@ Avtomatik testlar haqiqiy odamlar bilan sinov o‘rnini bosmaydi.
 Sana/vaqt (Asia/Tashkent):
 Commit:
 Sinov bot username (token emas):
-A / B / C:
+A / B / C (Kim/Telefon uchun D; Mafia uchun qo‘shimcha odamlar):
 O‘tgan qadamlar:
 Ishlamagan qadam va kutilgan/haqiqiy natija:
 Jurnal vaqti / update raqami:

@@ -44,7 +44,7 @@ class PrivateGames:
         user = message.from_user
         if not user or user.is_bot:
             return texts.GAME_JOIN_FIRST
-        if kind == "telephone" and not await self.can_delete(message.chat.id):
+        if kind in {"telephone", "memory"} and not await self.can_delete(message.chat.id):
             return texts.PRIVATE_GAME_NEED_DELETE
         state = {
             "phase": "lobby",
@@ -442,7 +442,7 @@ class PrivateGames:
     async def membership_changed(self, chat_id, user):
         for game in self.cache.for_chat(chat_id):
             if (
-                game.game in {"kim", "telephone"}
+                game.game in {"kim", "telephone", "memory"}
                 and str(user) in game.state.get("players", {})
                 and not self.hub.participants.contains(chat_id, user)
             ):

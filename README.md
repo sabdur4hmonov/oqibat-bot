@@ -932,3 +932,62 @@ Parametrsiz backup konteyner testlari skip bo‘ladi; ular haqiqiy loyiha bazasi
 ochmaydi. PostgreSQL integratsiyasi yuqoridagi alohida yangi/bo‘sh/local baza
 parametri bilan tekshiriladi. Kundalik 24 soatlik devor-soat sinovi, haqiqiy
 DNS/sertifikat chiqarish va real Telegram ishlashi egasining muhitida alohida qoladi.
+
+### Shaxsiy o‘yinlar va fon o‘yini (18–21-bosqichlar)
+
+Barcha yangi o‘yinlarga guruhdagi lobby havolasini bosib shaxsiy Start orqali
+rozilik bilan qo‘shiling. Mafia bilan birga **bir odamga faqat bitta faol shaxsiy
+kontekst** ruxsat. `/yashirin` bitta alohida fon joyini oladi; qolganlari asosiy
+joydan foydalanadi. Fon va asosiy o‘yin birga yursa, kerakli doskaga `/stop` bilan
+javob bering. Boshlovchi yoki admin to‘xtatadi.
+
+| Buyruq | Odam / lobby | Shaxsiy topshiriq va natija |
+|---|---|---|
+| `/yashirin`, `/fosh` | 3–20 / 5 daqiqa | Boshlovchi 2/6/24 soatni tanlaydi (odatda 24). Har kim bitta nishon va faol ovchilar orasida yagona so‘z oladi. Nishon yangi guruh matni/izohida so‘zni aytsa +10, ko‘pi bilan 3 muvaffaqiyat. `/fosh` gumondagi ovchining xabariga javoban: to‘g‘ri +5 va so‘z yangilanadi; xato −2, 1 soat kutish; jami 3 gumon. |
+| `/kimaytdi` | 4–12 / 3 daqiqa | Bir xil savolga 5 daqiqada bitta matn (<=300 belgi). Javoblar anonim, 30 soniya taxmin, keyin muallif. To‘g‘ri topgan har odam +3; hech kim topmasa muallif +3. |
+| `/telefon` | 4–10 / 3 daqiqa | Navbat 2 daqiqa, ovoz <=30 soniya; keyingiga faqat oxirgi ovoz. Oxirgi odam matn yozadi (<=300 belgi). Yakunda asl jumla, matn va ovozlar ketma-ket ochiladi; yashirilmagan material topshirgan har odam +3. |
+| `/eslaysizmi` | 3–10 / 5 daqiqa | 5 daqiqada bitta photo, ixtiyoriy izoh <=300 belgi. Guruhga spoiler bilan; 30 soniyadan keyin yuboruvchi va izoh ochiladi. Topuvchiga +3, kamida bir topuvchi bo‘lsa yuboruvchiga +2. |
+
+Yashirin uchun bankdagi turli so‘zlar soni o‘yinchilar sonidan kamida bitta ko‘p
+bo‘lsin. Uchta namuna bilan uch kishilik o‘yin boshlanmaydi: CONTENT_GUIDE bo‘yicha
+kamida to‘rtinchi so‘zni yozing. So‘z yangi guruh matni yoki captionida token bilan
+moslashadi; 4+ harfli so‘zga qo‘shimcha mumkin (`palov` → `palovni`, `palovdan`).
+Uzatilgan/tahrirlangan xabarlar yutuq bermaydi. Ketgan odamdan keyin aylana tuzatiladi,
+uchdan kam qolsa bekor bo‘ladi. Oddiy xabarlar uchun SQL kerak emas.
+
+Kim/Surat o‘yinida har odam bir marta taxmin qiladi, o‘z materialiga ovoz bera olmaydi.
+Hech kim topshirmasa bekor; ayrimlar yuborgan bo‘lsa kelgan materiallar o‘ynaladi.
+Telefon navbatida vaqt tugasa yoki shaxsiy xabar yetmasa odam o‘tkaziladi va oxirgi
+ovoz saqlanadi. Hali ovoz yo‘q bo‘lsa keyingi so‘zlovchiga jumla beriladi; oxirgi
+matn yo‘q bo‘lsa bu aytiladi. Ovoz/rasm fayli yuklab olinmaydi: Telegram file_id,
+rozilik bilan berilgan matn/izoh va cheklangan o‘yin ma’lumotlari JSON holatda saqlanadi.
+
+Shaxsiy materialda link, @eslatma, forward, tahrir va noto‘g‘ri media qabul qilinmaydi.
+Har guruh materialida **admin uchun yashirish** tugmasi bor. Botning o‘chirish huquqi
+bo‘lsa xabar o‘chadi; matn aks holda belgilanadi. Media uchun shu huquq o‘yin boshida
+va chiqarishda tekshiriladi. Huquq yo‘qolsa yoki Telegram o‘chirishni rad etsa, izohni
+belgilash ovoz/rasmni olib tashlamaydi — admin qo‘lda o‘chirsin. Yashirilgan material
+muallif bonusi olmaydi; berilgan bonus alohida qarshi ledger yozuvi bilan bir marta
+bekor bo‘ladi. Topuvchining boshqa bali saqlanadi. Migratsiyadan oldingi material
+ID lari yangi guruhda qayta ishlatilmaydi; eski tarixni admin alohida boshqaradi.
+
+Stop/restart/migratsiya/shaxsiy ma’lumotni o‘chirish va asosiy shaxsiy o‘yinlarda
+/chiqish o‘yinni bekor qiladi. Oldin tasdiqlangan raund ballari takrorlanmaydi;
+Telefon yakuniy reveal tugaguncha ball bermaydi. Botdan oldin yetkazilgan Telegram
+xabarlari hamda tashqi backupni `/malumotlarimni_ochir` o‘chirmaydi.
+
+Yangilash va mahalliy tekshirish (PowerShell):
+
+```powershell
+python -m pip install -r requirements-dev.txt
+alembic upgrade head
+python scripts/validate_content.py
+python -m pytest
+ruff check .
+python -m bot --check
+```
+
+Jonli ro‘yxat: [docs/LIVE_TEST.md](docs/LIVE_TEST.md). Eslaysizmi/Yashirin uch kishi
+bilan; Kim/Telefon uchun to‘rtinchi odam kerak. Haqiqiy Telegram, ovoz ijrosi,
+rasm spoilerlari va server quvvati alohida tekshiriladi. Bu bosqichlar deploy qilmaydi,
+review ZIP ham yaratmaydi.
