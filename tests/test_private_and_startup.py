@@ -149,6 +149,7 @@ async def test_bootstrap_registers_scopes_and_required_updates(database_url, set
     assert [c.command for c in registrations[0].commands] == [
         "start",
         "help",
+        "oyinlar",
         "stats",
         "maxfiylik",
         "malumotlarimni_ochir",

@@ -20,6 +20,7 @@ from bot.handlers.errors import handle_error
 from bot.handlers.games.easy import create_router as create_games_router
 from bot.handlers.games.krokodil import create_router as create_krokodil_router
 from bot.handlers.games.mafia import create_router as create_mafia_router
+from bot.handlers.games.quick import create_router as create_quick_router
 from bot.handlers.games.rps import create_router as create_rps_router
 from bot.handlers.games.truth_dare import create_router as create_truth_dare_router
 from bot.handlers.group_setup import create_router as create_group_router
@@ -47,6 +48,7 @@ def create_dispatcher() -> Dispatcher:
     dispatcher.include_router(create_stats_router())
     dispatcher.include_router(create_games_router())
     dispatcher.include_router(create_rps_router())
+    dispatcher.include_router(create_quick_router())
     dispatcher.include_router(create_krokodil_router())
     dispatcher.include_router(create_truth_dare_router())
     dispatcher.include_router(create_mafia_router())
@@ -58,6 +60,7 @@ async def register_commands(bot: Bot, sender: Sender) -> None:
     private = [
         BotCommand(command="start", description=texts.START_DESCRIPTION),
         BotCommand(command="help", description=texts.HELP_DESCRIPTION),
+        BotCommand(command="oyinlar", description=texts.GAME_CATALOG_DESCRIPTION),
         BotCommand(command="stats", description=texts.OWNER_STATS_DESCRIPTION),
         BotCommand(command="maxfiylik", description=texts.PRIVACY_DESCRIPTION),
         BotCommand(command="malumotlarimni_ochir", description=texts.ERASE_DESCRIPTION),

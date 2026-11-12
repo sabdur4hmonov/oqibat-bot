@@ -135,7 +135,7 @@ class ChatMigrations:
                 cache.sync(replace(game, status="cancelled"))
             for game in result["games"]:
                 cache.sync(game)
-                if game.game == "rps":
+                if game.game in {"rps", "number", "math"}:
                     # Old group boards are no longer actionable; never reuse a
                     # private selection across migration/recreated message contexts.
-                    runtime.effects.start(runtime.rps_game.recover(game))
+                    runtime.effects.start(runtime.game_hub.services[game.game].recover(game))

@@ -388,6 +388,37 @@ GAME priority, independent deadlines, migration of populated linked rows and exi
 regression tests pass; pytest/Ruff, offline startup, PROGRESS entry, commit/push.
 Real Telegram remains a separate manual acceptance check. No dependency or deployment.
 
+### Phase 16 — Number hunt, quick maths and game discovery (owner request, 2026-11-12)
+Owner authorized more games and polish; implement this bounded phase, then stop.
+Add `/sontop`: secret integer 1–100, group members reply to the game board with a
+number, narrowing higher/lower hints, 15 valid guesses maximum, 180 seconds from
+confirmed board delivery, winner +3. One accepted guess per user per three seconds;
+ignore malformed/out-of-range, forwarded, duplicate/older messages and guesses that
+do not reply to the current board. Normal messages and rejected guesses do no SQL.
+Add `/matematika`: five generated addition/subtraction/multiplication questions,
+four inline choices each, 20 seconds per question from confirmed delivery. Distinct
+correct values across the match; one attempt per opted-in user per round, max 500
+distinct attempts/round. First correct earns +2 atomically with advancing state;
+wrong answers get a private popup and no group edit. On timeout show the answer and
+advance; end with a score table and optional existing result card, no extra final award.
+Add `/oyinlar` in private/groups as a simple Uzbek catalog of all existing games.
+Use the existing main slot, per-chat repository locks, GAME Sender priority, direct
+callback replies, indexed independent deadlines and transactional point references.
+Sending/preparing stages have a 90-second watchdog and accept no actions; only a
+confirmed board starts the play window. Session/round/board checks reject stale math
+buttons. Ended/cancelled games never accept actions. Restart/migration or starter
+opt-out/leave cancels; committed earlier math awards remain. Other players can leave
+without ending the match, and inactive players cannot earn new points. Preserve
+privacy-erasure handling. No dictionary/content bank, dependency, deployment or
+new persistent-queue design. New Alembic revision extends game CHECK to number/math;
+old migrations unchanged, reuse Phase 15's validated SQLite parent rebuild handling.
+**Accept:** pure generation/parser/answer/hint/limit/cooldown tests, complete scripted
+games, concurrent winner/dedup/stale/foreign/permission tests, delivery-window/watchdog
+and independent deadlines under send pause, normal-message zero SQL, stop/leave/
+restart/migration/erasure, menu/help/card integration, linked-row migration safety,
+pytest/Ruff/offline startup pass; write honest PROGRESS/manual Uzbek steps, commit/push.
+Real Telegram and production capacity remain manual acceptance, not a deployment claim.
+
 ### Later (not now)
 Additional Mini App interactions beyond the read-only scope and further game features.
 

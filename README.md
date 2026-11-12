@@ -754,3 +754,33 @@ to‘xtatiladi, yakunda bog‘lanishlar tekshiriladi va yoqiladi; bot ulanishlar
 tekshiruv doim yoqilgan. RPS tarixli bazani eski sxemaga qaytarish ma’lumot yo‘qotmaslik
 uchun rad etiladi. [Alembic rasmiy batch qo‘llanmasi](https://alembic.sqlalchemy.org/en/latest/batch.html#dealing-with-referencing-foreign-keys)
 shu SQLite jadval-almashtirish cheklovini tushuntiradi. O‘zgarish oldidan nusxa oling.
+
+### Son topish va tezkor matematika
+
+Yangi koddan oldin botni to‘xtating, bazadan nusxa oling; virtual muhitda
+`alembic upgrade head`, `python -m bot --check`, keyin `python -m bot` bajaring.
+`/oyinlar` shaxsiy chatda ham, guruhda ham barcha to‘qqiz o‘yin ro‘yxatini ko‘rsatadi.
+Guruhda bot admin, o‘yinchilar esa `/qoshilish` bilan qo‘shilgan bo‘lsin.
+
+- `/sontop`: 1–100 orasidagi son. **O‘yin xabariga javob** qilib faqat butun son
+  yuboring; oddiy yozishma hisoblanmaydi. Bot “kattaroq/kichikroq” deb oraliqni
+  toraytiradi. 15 ta qabul qilingan urinish va 3 daqiqa bor. Har bir odam o‘z
+  urinishlari orasida kamida 3 soniya kutsin. Birinchi topuvchiga +3, topilmasa
+  ball yo‘q. Takror/eski/uzatilgan yoki oraliqdan tashqari javob hisoblanmaydi.
+- `/matematika`: qo‘shish, ayirish va ko‘paytirishdan 5 savol, har birida 4 tugma.
+  Savol yetkazilgandan keyin 20 soniya, har odamga bir urinish. Noto‘g‘ri javob
+  faqat o‘sha odamga popup bo‘ladi. Birinchi to‘g‘ri javobga +2, keyingi savolga
+  o‘tiladi; vaqt tugasa javob ochilib, keyingisi chiqadi. Oxirida jami ballar va
+  yoqilgan bo‘lsa karta ko‘rinadi. Yakun uchun qo‘shimcha ball yozilmaydi.
+
+Son topishda 3 daqiqa va matematikadagi 20 soniya xabar yetkazilgach boshlanadi.
+Yetkazish 90 soniyada bajarilmasa o‘yin to‘xtaydi. Matematikada bitta savolga
+500 ta odamgacha urinish qabul qilinadi. Bir vaqtda bitta asosiy o‘yin; `/stop`
+ni boshlovchi yoki admin ishlatadi. Boshlovchi chiqsa, bot qayta yoqilsa yoki guruh
+ko‘chsa davom ettirilmaydi. Oldin yozilgan matematika ballari saqlanadi; qolgan
+odamning chiqishi butun o‘yinni to‘xtatmaydi. Shaxsiy ma’lumotlarni o‘chirish
+buyrug‘i avvalgidek tegishli o‘yin holatini tozalaydi.
+
+Yangi kutubxona, haqiqiy token yoki kontent banki kerak emas. Savollar koddagi
+cheklangan matematik amallardan tuziladi. Haqiqiy Telegram va serverdagi yuk
+sinovi alohida; ushbu qo‘shimcha hech narsani serverga joylamaydi.

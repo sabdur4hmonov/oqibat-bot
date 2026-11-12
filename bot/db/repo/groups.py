@@ -87,7 +87,7 @@ class GroupRepository:
                         select(GameSession)
                         .where(
                             GameSession.chat_id == chat_id,
-                            GameSession.game.in_(["hyj", "rps"]),
+                            GameSession.game.in_(["hyj", "rps", "number", "math"]),
                             GameSession.status.in_(["lobby", "running"]),
                         )
                         .limit(1)
@@ -95,6 +95,7 @@ class GroupRepository:
                     if game is not None and (
                         game.state.get("target") == tg_user.id
                         or (game.game == "rps" and tg_user.id in game.state.get("players", []))
+                        or (game.game in {"number", "math"} and game.started_by == tg_user.id)
                     ):
                         game.status, game.phase_deadline_at = "cancelled", None
                         game.state = {

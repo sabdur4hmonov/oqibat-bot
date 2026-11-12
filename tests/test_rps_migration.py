@@ -75,7 +75,7 @@ async def test_populated_parent_rebuild_preserves_dares_ids_points_indexes_and_f
 ):
     path = tmp_path / "linked.db"
     url = await seeded_previous(path)
-    for command, target in [("upgrade", "head"), ("downgrade", PREVIOUS), ("upgrade", "head")]:
+    for command, target in [("upgrade", CURRENT), ("downgrade", PREVIOUS), ("upgrade", CURRENT)]:
         result = await migrate(url, command, target)
         assert result.returncode == 0, result.stdout + result.stderr
     engine = create_engine(url)
@@ -125,7 +125,7 @@ async def test_foreign_key_validation_failure_rolls_back_table_rebuild_and_revis
     # migration behavior; production/runtime FK enforcement is never disabled.
     with sqlite3.connect(path) as connection:
         connection.execute("UPDATE challenges SET game_session_id=999 WHERE id=11")
-    result = await migrate(url, "upgrade", "head")
+    result = await migrate(url, "upgrade", CURRENT)
     assert result.returncode != 0 and "Migration foreign-key validation failed" in result.stderr
     with sqlite3.connect(path) as connection:
         assert (

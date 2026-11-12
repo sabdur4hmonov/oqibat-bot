@@ -216,7 +216,8 @@ class GameSession(Timestamps, Base):
     __tablename__ = "game_sessions"
     __table_args__ = (
         CheckConstraint(
-            "game IN ('quiz', 'duel', 'wyr', 'krokodil', 'hyj', 'mafia', 'rps')", name="game"
+            "game IN ('quiz', 'duel', 'wyr', 'krokodil', 'hyj', 'mafia', 'rps', 'number', 'math')",
+            name="game",
         ),
         CheckConstraint("status IN ('lobby', 'running', 'finished', 'cancelled')", name="status"),
         Index("ix_game_sessions_status_deadline", "status", "phase_deadline_at"),

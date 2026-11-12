@@ -28,6 +28,7 @@ from bot.services.participation import Participants
 from bot.services.penalties import Penalties
 from bot.services.pending import PendingChallenges
 from bot.services.points import CheckinBuffer, Points
+from bot.services.quick_games import QuickGames
 from bot.services.recovery import Recovery
 from bot.services.result_cards import ResultCards
 from bot.services.rps import RockPaperScissors
@@ -75,6 +76,8 @@ class ScaleRuntime:
         self.game_hub.register(("duel", "quiz", "wyr"), self.easy_games)
         self.rps_game = RockPaperScissors(self.game_hub)
         self.game_hub.register(("rps",), self.rps_game)
+        self.quick_games = QuickGames(self.game_hub)
+        self.game_hub.register(("number", "math"), self.quick_games)
         self.krokodil_game = Krokodil(self.game_hub, self.content, sessions)
         self.game_hub.register(("krokodil",), self.krokodil_game)
         self.scheduler.hooks["game"] = self.game_hub.advance
@@ -182,6 +185,7 @@ class ScaleRuntime:
             "game_hub": self.game_hub,
             "easy_games": self.easy_games,
             "rps_game": self.rps_game,
+            "quick_games": self.quick_games,
             "krokodil_game": self.krokodil_game,
             "truth_dare": self.truth_dare,
             "mafia_game": self.mafia_game,
@@ -190,6 +194,8 @@ class ScaleRuntime:
     def membership_game_resolved(self, game):
         if game.game == "rps":
             self.rps_game.membership_resolved(game)
+        elif game.game in {"number", "math"}:
+            self.quick_games.membership_resolved(game)
         else:
             self.truth_dare.challenge_resolved(game)
 

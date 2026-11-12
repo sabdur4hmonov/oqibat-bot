@@ -160,5 +160,18 @@ async def test_postgres_migrations_utc_bulk_upserts_ledger_games_and_due_queries
         assert (await games.transition(chat_id, rps.id, rps_finish)).status == "finished"
         assert await games.transition(chat_id, rps.id, rps_finish) is None
         assert (await points.stats(chat_id, 42))[0] == 14
+        for kind, delta in (("number", 3), ("math", 2)):
+            quick = await games.start(
+                chat_id, 42, kind, {"phase": "playing"}, now + timedelta(seconds=20)
+            )
+
+            def finish_quick(row, kind=kind, delta=delta):
+                row.status, row.phase_deadline_at = "finished", None
+                row.state.update(phase="done", winner=42)
+                return [Award(42, delta, kind, f"game:{row.id}")]
+
+            assert (await games.transition(chat_id, quick.id, finish_quick)).status == "finished"
+            assert await games.transition(chat_id, quick.id, finish_quick) is None
+        assert (await points.stats(chat_id, 42))[0] == 19
     finally:
         await engine.dispose()
