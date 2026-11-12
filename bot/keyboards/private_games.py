@@ -36,3 +36,17 @@ def hide(game_id, item):
             ]
         ]
     )
+
+
+def guesses(game, item_id):
+    rows = [
+        [
+            InlineKeyboardButton(
+                text=texts.private_guess_name(index, name),
+                callback_data=f"pg:{game.id}:{game.state['round']}:v:{user}",
+            )
+        ]
+        for index, (user, name) in enumerate(game.state["players"].items(), 1)
+    ]
+    rows.extend(hide(game.id, item_id).inline_keyboard)
+    return InlineKeyboardMarkup(inline_keyboard=rows)

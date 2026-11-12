@@ -28,7 +28,11 @@ class GameHub:
 
             async with self.repo.sessions() as session:
                 row = await session.get(GameSession, game.id)
-                if row is None or row.state.get("erased"):
+                if (
+                    row is None
+                    or row.state.get("erased")
+                    or row.state.get("rev") != game.state.get("rev")
+                ):
                     return None
             current = self.cache.get(game.id)
             if game.status in {"lobby", "running"} and (

@@ -6,6 +6,7 @@ import re
 from bot.utils.text_normalize import normalize_text
 
 PRIVATE_GAMES = {"mafia", "secret", "kim", "telephone", "memory"}
+LOBBY_LIMITS = {"secret": (3, 20, 5), "kim": (4, 12, 3)}
 PREFIXES = {
     "mafia": "mafia",
     "secret": "yashirin",
@@ -81,3 +82,10 @@ def replacement(words, current, previous, rng=None):
         if normalize_text(word) not in occupied and normalize_text(word) != normalize_text(previous)
     ]
     return (rng or random).choice(available) if available else None
+
+
+def guess_rewards(author, votes, hidden=False):
+    correct = {user: 3 for user, choice in votes.items() if choice == author and user != author}
+    if not correct and not hidden:
+        correct[author] = 3
+    return correct

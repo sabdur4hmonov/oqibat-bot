@@ -493,6 +493,33 @@ cross-game consent/context isolation, stale/foreign/bot callbacks, hide authoriz
 and award reversal, zero-SQL nonmatches, stop/restart/migration/erasure, no double
 points; pytest/Ruff/offline startup; PROGRESS entry, commit/push before Phase 19.
 
+### Phase 19 — Kim aytdi?
+`/kimaytdi`, main slot, three-minute consent lobby, 4–12 opted-in humans joining
+only through `start=kimaytdi_<session_id>`. Reuse Phase 18's global private context,
+admission lock, submission validation, moderation, lifecycle and GAME Sender.
+Everyone receives the same bank question privately, then has five minutes to send
+one nonempty text answer (<=300 characters); reject voice/photo/links/@mentions,
+forwards, edits and old messages. Start the input window after confirmed prompts;
+90-second preparing/sending watchdogs cancel safely under delivery failure.
+Shuffle submitted answers; non-submitters may still guess. If no answers, cancel.
+Post each answer anonymously with player-name guess buttons and admin hide, wait
+30 seconds from confirmed delivery, then reveal the author. Joined humans only,
+one final guess/round, no self-answer vote; session/round/chat/message validation
+rejects stale/foreign/bot callbacks. Correct guessers +3 each; author +3 if nobody
+guessed, unless the item is hidden. State and all awards commit together with
+unique session/item references. A later admin hide compensates author points once,
+including after finish; never repost hidden text while revealing or retrying.
+Use indexed deadlines and deferred sends; edit the original lobby into progress/
+results and each answer into its reveal. Leave/opt-out cancels this main private
+game, preserving earlier committed rounds. Stop/restart/migration/erasure cancel
+and release contexts; erasure clears submissions, no late disclosure from queues.
+New migration adds `kim` to the CHECK; preserve populated parent links and indexes.
+**Accept:** complete scripted correct/nobody-guessed flows, text limits/escaping,
+single-context consent, timeouts/empty answers, callbacks/permissions, admin hide
+before/after award, concurrent/no-double points, all lifecycle paths, regression
+pytest/Ruff/offline startup; PROGRESS, commit/push before Phase 20. Live play needs
+four real participants; a three-person group can only verify minimum cancellation.
+
 ### Later (not now)
 Additional Mini App interactions beyond the read-only scope and further game features.
 

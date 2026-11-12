@@ -1,12 +1,13 @@
 from aiogram import F, Router
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandObject
 
 from bot import texts
 from bot.services.sender import Priority
 
 
-async def start(message, private_games, sender, bot):
-    error = await private_games.start(message)
+async def start(message, private_games, sender, bot, command: CommandObject):
+    kind = {"yashirin": "secret", "kimaytdi": "kim"}[command.command]
+    error = await private_games.start(message, kind)
     if error:
         await sender.send(
             message.chat.id,
@@ -65,7 +66,9 @@ async def private(message, private_contexts, private_games, sender, bot):
 
 def create_router():
     router = Router(name="private_input_games")
-    router.message.register(start, F.chat.type.in_({"group", "supergroup"}), Command("yashirin"))
+    router.message.register(
+        start, F.chat.type.in_({"group", "supergroup"}), Command("yashirin", "kimaytdi")
+    )
     router.message.register(accuse, F.chat.type.in_({"group", "supergroup"}), Command("fosh"))
     router.callback_query.register(button, F.data.startswith("pg:"))
     router.callback_query.register(hide, F.data.startswith("ph:"))

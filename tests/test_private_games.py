@@ -25,8 +25,8 @@ from bot.utils.time import utc_now
 
 
 def dm_update(text, user=1, message_id=200, **media):
-    update = command_update(text, message_id, user)
-    values = {"chat": {"id": user, "type": "private"}, **media}
+    update = command_update(text if text.strip() else "empty", message_id, user)
+    values = {"chat": {"id": user, "type": "private"}, "text": text, **media}
     return update.__class__.model_validate(
         {**update.model_dump(), "message": {**update.message.model_dump(), **values}}
     )
@@ -40,7 +40,7 @@ def group_message(text, user=1, message_id=300, **values):
 
 async def lobby(app, kind="secret", users=(1, 2, 3)):
     feed, _, runtime = app
-    command = {"secret": "yashirin"}.get(kind, kind)
+    command = {"secret": "yashirin", "kim": "kimaytdi"}.get(kind, kind)
     await feed(command_update(f"/{command}"))
     game = next(game for game in runtime.game_cache.for_chat(-1) if game.game == kind)
     for user in users:

@@ -31,7 +31,7 @@ CONTENT_ERRORS = {
     ),
     "unreadable": "Fayl yoki papka o‘qilmadi. Manzil va ruxsatni tekshiring.",
     "missing": "Kerakli bank fayli topilmadi. Bo‘sh bank uchun [] yozing.",
-    "unknown": "Bu nomdagi bank tanilmagan. Faqat qo‘llanmadagi olti JSON fayl kerak.",
+    "unknown": "Bu nomdagi bank tanilmagan. Faqat qo‘llanmadagi JSON bank fayllari kerak.",
     "duplicate_text": (
         "Matn boshqa elementni takrorlaydi (harf/apostrof farqi ham hisobga olinadi)."
     ),
@@ -929,7 +929,8 @@ PRIVACY = (
     "Telegram ID, ism va username; guruh sozlamalari, qo‘shilish roziligi, oxirgi faollik, "
     "vazifa/o‘yin natijalari va ballar saqlanadi. Ular o‘yinlar, reyting va vazifalar uchun kerak. "
     "Oddiy yozishmalar, surat, ovoz yoki video fayllari saqlanmaydi. "
-    "Faol o‘yin holati tanlangan javoblar yoki ismlarni saqlashi mumkin.\n"
+    "O‘yin holati tanlangan javoblar va ismlarni, rozilik bilan yuborgan o‘yin "
+    "javobingizni saqlashi mumkin; muallifni ochish va admin yashirishi uchun kerak.\n"
     "Rozilikdan /chiqish bilan chiqing. Shaxsiy chatda /malumotlarimni_ochir orqali "
     "ma’lumotlaringizni tasdiqlab o‘chiring. Avval yuborilgan Telegram xabarlari va "
     "operatorning tashqi zaxira nusxalari bu buyruq bilan o‘chmaydi."
@@ -1052,9 +1053,7 @@ def game_card_caption(game):
     return f"🏆 {CARD_GAME_TITLES[game.game]}"
 
 
-PRIVATE_GAME_BUSY = (
-    "Siz boshqa shaxsiy o‘yinda qatnashyapsiz. Avval o‘sha o‘yin tugashini kuting."
-)
+PRIVATE_GAME_BUSY = "Siz boshqa shaxsiy o‘yinda qatnashyapsiz. Avval o‘sha o‘yin tugashini kuting."
 PRIVATE_GAME_CLOSED = (
     "Bu lobby yopilgan yoki o‘yin topilmadi. Guruhdagi yangi havoladan qo‘shiling."
 )
@@ -1077,6 +1076,10 @@ PRIVATE_GAME_HIDE_WAIT = "Admin huquqi va material tekshirilmoqda. Natija shaxsi
 PRIVATE_GAME_HIDDEN = "Admin tomonidan yashirildi"
 PRIVATE_GAME_HIDE_DENIED = "Bu tugma faqat guruh adminlari uchun."
 PRIVATE_GAME_HIDE_DONE = "Yashirildi; muallifning shu material uchun bali bekor qilindi."
+PRIVATE_GAME_HIDE_FAILED = (
+    "Material bali bekor qilindi, lekin Telegramda yashirish bajarilmadi. "
+    "Admin xabarni qo‘lda o‘chirsin va bot logini tekshirsin."
+)
 PRIVATE_GAME_HIDE_MEDIA = (
     "Bali bekor qilindi, izoh belgilandi. Media o‘chmadi: "
     "o‘chirish huquqini bering yoki admin o‘chirsin."
@@ -1094,7 +1097,15 @@ SECRET_WORD_DM = (
     "Uni o‘zingiz oshkor qilmang. Nishon guruhda aytsa +10 (ko‘pi bilan 3 marta)."
 )
 SECRET_NO_MORE = "Uchta muvaffaqiyatga erishdingiz. Endi yangi so‘z berilmaydi."
-PRIVATE_GAME_NAMES = {"secret": "Yashirin topshiriq"}
+PRIVATE_GAME_NAMES = {"secret": "Yashirin topshiriq", "kim": "Kim aytdi?"}
+KIM_QUESTION = (
+    "💬 Kim aytdi? Savol: <b>{question}</b>\nBir yangi matnli javob yuboring "
+    "(1–300 belgi, havola va @eslatmasiz). Tayyorlashdan so‘ng 5 daqiqa bor. "
+    "Javob anonim guruhga chiqadi, taxmindan keyin muallif ochiladi."
+)
+PRIVATE_GAME_NO_ANSWERS = "Hech kim javob yubormadi. O‘yin bekor qilindi."
+PRIVATE_GUESS_DENIED = "Faqat o‘yinchi taxmin qiladi; muallif o‘z javobiga ovoz bera olmaydi."
+PRIVATE_GUESS_SAVED = "Taxmin saqlandi. Natija raund oxirida ochiladi."
 
 
 def private_game_board(game):
@@ -1102,6 +1113,13 @@ def private_game_board(game):
     title = PRIVATE_GAME_NAMES[game.game]
     names = ", ".join(escape(name) for name in state.get("players", {}).values()) or "—"
     if state["phase"] == "lobby":
+        if game.game == "kim":
+            return (
+                "💬 <b>Kim aytdi?</b> · lobby 3 daqiqa, 4–12 kishi\n"
+                "Savol shaxsiy keladi. Matnli javobingiz guruhga avval anonim, "
+                "30 soniyalik taxmindan keyin ismingiz bilan chiqadi.\n"
+                "Faqat shaxsiy havolani bosib rozilik bilan qo‘shiling.\n" + names
+            )
         consent = (
             "Nishon va so‘z shaxsiy keladi. Yutuq yoki fosh bo‘lsa, "
             "ismingiz va so‘z guruhga chiqariladi."
@@ -1119,3 +1137,17 @@ def private_game_board(game):
     return (
         f"🕵️ <b>{title}</b> · {'tugadi' if game.status == 'finished' else 'davom etmoqda'}\n{table}"
     )
+
+
+def private_guess_name(index, name):
+    return f"{index}. {name}"
+
+
+def private_answer(game, reveal=False):
+    state = game.state
+    item = state["items"][state["item"]]
+    text = f"💬 {state['round']}/{len(state['order'])}\n{escape(item['text'])}"
+    if reveal:
+        author = escape(state["players"][str(item["user_id"])])
+        return text + f"\n\nMuallif: <b>{author}</b>. Raund yakunlandi."
+    return text + "\n\nKim yozgan? 30 soniyada bitta taxmin tanlang."

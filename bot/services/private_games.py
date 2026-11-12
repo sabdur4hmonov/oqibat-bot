@@ -7,7 +7,7 @@ from html import escape
 from bot import texts
 from bot.db.models import GameSession
 from bot.db.repo.games import Award, GameBusy
-from bot.games.private_input import matches, repair_cycle, replacement, target_cycle
+from bot.games.private_input import LOBBY_LIMITS, matches, repair_cycle, replacement, target_cycle
 from bot.keyboards import private_games as keyboards
 from bot.services.game_cache import view
 from bot.services.points import record_event
@@ -54,7 +54,7 @@ class PrivateGames:
                 user.id,
                 kind,
                 state,
-                utc_now() + timedelta(minutes=5),
+                utc_now() + timedelta(minutes=LOBBY_LIMITS[kind][2]),
                 status="lobby",
             )
         except GameBusy:
@@ -90,7 +90,7 @@ class PrivateGames:
                 if (
                     row.state["phase"] != "lobby"
                     or row.phase_deadline_at <= utc_now()
-                    or len(row.state["players"]) >= 20
+                    or len(row.state["players"]) >= LOBBY_LIMITS[kind][1]
                     or not self.hub.participants.contains(row.chat_id, user.id)
                 ):
                     return False
@@ -230,6 +230,13 @@ class PrivateGames:
             round_number = int(round_number)
         except (ValueError, AttributeError):
             return texts.PRIVATE_GAME_CLOSED
+        if game and game.game != "secret":
+            service = self.hub.services.get(game.game)
+            return (
+                await service.callback(query)
+                if service and service is not self
+                else texts.PRIVATE_GAME_CLOSED
+            )
         if (
             prefix != "pg"
             or not game
@@ -258,6 +265,12 @@ class PrivateGames:
         return texts.SECRET_DURATION.format(hours=value)
 
     async def private_input(self, game, message):
+        if (
+            game.game != "secret"
+            and (service := self.hub.services.get(game.game))
+            and service is not self
+        ):
+            return await service.private_input(game, message)
         return texts.PRIVATE_GAME_INPUT_WAIT
 
     def rotate_word(self, state, hunter):
@@ -403,6 +416,13 @@ class PrivateGames:
     async def membership_changed(self, chat_id, user):
         for game in self.cache.for_chat(chat_id):
             if (
+                game.game in {"kim"}
+                and str(user) in game.state.get("players", {})
+                and not self.hub.participants.contains(chat_id, user)
+            ):
+                await self.hub.cancel(game, defer=True)
+                continue
+            if (
                 game.game != "secret"
                 or str(user) not in game.state.get("players", {})
                 or self.hub.participants.contains(chat_id, user)
@@ -504,6 +524,12 @@ class PrivateGames:
             self.cache.sync(row)
             game = view(row)
 
+        async with self.hub.board_locks.for_chat(game.id):
+            return await self._apply_hide(query, game, item)
+
+    async def _apply_hide(self, query, game, item):
+        chat_id, game_id = game.chat_id, game.id
+
         async def remove():
             async with self.repo.sessions() as session:
                 current = await session.get(GameSession, game_id)
@@ -517,6 +543,7 @@ class PrivateGames:
             return False
 
         removed = await self.hub.sender.send(chat_id, remove, priority=Priority.GAME)
+        marked = None
         if not removed:
 
             async def mark():
@@ -536,9 +563,19 @@ class PrivateGames:
                     caption=texts.PRIVATE_GAME_HIDDEN,
                 )
 
-            await self.hub.sender.send(chat_id, mark, priority=Priority.GAME)
+            marked = await self.hub.sender.send(chat_id, mark, priority=Priority.GAME)
         if game.status in {"lobby", "running"}:
             self.hub.effects.start(self.render(game.id))
+        elif game.status == "finished":
+            async with self.repo.sessions() as session:
+                current = await session.get(GameSession, game.id)
+                if current and not current.state.get("erased"):
+                    current = view(current)
+                    self.hub.effects.start(
+                        self.hub.board(current, texts.private_game_board(current))
+                    )
+        if not removed and not marked:
+            return texts.PRIVATE_GAME_HIDE_FAILED
         return (
             texts.PRIVATE_GAME_HIDE_MEDIA
             if not removed and item["kind"] != "text"

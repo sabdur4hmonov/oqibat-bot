@@ -19,6 +19,7 @@ from bot.services.effects import Effects
 from bot.services.error_alerts import ErrorAlerts
 from bot.services.game_cache import GameCache
 from bot.services.game_hub import GameHub
+from bot.services.guess_games import GuessGames
 from bot.services.krokodil import Krokodil
 from bot.services.locks import ChatLocks
 from bot.services.mafia import Mafia
@@ -88,6 +89,8 @@ class ScaleRuntime:
             getattr(settings, "bot_username", "OqibatBot"),
         )
         self.game_hub.register(("secret",), self.private_games)
+        self.guess_games = GuessGames(self.private_games)
+        self.game_hub.register(("kim",), self.guess_games)
         self.groups.on_membership_changed = self.membership_changed
         self.easy_games = EasyGames(self.game_hub, self.content, sessions)
         self.game_hub.register(("duel", "quiz", "wyr"), self.easy_games)
@@ -331,7 +334,7 @@ class ScaleMiddleware(BaseMiddleware):
             member = event.my_chat_member.new_chat_member
             if not member_is_active(member) or not member_is_admin(member):
                 for game in self.runtime.game_cache.for_chat(event.my_chat_member.chat.id):
-                    if game.game == "secret":
+                    if game.game in {"secret", "kim"}:
                         await self.runtime.game_hub.cancel(game, defer=True)
         if event.chat_member:
             await self.runtime.mafia_game.membership_changed(
