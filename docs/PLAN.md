@@ -451,6 +451,48 @@ manual checklist, pytest/Ruff/offline startup pass. Write PROGRESS, commit/push,
 No schema change expected; no new Python dependency. Real DNS/TLS/Telegram and daily
 wall-clock/live capacity checks remain explicitly unverified. No review archive.
 
+### Phase 18 — Yashirin topshiriq and private-input foundation
+Owner authorizes Phases 18–21 sequentially, each independently tested, logged, committed
+and pushed. This overrides only the one-phase stopping rule. Reuse existing JSON game
+sessions, repository locks, independent deadline loop and GAME-priority Sender.
+Lobby joins are exclusively private /start deep links (<=64 characters). One active
+private-input context per user across Mafia and all new games, including lobbies;
+one shared join lock serializes cross-chat admission. Route private text/voice/photo
+to that context, preserve normal commands. Release contexts on finish/cancel/erasure.
+One background `secret` session per chat is independent of the main slot and duels.
+All user submissions reject links/@mentions/forwards, enforce size/duration limits,
+and escape HTML. User-content group posts have admin-only hide buttons bound to
+session/item/message/chat. Hide atomically marks the item and reverses any author
+award once through a compensating ledger event; never rewrite ledger history.
+Try delete with the bot's delete right, otherwise replace text/caption with
+"Admin tomonidan yashirildi". Telegram cannot replace a voice with text: media
+games require delete permission before posting; if permission is later lost the
+caption marks hidden but an admin must remove the media. Explain this limitation.
+Keep bounded submissions/file IDs in session JSON, never download user media.
+Add three samples each in secret_words.json (single word), kim_aytdi_questions.json
+and telephone_phrases.json (text); runtime/offline validator and authoring guide agree.
+Lobbies explicitly describe what will be published and require voluntary deep-link join.
+
+`/yashirin`: five-minute lobby, 3–20 opted-in humans; starter chooses 2/6/24 hours
+(default 24). Random single target cycle; unique active secret words from the bank.
+Require at least players+1 distinct words to permit immediate replacement; samples
+are illustrative, insufficient content cancels clearly rather than inventing words.
+DM each hunter their target and word. New non-forwarded/non-edited target messages
+(text/caption) match normalized whole tokens, or prefix for words >=4 letters.
+Hunter +10, reveal word/group announcement, replace word, at most three successes.
+`/fosh` replies to suspected hunter: a player accusing their actual hunter earns +5,
+burns/reveals/replaces the word; wrong accusation costs 2 and one-hour cooldown.
+At most three accusations/player/game. Serial state/points commits and message-ID
+deduplication prevent duplicate scoring. In-memory per-chat word index rejects normal
+messages without SQL. Leave/opt-out repairs the cycle (preserving remaining order),
+cancels below three; starter leaving also repairs rather than ending a viable game.
+Finished games edit a results table. Stop/restart/migration cancel and release private
+contexts; confirmed erasure clears JSON/submissions and queued affected effects.
+**Accept:** pure cycle/matching/repair tests; complete success/accusation/timeouts;
+cross-game consent/context isolation, stale/foreign/bot callbacks, hide authorization
+and award reversal, zero-SQL nonmatches, stop/restart/migration/erasure, no double
+points; pytest/Ruff/offline startup; PROGRESS entry, commit/push before Phase 19.
+
 ### Later (not now)
 Additional Mini App interactions beyond the read-only scope and further game features.
 

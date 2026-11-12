@@ -67,8 +67,10 @@ class GameSessionRepository:
                     query = query.where(
                         GameSession.game == "duel", GameSession.started_by == user_id
                     )
+                elif game == "secret":
+                    query = query.where(GameSession.game == "secret")
                 else:
-                    query = query.where(GameSession.game != "duel")
+                    query = query.where(GameSession.game.not_in(["duel", "secret"]))
                 if await session.scalar(query.limit(1)) is not None:
                     raise GameBusy()
                 row = GameSession(

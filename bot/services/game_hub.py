@@ -128,6 +128,9 @@ class GameHub:
                     logger.exception("Could not recover game %s", game.id)
 
     async def observe(self, message) -> None:
+        background = self.cache.background(message.chat.id)
+        if background and background.game in self.services:
+            await self.services[background.game].observe(background, message)
         game = self.cache.main(message.chat.id)
         service = self.services.get(game.game) if game else None
         if service:

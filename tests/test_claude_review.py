@@ -1,6 +1,7 @@
 import asyncio
 from datetime import timedelta
 from unittest.mock import AsyncMock, patch
+from zoneinfo import ZoneInfo
 
 import pytest
 from aiogram.exceptions import TelegramMigrateToChat
@@ -41,7 +42,7 @@ async def seed(runtime, sessions):
                 ScheduledPost(
                     chat_id=-1,
                     kind="daily",
-                    local_date=now.date(),
+                    local_date=now.astimezone(ZoneInfo("Asia/Tashkent")).date(),
                     status="sent",
                     message_id=999,
                     posted_at=now - timedelta(seconds=5),

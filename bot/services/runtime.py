@@ -29,6 +29,8 @@ from bot.services.participation import Participants
 from bot.services.penalties import Penalties
 from bot.services.pending import PendingChallenges
 from bot.services.points import CheckinBuffer, Points
+from bot.services.private_contexts import PrivateContexts
+from bot.services.private_games import PrivateGames
 from bot.services.quick_games import QuickGames
 from bot.services.recovery import Recovery
 from bot.services.result_cards import ResultCards
@@ -61,6 +63,7 @@ class ScaleRuntime:
         self.scheduler.on_error = self.alerts.record
         self.effects.on_error = self.alerts.record
         self.game_cache = GameCache()
+        self.private_contexts = PrivateContexts(self.game_cache)
         self.challenges = ChallengeRepository(sessions, self.pending, self.locks, self.game_cache)
         self.games = GameSessionRepository(sessions, self.locks, self.game_cache, self.pending)
         self.game_hub = GameHub(
@@ -77,6 +80,15 @@ class ScaleRuntime:
         )
         self.setting_prompts = SettingPrompts()
         self.content = ContentLibrary()
+        self.game_hub.private_contexts = self.private_contexts
+        self.private_games = PrivateGames(
+            self.game_hub,
+            self.private_contexts,
+            self.content,
+            getattr(settings, "bot_username", "OqibatBot"),
+        )
+        self.game_hub.register(("secret",), self.private_games)
+        self.groups.on_membership_changed = self.membership_changed
         self.easy_games = EasyGames(self.game_hub, self.content, sessions)
         self.game_hub.register(("duel", "quiz", "wyr"), self.easy_games)
         self.rps_game = RockPaperScissors(self.game_hub)
@@ -197,6 +209,8 @@ class ScaleRuntime:
             "krokodil_game": self.krokodil_game,
             "truth_dare": self.truth_dare,
             "mafia_game": self.mafia_game,
+            "private_games": self.private_games,
+            "private_contexts": self.private_contexts,
         }
 
     def membership_game_resolved(self, game):
@@ -206,6 +220,10 @@ class ScaleRuntime:
             self.quick_games.membership_resolved(game)
         else:
             self.truth_dare.challenge_resolved(game)
+
+    async def membership_changed(self, chat_id, user_id):
+        await self.private_games.membership_changed(chat_id, user_id)
+        await self.mafia_game.membership_changed(chat_id, user_id)
 
 
 class ScaleMiddleware(BaseMiddleware):
@@ -307,6 +325,14 @@ class ScaleMiddleware(BaseMiddleware):
         ):
             return None
         result = await handler(event, data)
+        if event.my_chat_member:
+            from bot.utils.admin import member_is_active, member_is_admin
+
+            member = event.my_chat_member.new_chat_member
+            if not member_is_active(member) or not member_is_admin(member):
+                for game in self.runtime.game_cache.for_chat(event.my_chat_member.chat.id):
+                    if game.game == "secret":
+                        await self.runtime.game_hub.cancel(game, defer=True)
         if event.chat_member:
             await self.runtime.mafia_game.membership_changed(
                 event.chat_member.chat.id, event.chat_member.new_chat_member.user.id

@@ -146,3 +146,18 @@ Bu papkada ham barcha olti fayl bo‘lsin. Tekshiruv fayllarni o‘zgartirmaydi 
 Telegramga hech narsa yubormaydi. O‘tgach Claude bilan mazmunni ko‘rib chiqing,
 sinov botida sinang, so‘ng botni tinch paytda qayta ishga tushiring — banklar
 ishga tushishda bir marta yuklanadi. .env ni kontent bilan birga yubormang.
+# Yangi shaxsiy o‘yinlar banklari
+
+`secret_words.json`: `[{"key":"secret_palov","word":"palov"}]`.
+Bitta harfli so‘z emas, bitta mazmunli so‘z yozing; bo‘shliq va raqam bo‘lmasin,
+uzunligi ko‘pi bilan 32 belgi. Faol ovchilarga takrorlanmaydigan so‘z beriladi;
+o‘yinni boshlash uchun o‘yinchilar sonidan kamida bitta ko‘p turli so‘z kerak.
+Uchta namuna faqat formatni ko‘rsatadi: 3 kishilik sinov uchun kamida 4 ta,
+20 kishilik o‘yin uchun kamida 21 ta so‘z tayyorlang.
+
+`kim_aytdi_questions.json`: `[{"key":"kim_xotira","text":"Eng quvnoq xotirangiz nima?"}]`.
+`telephone_phrases.json`: `[{"key":"telephone_bog","text":"Bog‘da qizil olma pishdi."}]`.
+Har ikkala `text` ko‘pi bilan 300 belgi; shaxsiy yoki noqulay ma’lumot so‘ramang.
+Har faylda uchta namuna bor. `key` barcha banklarda yagona; bir xil mazmundagi
+matnni apostrof yoki kirill bilan takrorlab kiritmang. Tekshirish:
+`.\.venv\Scripts\python.exe scripts/validate_content.py`.

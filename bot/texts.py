@@ -474,7 +474,11 @@ def mafia_group(game):
             if state.get("extended_roles")
             else ""
         )
-        return f"🎭 <b>Mafia</b> — {len(state['players'])}/15\n{notice}{status}{mode}\n\n{players}"
+        consent = "\nIsmingiz, ovozingiz va o‘yin oxirida rolingiz guruhda ko‘rsatiladi."
+        return (
+            f"🎭 <b>Mafia</b> — {len(state['players'])}/15\n"
+            f"{notice}{status}{mode}{consent}\n\n{players}"
+        )
     if phase == "done":
         outcome = MAFIA_OUTCOMES.get(state.get("winner"), "Mafia to‘xtatildi. Ball berilmaydi.")
         roles = "\n".join(
@@ -1046,3 +1050,72 @@ def game_card_data(game):
 
 def game_card_caption(game):
     return f"🏆 {CARD_GAME_TITLES[game.game]}"
+
+
+PRIVATE_GAME_BUSY = (
+    "Siz boshqa shaxsiy o‘yinda qatnashyapsiz. Avval o‘sha o‘yin tugashini kuting."
+)
+PRIVATE_GAME_CLOSED = (
+    "Bu lobby yopilgan yoki o‘yin topilmadi. Guruhdagi yangi havoladan qo‘shiling."
+)
+PRIVATE_GAME_JOINED = "Roziligingiz qabul qilindi. Lobby tugagach topshiriq shu yerga keladi."
+PRIVATE_GAME_INPUT_WAIT = "Hozir shaxsiy javob qabul qilinmaydi. O‘yin ko‘rsatmasini kuting."
+PRIVATE_GAME_INVALID = (
+    "Havola, @eslatma va uzatilgan xabar qabul qilinmaydi. "
+    "Ko‘rsatmadagi tur va uzunlikda yangi javob yuboring."
+)
+PRIVATE_GAME_SAVED = "Qabul qilindi. Javobni qayta yuborish shart emas."
+PRIVATE_GAME_ENDED = (
+    "Shaxsiy o‘yin tugadi yoki bekor qilindi. Endi boshqa o‘yinga qo‘shilishingiz mumkin."
+)
+PRIVATE_GAME_NOT_ENOUGH = (
+    "Ishtirokchilar yoki bankdagi turli so‘zlar yetarli emas. O‘yin bekor qilindi."
+)
+PRIVATE_GAME_MAFIA_INPUT = "Mafia harakatini shu o‘yinning shaxsiy tugmalari orqali tanlang."
+PRIVATE_GAME_HIDE = "🙈 Admin: yashirish"
+PRIVATE_GAME_HIDE_WAIT = "Admin huquqi va material tekshirilmoqda. Natija shaxsiy xabarda keladi."
+PRIVATE_GAME_HIDDEN = "Admin tomonidan yashirildi"
+PRIVATE_GAME_HIDE_DENIED = "Bu tugma faqat guruh adminlari uchun."
+PRIVATE_GAME_HIDE_DONE = "Yashirildi; muallifning shu material uchun bali bekor qilindi."
+PRIVATE_GAME_HIDE_MEDIA = (
+    "Bali bekor qilindi, izoh belgilandi. Media o‘chmadi: "
+    "o‘chirish huquqini bering yoki admin o‘chirsin."
+)
+SECRET_DURATION = "Davomiylik: {hours} soat"
+SECRET_REVEAL = "🕵️ {hunter} {target}ni topdi: <b>{word}</b>. +10 ball!"
+SECRET_EXPOSED = "🔎 {accuser} ovchini fosh qildi: {hunter}. So‘z: <b>{word}</b>. +5 ball!"
+SECRET_WRONG = "Gumon noto‘g‘ri: −2 ball. Keyingi gumon bir soatdan keyin."
+SECRET_ACCUSE_LIMIT = (
+    "Gumon uchun /fosh ni gumon qilgan odamingizning xabariga javoban yuboring. "
+    "O‘zingiz o‘yinchi bo‘lishingiz kerak; jami 3 gumon va xato gumondan keyin 1 soat kutish bor."
+)
+SECRET_WORD_DM = (
+    "🕵️ Nishoningiz: {target}. Maxfiy so‘z: <b>{word}</b>. "
+    "Uni o‘zingiz oshkor qilmang. Nishon guruhda aytsa +10 (ko‘pi bilan 3 marta)."
+)
+SECRET_NO_MORE = "Uchta muvaffaqiyatga erishdingiz. Endi yangi so‘z berilmaydi."
+PRIVATE_GAME_NAMES = {"secret": "Yashirin topshiriq"}
+
+
+def private_game_board(game):
+    state = game.state
+    title = PRIVATE_GAME_NAMES[game.game]
+    names = ", ".join(escape(name) for name in state.get("players", {}).values()) or "—"
+    if state["phase"] == "lobby":
+        consent = (
+            "Nishon va so‘z shaxsiy keladi. Yutuq yoki fosh bo‘lsa, "
+            "ismingiz va so‘z guruhga chiqariladi."
+        )
+        return (
+            f"🕵️ <b>{title}</b> · lobby 5 daqiqa, 3–20 kishi\n{consent}\n"
+            "Faqat pastdagi shaxsiy havola orqali rozilik bilan qo‘shiling.\n"
+            f"Davomiylik: {state['hours']} soat\n{names}"
+        )
+    scores = state.get("scores", {})
+    table = "\n".join(
+        f"{escape(name)}: {scores.get(user, 0)} ball"
+        for user, name in state.get("players", {}).items()
+    )
+    return (
+        f"🕵️ <b>{title}</b> · {'tugadi' if game.status == 'finished' else 'davom etmoqda'}\n{table}"
+    )

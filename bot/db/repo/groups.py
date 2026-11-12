@@ -15,6 +15,7 @@ class GroupRepository:
         self.participants = participants
         self.game_cache = game_cache
         self.on_game_resolved = None
+        self.on_membership_changed = None
 
     async def get(self, chat_id: int) -> Chat | None:
         chat_id = self.locks.resolve(chat_id)
@@ -114,6 +115,8 @@ class GroupRepository:
                     self.game_cache.sync(cancelled_game)
                 if self.on_game_resolved:
                     self.on_game_resolved(view(cancelled_game))
+        if self.on_membership_changed:
+            await self.on_membership_changed(chat_id, tg_user.id)
         return True
 
     async def change_setting(self, chat_id: int, field: str, value) -> Chat | None:

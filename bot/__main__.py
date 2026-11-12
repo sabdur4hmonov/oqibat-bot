@@ -20,6 +20,7 @@ from bot.handlers.errors import handle_error
 from bot.handlers.games.easy import create_router as create_games_router
 from bot.handlers.games.krokodil import create_router as create_krokodil_router
 from bot.handlers.games.mafia import create_router as create_mafia_router
+from bot.handlers.games.private_input import create_router as create_private_games_router
 from bot.handlers.games.quick import create_router as create_quick_router
 from bot.handlers.games.rps import create_router as create_rps_router
 from bot.handlers.games.truth_dare import create_router as create_truth_dare_router
@@ -52,6 +53,7 @@ def create_dispatcher() -> Dispatcher:
     dispatcher.include_router(create_krokodil_router())
     dispatcher.include_router(create_truth_dare_router())
     dispatcher.include_router(create_mafia_router())
+    dispatcher.include_router(create_private_games_router())
     dispatcher.errors.register(handle_error)
     return dispatcher
 

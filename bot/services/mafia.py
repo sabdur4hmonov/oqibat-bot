@@ -1,6 +1,5 @@
 """Mafia lifecycle. State commits never wait for Telegram delivery."""
 
-import asyncio
 from datetime import datetime, timedelta
 
 from aiogram.exceptions import TelegramForbiddenError
@@ -21,7 +20,7 @@ class Mafia:
         self.hub, self.repo, self.cache = hub, hub.repo, hub.cache
         self.sessions, self.username = sessions, username
         self.members: dict[int, int] = {}
-        self.join_lock = asyncio.Lock()
+        self.join_lock = hub.private_contexts.lock
         self.private_locks = ChatLocks()
         self.refreshes: dict[int, set[str]] = {}
         self.last_render = {}
@@ -104,6 +103,9 @@ class Mafia:
         if game is None or game.game != "mafia":
             return texts.MAFIA_LOBBY_CLOSED
         async with self.join_lock:
+            context = self.hub.private_contexts.get(user.id)
+            if user.is_bot or (context and context.game != "mafia" and context.id != session_id):
+                return texts.PRIVATE_GAME_BUSY
             existing_id = self.members.get(user.id)
             existing = self.cache.get(existing_id) if existing_id else None
             if (

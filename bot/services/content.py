@@ -11,6 +11,9 @@ FIELDS = {
     "krokodil_words": {"key", "word"},
     "would_you_rather": {"key", "question", "options"},
     "truth_questions": {"key", "text"},
+    "secret_words": {"key", "word"},
+    "kim_aytdi_questions": {"key", "text"},
+    "telephone_phrases": {"key", "text"},
 }
 TEXT_LIMITS = {
     "daily_messages": ("text", 2000),
@@ -19,6 +22,9 @@ TEXT_LIMITS = {
     "krokodil_words": ("word", 100),
     "would_you_rather": ("question", 300),
     "truth_questions": ("text", 2000),
+    "secret_words": ("word", 32),
+    "kim_aytdi_questions": ("text", 300),
+    "telephone_phrases": ("text", 300),
 }
 
 
@@ -59,13 +65,18 @@ def validate_bank(kind: str, items) -> list[dict]:
             raise ValueError("Invalid correct answer index")
         if kind == "would_you_rather" and len(item["options"]) != 2:
             raise ValueError("Would-you-rather requires two choices")
-        if kind == "krokodil_words":
+        if kind in {"krokodil_words", "secret_words"}:
             from bot.utils.text_normalize import normalize_text
 
             if len(item["word"]) > 100 or not normalize_text(item["word"]):
                 raise ValueError(
                     "Krokodil words must fit a private callback popup and be guessable"
                 )
+            if kind == "secret_words" and (
+                len(normalize_text(item["word"]).split()) != 1
+                or not normalize_text(item["word"]).isalpha()
+            ):
+                raise ValueError("Secret words must be one alphabetic token")
         if kind == "challenges" and item["kind"] not in {"video_note", "voice", "photo", "text"}:
             raise ValueError("Invalid challenge kind")
     return items

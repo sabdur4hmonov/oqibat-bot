@@ -112,7 +112,7 @@ async def merge_collisions(session, old_id: int, new_id: int) -> None:
     for model, statuses in ((Challenge, ["pending"]), (GameSession, ["lobby", "running"])):
         query = select(model).where(model.chat_id.in_([old_id, new_id]), model.status.in_(statuses))
         if model is GameSession:
-            query = query.where(GameSession.game != "duel")
+            query = query.where(GameSession.game.not_in(["duel", "secret"]))
         active = (await session.scalars(query.order_by(model.created_at, model.id))).all()
         for duplicate in active[1:]:
             duplicate.status = "cancelled"
@@ -120,6 +120,21 @@ async def merge_collisions(session, old_id: int, new_id: int) -> None:
                 duplicate.resolved_at = utc_now()
             else:
                 duplicate.phase_deadline_at = None
+    await session.flush()
+
+    background = (
+        await session.scalars(
+            select(GameSession)
+            .where(
+                GameSession.chat_id.in_([old_id, new_id]),
+                GameSession.game == "secret",
+                GameSession.status.in_(["lobby", "running"]),
+            )
+            .order_by(GameSession.created_at, GameSession.id)
+        )
+    ).all()
+    for duplicate in background[1:]:
+        duplicate.status, duplicate.phase_deadline_at = "cancelled", None
     await session.flush()
 
 

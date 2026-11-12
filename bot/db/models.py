@@ -216,7 +216,8 @@ class GameSession(Timestamps, Base):
     __tablename__ = "game_sessions"
     __table_args__ = (
         CheckConstraint(
-            "game IN ('quiz', 'duel', 'wyr', 'krokodil', 'hyj', 'mafia', 'rps', 'number', 'math')",
+            "game IN ('quiz', 'duel', 'wyr', 'krokodil', 'hyj', 'mafia', 'rps',"
+            " 'number', 'math', 'secret')",
             name="game",
         ),
         CheckConstraint("status IN ('lobby', 'running', 'finished', 'cancelled')", name="status"),
@@ -226,8 +227,17 @@ class GameSession(Timestamps, Base):
             "uq_game_sessions_active_chat",
             "chat_id",
             unique=True,
-            sqlite_where=text("game != 'duel' AND status IN ('lobby', 'running')"),
-            postgresql_where=text("game != 'duel' AND status IN ('lobby', 'running')"),
+            sqlite_where=text("game NOT IN ('duel','secret') AND status IN ('lobby','running')"),
+            postgresql_where=text(
+                "game NOT IN ('duel','secret') AND status IN ('lobby','running')"
+            ),
+        ),
+        Index(
+            "uq_game_sessions_background_chat",
+            "chat_id",
+            unique=True,
+            sqlite_where=text("game = 'secret' AND status IN ('lobby','running')"),
+            postgresql_where=text("game = 'secret' AND status IN ('lobby','running')"),
         ),
     )
     id: Mapped[int] = mapped_column(Integer, primary_key=True)

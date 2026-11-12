@@ -162,7 +162,7 @@ def test_cli_messages_counts_exit_and_no_env_or_network(tmp_path):
     output = []
     assert main(["--directory", str(tmp_path)], output.append) == 0
     assert output[-1] == texts.CONTENT_OK
-    assert len(output) == 7
+    assert len(output) == len(FIELDS) + 1
     write(tmp_path, "daily_messages", {})
     assert main(["--directory", str(tmp_path)], output.append) == 1
     assert output[-1] == texts.CONTENT_BAD
