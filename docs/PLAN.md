@@ -419,6 +419,38 @@ restart/migration/erasure, menu/help/card integration, linked-row migration safe
 pytest/Ruff/offline startup pass; write honest PROGRESS/manual Uzbek steps, commit/push.
 Real Telegram and production capacity remain manual acceptance, not a deployment claim.
 
+### Phase 17 — Production readiness (owner request)
+Pin direct runtime dependencies to the exact installed/passing versions; separate
+pytest/pytest-asyncio/ruff into requirements-dev.txt (including runtime requirements).
+Docker installs runtime only. Add safe owner DMs for unhandled handler/scheduler and
+background failures and repeated Sender errors (three failures within ten minutes).
+Aggregate in memory, one alert per ten minutes including additional suppressed-error
+count, type, fixed source identifier, chat ID and UTC time only. Never stringify
+exceptions/messages or include credentials. Owner alert failures are non-recursive,
+use the shared Sender, and cannot crash any worker. No durable queue/journal.
+Add optional Compose `https` profile with DOMAIN-driven Caddy proxy/certificate
+volumes, preserving webhook and Mini App paths/headers. Do not deploy or contact a
+real domain. Document DNS A record, 80/443, URLs/secret and getWebhookInfo verification.
+Automate daily custom-format pg_dump, retain completed Oqibat dumps for 14 days, add
+scripts/backup.sh, validate before atomic rename and prune only after a successful
+backup. Keep restore instructions consistent and demonstrate an isolated restore.
+Add /healthz to webhook/Mini App HTTP applications: completed scheduler tick age and
+send queue length, 503 until first successful tick or age >120 seconds. Production
+polling also hosts health-only HTTP if Mini App is disabled, so Docker healthchecks
+work; ordinary local development polling remains HTTP-free. Use stdlib Docker probe.
+Replace aiohttp request-state strings with web.RequestKey; set .env.example
+BOT_USERNAME=YourBotUsername (explicit placeholder, must be replaced with real username).
+Rewrite LIVE_TEST.md as one Uzbek checklist for phases 0–16 with setup, three human
+testers, expected results, log troubleshooting and no review ZIP step. Clearly mark
+full Mafia/extended roles as requiring 5/8/9/11 real players; three people can test
+minimum-player cancellation/settings and run offline suites, not certify full games.
+**Accept:** pinned metadata/dev split, sanitized aggregation/rate/non-recursion,
+handler/scheduler/Sender hooks, health freshness/status/hosting/probe, RequestKey,
+Caddy/Compose validation and isolated backup/retention/failure/restore checks, complete
+manual checklist, pytest/Ruff/offline startup pass. Write PROGRESS, commit/push, stop.
+No schema change expected; no new Python dependency. Real DNS/TLS/Telegram and daily
+wall-clock/live capacity checks remain explicitly unverified. No review archive.
+
 ### Later (not now)
 Additional Mini App interactions beyond the read-only scope and further game features.
 

@@ -94,6 +94,7 @@ class _Item:
     attempts: int = field(compare=False, default=0)
     migrations: int = field(compare=False, default=0)
     generation: int = field(compare=False, default=0)
+    report_failures: bool = field(compare=False, default=True)
 
 
 class Sender:
@@ -122,6 +123,9 @@ class Sender:
         self.aliases = {}
         self.resolve_chat = lambda chat_id: self.aliases.get(chat_id, chat_id)
         self.on_migrate = None
+        self.on_failure = None
+        self._failures = deque(maxlen=3)
+        self._failure_reporting = False
 
     @property
     def queue_length(self) -> int:
@@ -134,9 +138,12 @@ class Sender:
         *,
         priority: Priority = Priority.GAME,
         retry_scope: Literal["chat", "global"] = "global",
+        report_failures: bool = True,
     ) -> T | None:
         if not self._accepting or self._closed or self.queue_length >= 20_000:
             logger.warning("Outbound queue closed or full; operation rejected")
+            if self._accepting and not self._closed and report_failures:
+                self._note_failure(OverflowError(), chat_id)
             return None
         future = asyncio.get_running_loop().create_future()
         self._futures.add(future)
@@ -150,6 +157,7 @@ class Sender:
                 future,
                 retry_scope,
                 generation=self.generations.get(chat_id, 0),
+                report_failures=report_failures,
             )
         )
         return await asyncio.shield(future)
@@ -234,10 +242,12 @@ class Sender:
 
     async def _execute(self, item: _Item) -> None:
         result = None
+        failure = None
         try:
             if item.generation == self.generations.get(item.chat_id, 0):
                 result = await item.operation()
         except TelegramMigrateToChat as error:
+            failure = error
             old_id, new_id = item.chat_id, error.migrate_to_chat_id
             logger.info("TelegramMigrateToChat: %s -> %s", old_id, new_id)
             try:
@@ -264,8 +274,9 @@ class Sender:
                 if not item.future.done() and not self._closed:
                     self._enqueue(item)
                     return
-            except Exception:
+            except Exception as migration_error:
                 logger.exception("Could not migrate Telegram chat %s -> %s", old_id, new_id)
+                failure = migration_error
         except TelegramRetryAfter as error:
             scope = item.chat_id if item.retry_scope == "chat" else None
             self.limiter.pause(scope, self.clock.now() + error.retry_after)
@@ -274,16 +285,33 @@ class Sender:
                 item.attempts += 1
                 self._enqueue(item)
                 return
+            failure = error
         except TelegramForbiddenError:
             await self._forbidden(item.chat_id)
         except asyncio.CancelledError:
             if not item.future.done():
                 item.future.cancel()
             return
-        except Exception:
+        except Exception as error:
             logger.exception("Telegram operation failed for chat %s", item.chat_id)
+            failure = error
+        if failure is not None and item.report_failures:
+            self._note_failure(failure, item.chat_id)
         if not item.future.done():
             item.future.set_result(result)
+
+    def _note_failure(self, error, chat_id):
+        now = self.clock.now()
+        if self._failures and now - self._failures[-1] >= 600:
+            self._failure_reporting = False
+        self._failures.append(now)
+        if len(self._failures) == 3 and now - self._failures[0] <= 600 and self.on_failure:
+            count = 1 if self._failure_reporting else 3
+            self._failure_reporting = True
+            try:
+                self.on_failure(error, "sender", chat_id, count=count)
+            except Exception:
+                logger.warning("Sender failure summary could not be recorded")
 
     async def answer_callback_query(self, bot: Bot, callback_query_id: str, **kwargs) -> Any:
         """Never enter the queue or wait on message windows/global message pauses."""
@@ -295,8 +323,11 @@ class Sender:
                 self._wake.set()
                 if attempt == 0:
                     await self.clock.sleep(error.retry_after)
-            except Exception:
+                else:
+                    self._note_failure(error, None)
+            except Exception as error:
                 logger.exception("Callback answer failed")
+                self._note_failure(error, None)
                 return None
         return None
 

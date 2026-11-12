@@ -6,9 +6,12 @@ from urllib.parse import urlsplit
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 
+from bot.handlers.health import install_health
+
 
 def create_webhook_app(dispatcher, bot, settings, workflow: dict) -> web.Application:
     app = web.Application(client_max_size=1024 * 1024)
+    install_health(app, workflow.get("runtime"))
     SimpleRequestHandler(
         dispatcher=dispatcher,
         bot=bot,
@@ -26,7 +29,7 @@ def create_webhook_app(dispatcher, bot, settings, workflow: dict) -> web.Applica
 
 async def serve_webhook(dispatcher, bot, settings, sender, workflow: dict) -> None:
     app = create_webhook_app(dispatcher, bot, settings, workflow)
-    runner = web.AppRunner(app)
+    runner = web.AppRunner(app, access_log=None)
     try:
         await runner.setup()
         await web.TCPSite(runner, host=settings.webhook_host, port=settings.webhook_port).start()

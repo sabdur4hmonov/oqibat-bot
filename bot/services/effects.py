@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 class Effects:
     def __init__(self) -> None:
         self.tasks: set[asyncio.Task] = set()
+        self.on_error = None
 
     def start(self, operation) -> None:
         task = asyncio.create_task(operation)
@@ -22,6 +23,11 @@ class Effects:
                 "Background game/challenge notification failed",
                 exc_info=(type(error), error, error.__traceback__),
             )
+            if self.on_error:
+                try:
+                    self.on_error(error, "background")
+                except Exception:
+                    logger.warning("Background error summary could not be recorded")
 
     async def drain(self) -> None:
         while self.tasks:

@@ -10,6 +10,7 @@ from aiohttp import web
 
 from bot import texts
 from bot.handlers import webapp as handlers
+from bot.handlers.health import install_health
 
 DIRECTORY = Path(__file__).resolve().parents[1] / "webapp"
 
@@ -54,18 +55,21 @@ def install_webapp(app, runtime, bot, settings):
 
 def create_webapp_app(runtime, bot, settings):
     app = web.Application(client_max_size=16384)
+    install_health(app, runtime)
     install_webapp(app, runtime, bot, settings)
     return app
 
 
 @asynccontextmanager
 async def polling_webapp(runtime, bot, settings):
-    if not settings.webapp_url:
+    if not settings.webapp_url and settings.environment != "production":
         yield
         return
-    runner = web.AppRunner(
-        create_webapp_app(runtime, bot, settings), access_log=None, shutdown_timeout=10
-    )
+    app = web.Application(client_max_size=16384)
+    install_health(app, runtime)
+    if settings.webapp_url:
+        install_webapp(app, runtime, bot, settings)
+    runner = web.AppRunner(app, access_log=None, shutdown_timeout=10)
     try:
         await runner.setup()
         await web.TCPSite(runner, host=settings.webhook_host, port=settings.webhook_port).start()

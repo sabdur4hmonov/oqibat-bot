@@ -50,5 +50,54 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  backups:
+    image: postgres:16-alpine
+    environment:
+      PGHOST: db
+      PGDATABASE: ${POSTGRES_DB:-oqibat}
+      PGUSER: ${POSTGRES_USER:-oqibat}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      BACKUP_DIR: /backups
+    entrypoint: ["/bin/sh", "/scripts/backup_loop.sh"]
+    volumes:
+      - ./scripts/backup.sh:/scripts/backup.sh:ro
+      - ./scripts/backup_loop.sh:/scripts/backup_loop.sh:ro
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    init: true
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  caddy:
+    image: caddy:2.11.9-alpine
+    profiles: [https]
+    environment:
+      DOMAIN: ${DOMAIN:-}
+    entrypoint: ["/bin/sh", "/etc/caddy/caddy-start.sh"]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./deploy/caddy-start.sh:/etc/caddy/caddy-start.sh:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   postgres_data:
+  caddy_data:
+  caddy_config:

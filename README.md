@@ -74,8 +74,8 @@ Install Python 3.12 from python.org with the Python launcher, then open PowerShe
 Set-Location 'D:\Coding projects\oqibat bot'
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-Copy-Item .env.example .env
+python -m pip install -r requirements-dev.txt
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 notepad .env
 ```
 
@@ -90,7 +90,7 @@ Create a bot with Telegram **@BotFather** (`/newbot`). Set these local `.env` va
 | Variable | Value |
 | --- | --- |
 | `BOT_TOKEN` | Token from BotFather; keep it private |
-| `BOT_USERNAME` | Your bot username, e.g. `OqibatBot` (optional leading `@`) |
+| `BOT_USERNAME` | Your actual BotFather username (optional leading `@`); replace `YourBotUsername` |
 | `DATABASE_URL` | `sqlite+aiosqlite:///./oqibat.db` for development |
 | `INSTAGRAM_HANDLE` | Your Instagram username, without a URL |
 | `LOG_LEVEL` | `DEBUG`, `INFO`, `WARNING`, `ERROR`, or `CRITICAL` |
@@ -108,6 +108,11 @@ Create a bot with Telegram **@BotFather** (`/newbot`). Set these local `.env` va
 The example token is a placeholder. Do not commit `.env` or send the token in chat.
 The username is checked against Telegram's `getMe` before polling. Secrets are
 hidden in configuration representations/errors and redacted in runtime logs.
+`OqibatBot` belongs to someone else; do not use it. `YourBotUsername` is an intentional
+placeholder, not a valid final bot username: enter your own name ending in `bot`.
+Direct runtime dependencies are pinned to tested installed versions in requirements.txt.
+Production installs only that file; development/tests install requirements-dev.txt,
+which includes runtime plus pytest/pytest-asyncio/ruff. Docker never installs the dev file.
 
 Create the database and start the bot, from the repository root:
 
@@ -538,7 +543,7 @@ ishlasin; bir vaqtda mahalliy polling, Compose va systemd ni ishlatmang.
 4. Tekshiruv o‘tgach, boshqa bot jarayonini to‘xtating va ishga tushiring:
 
    ```powershell
-   docker compose -p oqibat up -d bot
+   docker compose -p oqibat up -d bot backups
    docker compose -p oqibat ps
    docker compose -p oqibat logs --tail 100 bot
    docker compose -p oqibat logs -f bot
@@ -561,15 +566,28 @@ ishlasin; bir vaqtda mahalliy polling, Compose va systemd ni ishlatmang.
 
 ### Zaxira nusxa, yangilash va qaytarish
 
+Compose `backups` xizmati ishga tushganda bir nusxa, keyin har 86 400 soniyada
+(24 soatda) yangi nusxa oladi. UTC nomli `oqibat-*.dump` fayllar `./backups` da,
+faqat oxirgi 14 kun saqlanadi. Bu 14 dona fayl degani emas: bir kunda qo‘shimcha
+nusxa olish mumkin. `scripts/backup.sh` PostgreSQL 16 klientida custom format,
+no-owner/no-acl bilan yozadi, katalogini tekshiradi, keyin atomik nomlaydi. Faqat
+muvaffaqiyatdan so‘ng o‘zining eski dump fayllarini tozalaydi. Crashdan qolgan
+o‘zining yashirin vaqtinchalik fayllari ham 14 kundan
+so‘ng muvaffaqiyatli backup paytida tozalanadi. Xatoda avvalgi nusxa
+saqlanadi; keyingi kundalik urinish jurnalda ko‘rinadi. Birinchi nusxa bazaning
+o‘sha paytdagi holati, yangi o‘rnatishda migratsiyadan keyin ham qo‘lda nusxa oling.
+Papka shaxsiy ma’lumotli: serverda faqat mas’ul operator o‘qisin, boshqa himoyalangan
+joyga ham ko‘chiring. Mahalliy nusxa server yo‘qolishidan himoya qilmaydi.
+
 Quyidagi PowerShell misolida baza/foydalanuvchi `oqibat`; o‘zgartirgan bo‘lsangiz
 moslang. Nusxada foydalanuvchi ma'lumotlari bor; uni himoyalangan boshqa joyga ko‘chiring.
 Binary nusxani PowerShell `>` orqali o‘tkazmaymiz:
 
 ```powershell
-New-Item -ItemType Directory -Force .\backups
-$backupName = 'oqibat-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.dump'
-docker compose -p oqibat exec -T db pg_dump -U oqibat -d oqibat -Fc -f /tmp/oqibat-backup.dump
-docker compose -p oqibat cp db:/tmp/oqibat-backup.dump (Join-Path .\backups $backupName)
+docker compose -p oqibat up -d db backups
+docker compose -p oqibat exec -T backups sh /scripts/backup.sh
+$backupName = (Get-ChildItem .\backups -Filter 'oqibat-*.dump' | Sort-Object LastWriteTime -Descending | Select-Object -First 1).Name
+docker compose -p oqibat logs --tail 30 backups
 docker compose -p oqibat stop bot
 git pull --ff-only
 docker compose -p oqibat build bot
@@ -583,13 +601,20 @@ Tiklashni avval **yangi bo‘sh** bazada sinang, ishlayotgan bazani o‘chirmang
 ```powershell
 docker compose -p oqibat cp (Join-Path .\backups $backupName) db:/tmp/oqibat-restore.dump
 docker compose -p oqibat exec -T db createdb -U oqibat -T template0 oqibat_restore_test
-docker compose -p oqibat exec -T db pg_restore -U oqibat -d oqibat_restore_test --no-owner --exit-on-error /tmp/oqibat-restore.dump
+docker compose -p oqibat exec -T db pg_restore -U oqibat -d oqibat_restore_test --no-owner --no-acl --exit-on-error /tmp/oqibat-restore.dump
 ```
 
 Bir xil tiklash nomini qayta ishlatmang. Kodni qaytarishdan oldin migratsiya eski
 kodga mosligini Claude bilan tekshiring; avtomatik downgrade qilmang. Baza o‘zgargan
 bo‘lsa, nusxani alohida bazaga tiklash va URL ni almashtirish rejasi kerak. Bu qo‘llanma
 SQLite dan ishlab turgan PostgreSQL ga ma'lumot ko‘chirishni amalga oshirmaydi.
+
+`pg_restore` custom dump uchun; bu SQL matn fayli emas. `--clean` bilan ishlayotgan
+bazani tozalamang. Tekshiruv bazasida `/top`/hisoblar yoki kerakli jadvallarni
+tekshirib, tiklash natijasini qayd eting. `backups` xizmati logida `backup_status=ok`
+va fayl nomi bo‘lsin; `failed` bo‘lsa shu paytdagi PostgreSQL xatosini tekshiring.
+systemd yo‘lini tanlasangiz alohida rejalashtirilgan backup ham sozlashingiz kerak;
+ushbu avtomatlashtirish Compose xizmatida berilgan, host timer o‘rnatilmagan.
 
 Jurnalda `ERROR`, `Traceback`, `retry_after` va besh daqiqalik `queue_length`,
 `updates_per_minute`, `last_tick_duration_ms` ni tekshiring. Navbat doim o‘sayotgan
@@ -784,3 +809,126 @@ buyrug‘i avvalgidek tegishli o‘yin holatini tozalaydi.
 Yangi kutubxona, haqiqiy token yoki kontent banki kerak emas. Savollar koddagi
 cheklangan matematik amallardan tuziladi. Haqiqiy Telegram va serverdagi yuk
 sinovi alohida; ushbu qo‘shimcha hech narsani serverga joylamaydi.
+
+### HTTPS bilan ishga tushirish: Caddy profili (17-bosqich)
+
+Quyidagi ishlar egasining serveri va domenida keyin bajariladi; ushbu ishlab chiqish
+jarayonida domen ulanmagan yoki xizmat joylanmagan. Misoldagi **oqibat.com** ni
+**o‘zingiz boshqaradigan domen** bilan almashtiring; nomning o‘zi sizga tegishli degani emas.
+
+1. Domen DNS boshqaruvida `A` yozuvini serverning haqiqiy ochiq IPv4 manziliga
+   qo‘ying. Agar `AAAA` bo‘lsa IPv6 ham shu serverga kelishi kerak; ishlamaydigan
+   IPv6 yozuvini domen egasi tuzatsin. DNS yangilanishini kuting.
+2. Server/cloud firewall va kerak bo‘lsa routerda **TCP 80 va 443** ni Caddyga
+   oching. SSH va boshqa loyihalar qoidalarini saqlang; band 80/443 ni egasiz
+   to‘xtatmang. PostgreSQL porti ommaga ochilmaydi, botning 8080 porti hostda
+   faqat 127.0.0.1 ga bog‘langan.
+3. Avvalgi Compose sozlamalarini to‘ldiring; `.env` da:
+
+   ```dotenv
+   DOMAIN=oqibat.com
+   ENVIRONMENT=production
+   USE_WEBHOOK=true
+   WEBHOOK_URL=https://oqibat.com/telegram
+   WEBAPP_URL=https://oqibat.com/webapp
+   WEBHOOK_SECRET=BU_YERGA_YANGI_TASODIFIY_MAXFIY_QIYMAT
+   ```
+
+   Haqiqiy BOT_TOKEN/BOT_USERNAME/OWNER_ID va tasodifiy POSTGRES_PASSWORD ham kerak.
+   `python -c "import secrets; print(secrets.token_urlsafe(32))"` bilan yangi webhook
+   secret yarating va uni `.env` ga yozing. DOMAIN da protokol, port yoki yo‘l bo‘lmasin.
+   Caddy faqat DOMAIN oladi; bot tokeni/baza paroli Caddy muhitiga berilmaydi.
+4. Faqat o‘z loyihangiz nomi bilan config tekshiring, oldin Caddy va bazani yoqing:
+
+   ```powershell
+   docker compose -p oqibat --profile https config --quiet
+   docker compose -p oqibat --profile https up -d caddy db
+   docker compose -p oqibat --profile https logs --tail 50 caddy
+   ```
+
+   Caddy domen uchun sertifikatni avtomatik oladi va HTTP ni HTTPS ga yo‘naltiradi.
+   Sertifikat olingani/tuzatilgani jurnalda ko‘rinsin. Shu payt bot hali yoqilmagan
+   bo‘lsa upstream 502 tabiiy; sertifikat xatosini 502 bilan aralashtirmang.
+   `caddy_data`/`caddy_config` doimiy hajmlari sertifikat/kalitni saqlaydi; ularni
+   ko‘r-ko‘rona o‘chirmang. Caddy sertifikati uchun ham 80/443 ochiq qolsin.
+5. HTTPS tayyor bo‘lgach bitta bot jarayoni va backupni yoqing:
+
+   ```powershell
+   docker compose -p oqibat --profile https up -d --build bot backups
+   docker compose -p oqibat ps
+   docker compose -p oqibat logs --tail 100 bot
+   ```
+
+   Bot avval migratsiya, keyin listener va webhook ro‘yxatini tayyorlaydi. Caddy
+   yo‘lni o‘zgartirmay bot:8080 ga uzatadi: `/telegram`, `/webapp`, `/webapp/*`,
+   `/healthz`. Boshqa backend yo‘li yo‘q bo‘lsa 404; statik disk fayllari ochilmaydi.
+   Webhook va initData sarlavhalari saqlanadi; Caddy log filtri ulardagi maxfiy
+   qiymatlarni chiqarib tashlaydi. Access log alohida yoqilmagan.
+6. Sog‘liq va Telegramning haqiqiy webhook yozuvini tekshiring:
+
+   ```powershell
+   Invoke-RestMethod https://oqibat.com/healthz
+   docker compose -p oqibat exec -T bot python scripts/webhook_info.py
+   ```
+
+   `/healthz` 200/`status=ok`, yangi `last_tick_age_seconds`, navbat uzunligini ko‘rsatsin.
+   Skript aynan **getWebhookInfo** chaqiradi: URL sozlangan rejimga mos, kutayotgan
+   yangilanishlar kamayadi/0 bo‘ladi. Oxirgi xato vaqti eski qayd bo‘lishi mumkin;
+   u yangilanayotgani va bot logini tekshiring. Token buyruq argumenti yoki javobda
+   chiqmaydi, raw Telegram error matni ham chop etilmaydi. Noto‘g‘ri URL yoki aloqa
+   xatosida exit 1. Webhookni tekshirish uchun `getUpdates` ni parallel ishga tushirmang.
+7. Botga /start yuboring, guruhda /help, ilovada profilni oching. BotFather Main Mini
+   App URL ini yuqoridagi Mini App bo‘limi bo‘yicha sozlang. HTTPS GET ochilishi
+   webhook POST/header tasdig‘i o‘rnini bosmaydi; LIVE_TEST.md qadamlarini bajaring.
+
+Oddiy polling uchun `--profile https` ni yoqmang va `USE_WEBHOOK=false` qoldiring.
+Webhookdan pollingga o‘tish Telegramdagi webhookni pending update’larni tashlamay
+olib tashlaydi. Caddy ishlayotgan bo‘lsa uni to‘xtatish alohida qaror; profilni
+keyingi buyruqdan olib tashlash ishlayotgan Caddy konteynerini avtomatik o‘chirmaydi.
+
+### Sog‘liq va egaga xato xabarlari
+
+`/healthz` webhook yoki Mini App serverida bor. Production pollingda Mini App bo‘sh
+bo‘lsa ham sog‘liq uchun HTTP listener 8080 da ishlaydi; mahalliy development polling
+Mini App bo‘lmasa HTTP server ochmaydi. Birinchi tugagan tick bo‘lmaguncha yoki
+oxirgi tugagan tick 120 soniyadan eski bo‘lsa HTTP 503, aks holda 200. Baza so‘rovi
+qilinmaydi, maxfiy ma’lumot berilmaydi. Tick ichidagi alohida muvaffaqiyatsiz hook
+backoff bilan tugashi mumkin; health scheduler ishlayotganini, hamma yuborish
+muvaffaqiyatli ekanini kafolatlamaydi. Navbat/egaga alert/logni birga tekshiring.
+
+Docker stdlib probe’ni har 30 soniyada ishlatadi, boshlanishga 120 soniya beradi;
+uch marta yomon tekshiruv `unhealthy` qiladi. Dockerning o‘zi faqat unhealthy sabab
+konteynerni avtomatik qayta yoqmaydi. `docker compose ps` va bot logini ko‘ring.
+
+OWNER_ID egasi botning shaxsiy chatida avval **Start** bosgan bo‘lsin. Ushlanmagan
+handler/scheduler/fon xatolari va o‘n daqiqada uch takror Sender muvaffaqiyatsizligi
+qisqa DM beradi. Oddiy blocked-user holati normal reachability sifatida qayd etiladi.
+Birinchi alert darhol, qolganlari birlashtiriladi: ko‘pi bilan 10 daqiqada bitta
+alert; navbat yoki Telegram javobi kechiksa interval tasdiq/xato qaytganidan keyin ham to‘liq saqlanadi. Xulosa
+oxirgi xato turi, belgilangan joy, chat ID, UTC vaqt, jami hodisalar va qo‘shilgan
+xatolar sonini (jami−1) ko‘rsatadi. Exception matni, foydalanuvchi xabari, token,
+parol yoki initData yuborilmaydi. Owner bloklagan/aloqa yo‘q bo‘lsa alert botni
+buzmaydi va o‘zidan yangi alert hosil qilmaydi. Alertlar xotirada; restartda
+birlashtirilgan hisob yo‘qolishi mumkin, bu durable queue emas.
+
+Rasmiy qo‘llanmalar: [Caddy automatic HTTPS](https://caddyserver.com/docs/quick-starts/reverse-proxy),
+[Caddy environment](https://caddyserver.com/docs/caddyfile/concepts#environment-variables),
+[Telegram getWebhookInfo](https://core.telegram.org/bots/api#getwebhookinfo),
+[PostgreSQL custom dump](https://www.postgresql.org/docs/16/app-pgdump.html).
+
+### 17-bosqichning mahalliy testlari
+
+Oddiy testlar uchun `requirements-dev.txt` kerak; production Docker obrazida
+pytest/ruff yo‘q. Backup shell testlari Windowsda ham alohida tarmoqsiz klient
+konteynerida ishlaydi. Docker va keshlangan `postgres:16-alpine` kerak:
+
+```powershell
+$env:OQIBAT_TEST_BACKUP_DOCKER = '1'
+python -m pytest tests/test_backup.py tests/test_production.py -q
+Remove-Item Env:OQIBAT_TEST_BACKUP_DOCKER
+```
+
+Parametrsiz backup konteyner testlari skip bo‘ladi; ular haqiqiy loyiha bazasini
+ochmaydi. PostgreSQL integratsiyasi yuqoridagi alohida yangi/bo‘sh/local baza
+parametri bilan tekshiriladi. Kundalik 24 soatlik devor-soat sinovi, haqiqiy
+DNS/sertifikat chiqarish va real Telegram ishlashi egasining muhitida alohida qoladi.

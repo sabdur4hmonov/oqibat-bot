@@ -895,6 +895,29 @@ def weekly_summary(week, data, instagram_handle, *, compact=False):
 
 
 OWNER_STATS_DESCRIPTION = "Bot egasi uchun holat"
+WEBHOOK_INFO_FAILED = "Webhook holati olinmadi. Token, internet va sozlamalarni tekshiring."
+
+
+def webhook_info_status(matches, pending, last_error):
+    match = "mos" if matches else "mos emas"
+    at = last_error.astimezone(ZoneInfo("UTC")).isoformat() if last_error else "yo‘q"
+    return (
+        f"getWebhookInfo: URL sozlangan rejimga {match}.\n"
+        f"Kutayotgan yangilanishlar: {pending}.\nOxirgi qayd etilgan xato vaqti (UTC): {at}."
+    )
+
+
+def owner_error_alert(summary, count):
+    at = summary["at"].astimezone(ZoneInfo("UTC")).strftime("%Y-%m-%d %H:%M:%S UTC")
+    chat = str(summary["chat_id"]) if summary["chat_id"] is not None else "—"
+    return (
+        f"⚠️ <b>Bot xatosi</b>\nTur: {escape(summary['type'])}\n"
+        f"Joy: {escape(summary['where'])}\nChat: {chat}\nVaqt: {at}\n"
+        f"Hodisalar: {count}\nBirlashtirilgan qo‘shimcha xatolar: {count - 1}\n"
+        "Tafsilot uchun server jurnalini tekshiring; xabar matni bu yerga yuborilmaydi."
+    )
+
+
 PRIVACY_DESCRIPTION = "Ma’lumotlar maxfiyligi"
 ERASE_DESCRIPTION = "Ma’lumotlarimni o‘chirish"
 PRIVACY = (

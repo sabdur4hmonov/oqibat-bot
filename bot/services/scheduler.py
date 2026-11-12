@@ -38,6 +38,8 @@ class Scheduler:
         self.sessions = sessions
         self.hooks = hooks or {}
         self.last_tick_duration = 0.0
+        self.last_tick_at = None
+        self.on_error = None
         self.recovery = None
         self.maintenance = []
         self._lock = asyncio.Lock()
@@ -49,9 +51,17 @@ class Scheduler:
         try:
             async with self._workers[kind]:
                 return await self.hooks[kind](row, now)
-        except Exception:
+        except Exception as error:
             logger.exception("Scheduled %s failed for id %s", kind, row.id)
+            self._notify(error, f"scheduler.{kind}", getattr(row, "chat_id", row.id))
             return False
+
+    def _notify(self, error, where, chat_id=None):
+        if self.on_error:
+            try:
+                self.on_error(error, where, chat_id)
+            except Exception:
+                logger.warning("Scheduler error summary could not be recorded")
 
     async def _chat_batch(self, kind: str, now: datetime) -> int:
         column = CHAT_JOBS[kind]
@@ -70,8 +80,9 @@ class Scheduler:
                         "expected": getattr(chat, column.key),
                         "next_value": next_time,
                     }
-            except Exception:
+            except Exception as error:
                 logger.exception("Could not reschedule %s for chat %s", kind, chat.id)
+                self._notify(error, f"scheduler.{kind}", chat.id)
             retry_at = now + timedelta(minutes=10)
             logger.warning(
                 "Scheduled %s failed for chat %s; backing off until %s", kind, chat.id, retry_at
@@ -137,7 +148,11 @@ class Scheduler:
                     await self.recovery.tick(now)
                 for operation in self.maintenance:
                     await operation(now)
+                self.last_tick_at = time.monotonic()
                 return counts
+            except Exception as error:
+                self._notify(error, "scheduler.tick")
+                raise
             finally:
                 self.last_tick_duration = time.perf_counter() - started
 
@@ -152,6 +167,9 @@ class Scheduler:
                         if kind in self.hooks:
                             tasks[kind] = group.create_task(self._deadline_batch(kind, now))
                 return {kind: task.result() for kind, task in tasks.items()}
+            except Exception as error:
+                self._notify(error, "scheduler.deadlines")
+                raise
             finally:
                 self.last_deadline_tick_duration = time.perf_counter() - started
 

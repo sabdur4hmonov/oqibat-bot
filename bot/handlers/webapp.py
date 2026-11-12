@@ -10,9 +10,10 @@ from aiohttp import web
 from bot import texts
 from bot.db.models import Chat
 from bot.services import webapp_data
-from bot.services.webapp_auth import InitDataError, validate_init_data
+from bot.services.webapp_auth import Identity, InitDataError, validate_init_data
 
 STATE_KEY = web.AppKey("oqibat_webapp", dict)
+IDENTITY_KEY = web.RequestKey("oqibat_identity", Identity)
 logger = logging.getLogger(__name__)
 
 
@@ -34,7 +35,7 @@ async def middleware(request, handler):
                 request.headers.get("X-Telegram-Init-Data", ""),
                 state["settings"].bot_token.get_secret_value(),
             )
-            request["webapp_identity"] = identity
+            request[IDENTITY_KEY] = identity
             try:
                 async with asyncio.timeout(1):
                     await state["slots"].acquire()
@@ -98,7 +99,7 @@ async def group_for(request):
         raise web.HTTPServiceUnavailable()
     try:
         async with asyncio.timeout(5):
-            member = await state["bot"].get_chat_member(target, request["webapp_identity"].user_id)
+            member = await state["bot"].get_chat_member(target, request[IDENTITY_KEY].user_id)
     except (TelegramForbiddenError, TelegramBadRequest):
         raise web.HTTPForbidden() from None
     if not member_allowed(member):
@@ -108,9 +109,7 @@ async def group_for(request):
 
 async def profile(request):
     runtime = request.app[STATE_KEY]["runtime"]
-    return web.json_response(
-        await webapp_data.profile(runtime.sessions, request["webapp_identity"])
-    )
+    return web.json_response(await webapp_data.profile(runtime.sessions, request[IDENTITY_KEY]))
 
 
 async def leaderboard(request):
@@ -127,5 +126,5 @@ async def achievements(request):
     chat = await group_for(request)
     runtime = request.app[STATE_KEY]["runtime"]
     return web.json_response(
-        await webapp_data.achievements(runtime.sessions, chat, request["webapp_identity"].user_id)
+        await webapp_data.achievements(runtime.sessions, chat, request[IDENTITY_KEY].user_id)
     )

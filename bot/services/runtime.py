@@ -16,6 +16,7 @@ from bot.services.content import ContentLibrary
 from bot.services.daily import DailyService
 from bot.services.easy_games import EasyGames
 from bot.services.effects import Effects
+from bot.services.error_alerts import ErrorAlerts
 from bot.services.game_cache import GameCache
 from bot.services.game_hub import GameHub
 from bot.services.krokodil import Krokodil
@@ -55,6 +56,10 @@ class ScaleRuntime:
         self.scheduler = Scheduler(sessions)
         self.sender = Sender(sessions, on_forbidden=self.activity.mark_forbidden)
         self.effects = Effects()
+        self.alerts = ErrorAlerts(bot, self.sender, getattr(settings, "owner_id", None))
+        self.sender.on_failure = self.alerts.record
+        self.scheduler.on_error = self.alerts.record
+        self.effects.on_error = self.alerts.record
         self.game_cache = GameCache()
         self.challenges = ChallengeRepository(sessions, self.pending, self.locks, self.game_cache)
         self.games = GameSessionRepository(sessions, self.locks, self.game_cache, self.pending)
@@ -147,6 +152,8 @@ class ScaleRuntime:
                 self.metrics.run(self.sender, self.scheduler), name="scale-metrics"
             ),
         ]
+        if self.alerts.owner_id:
+            self.tasks.append(asyncio.create_task(self.alerts.run(), name="owner-alerts"))
         return self
 
     async def __aexit__(self, *args) -> None:
@@ -166,6 +173,7 @@ class ScaleRuntime:
     def workflow(self) -> dict:
         return {
             "runtime": self,
+            "error_alerts": self.alerts,
             "owner_tools": self.owner_tools,
             "achievements": self.achievements,
             "sender": self.sender,

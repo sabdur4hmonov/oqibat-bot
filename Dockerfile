@@ -20,4 +20,5 @@ COPY --chown=10001:10001 alembic.ini ./alembic.ini
 
 USER 10001:10001
 EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=6s --start-period=120s --retries=3 CMD ["python", "scripts/healthcheck.py"]
 CMD ["python", "-m", "bot"]
