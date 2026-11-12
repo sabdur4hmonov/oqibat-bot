@@ -87,12 +87,15 @@ class GroupRepository:
                         select(GameSession)
                         .where(
                             GameSession.chat_id == chat_id,
-                            GameSession.game == "hyj",
+                            GameSession.game.in_(["hyj", "rps"]),
                             GameSession.status.in_(["lobby", "running"]),
                         )
                         .limit(1)
                     )
-                    if game is not None and game.state.get("target") == tg_user.id:
+                    if game is not None and (
+                        game.state.get("target") == tg_user.id
+                        or (game.game == "rps" and tg_user.id in game.state.get("players", []))
+                    ):
                         game.status, game.phase_deadline_at = "cancelled", None
                         game.state = {
                             **game.state,

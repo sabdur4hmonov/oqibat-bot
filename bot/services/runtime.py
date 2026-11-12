@@ -30,6 +30,7 @@ from bot.services.pending import PendingChallenges
 from bot.services.points import CheckinBuffer, Points
 from bot.services.recovery import Recovery
 from bot.services.result_cards import ResultCards
+from bot.services.rps import RockPaperScissors
 from bot.services.scheduler import Scheduler
 from bot.services.seasons import Seasons
 from bot.services.sender import Sender
@@ -72,6 +73,8 @@ class ScaleRuntime:
         self.content = ContentLibrary()
         self.easy_games = EasyGames(self.game_hub, self.content, sessions)
         self.game_hub.register(("duel", "quiz", "wyr"), self.easy_games)
+        self.rps_game = RockPaperScissors(self.game_hub)
+        self.game_hub.register(("rps",), self.rps_game)
         self.krokodil_game = Krokodil(self.game_hub, self.content, sessions)
         self.game_hub.register(("krokodil",), self.krokodil_game)
         self.scheduler.hooks["game"] = self.game_hub.advance
@@ -102,7 +105,7 @@ class ScaleRuntime:
         self.truth_dare = TruthDare(self.game_hub, self.content, sessions, self.challenge_service)
         self.game_hub.register(("hyj",), self.truth_dare)
         self.challenges.on_game_resolved = self.truth_dare.challenge_resolved
-        self.groups.on_game_resolved = self.truth_dare.challenge_resolved
+        self.groups.on_game_resolved = self.membership_game_resolved
         self.mafia_game = Mafia(
             self.game_hub, sessions, getattr(settings, "bot_username", "OqibatBot")
         )
@@ -178,10 +181,17 @@ class ScaleRuntime:
             "migrations": self.migrations,
             "game_hub": self.game_hub,
             "easy_games": self.easy_games,
+            "rps_game": self.rps_game,
             "krokodil_game": self.krokodil_game,
             "truth_dare": self.truth_dare,
             "mafia_game": self.mafia_game,
         }
+
+    def membership_game_resolved(self, game):
+        if game.game == "rps":
+            self.rps_game.membership_resolved(game)
+        else:
+            self.truth_dare.challenge_resolved(game)
 
 
 class ScaleMiddleware(BaseMiddleware):

@@ -56,7 +56,7 @@ class GameSessionRepository:
                     or not member.is_active
                 ):
                     return None
-                if game == "hyj":
+                if game == "hyj" or (game == "rps" and state.get("target") is not None):
                     target = await session.get(Membership, (chat_id, state.get("target")))
                     if target is None or not target.opted_in or not target.is_active:
                         return None

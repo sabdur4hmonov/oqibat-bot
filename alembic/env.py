@@ -47,7 +47,27 @@ async def run_migrations_online() -> None:
     engine = create_engine(DatabaseSettings().database_url.get_secret_value())
     try:
         async with engine.connect() as connection:
-            await connection.run_sync(do_run_migrations)
+            if connection.dialect.name == "sqlite":
+                # Alembic batch rebuilds a parent table by copying/dropping it.
+                # Suspend FKs on this migration-only connection outside a DB
+                # transaction, then use explicit transactional DDL and validate
+                # all references before commit. Runtime connections keep FKs ON.
+                await connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
+                await connection.commit()
+                try:
+                    await connection.exec_driver_sql("BEGIN")
+                    await connection.run_sync(do_run_migrations)
+                    if (await connection.exec_driver_sql("PRAGMA foreign_key_check")).first():
+                        raise RuntimeError("Migration foreign-key validation failed")
+                    await connection.commit()
+                except BaseException:
+                    await connection.rollback()
+                    raise
+                finally:
+                    await connection.exec_driver_sql("PRAGMA foreign_keys=ON")
+                    await connection.commit()
+            else:
+                await connection.run_sync(do_run_migrations)
     finally:
         await engine.dispose()
 

@@ -365,6 +365,29 @@ After completing all phases, archive HEAD outside the repository as
 commit/push and refresh the archive from that final commit, then stop. A blocked preflight
 is not a completed phase and must never be represented as the final implementation archive.
 
+### Phase 15 — Tosh–qaychi–qog‘oz (owner request, 2026-11-12)
+Add `/tqq` (alias `/toshqaychiqogoz`) in groups. Two opted-in human members play
+one simultaneous-choice round; reply to invite a specific member or use an open lobby.
+Lobby expires after 90 seconds, accepted players have 60 seconds to choose. Each
+player's first choice is final; reveal both only when both have chosen. Rock beats
+scissors, scissors beats paper, paper beats rock. Winner +2 (same as dice duel),
+draw/timeout/cancellation no points. No bot opponent or extra games in this phase.
+Use the existing non-duel main-game slot, per-chat lock/repository, indexed independent
+deadline loop, immutable point ledger and shared GAME-priority sender. Edit one board;
+answer callbacks directly before effects. Include session ID + round in callbacks;
+reject outsiders, bots, expired/foreign-board/stale/duplicate choices. Starter/admin
+can /stop. Cancel without points on restart, group migration or a participant opting out/leaving.
+Add pure winner/choice logic, thin handler, service, command/help/Mini App rules and
+existing winner-card support. New Alembic revision adds `rps` to game type constraint;
+keep all old migrations unchanged. SQLite parent-table rebuild must retain linked
+challenge rows, run with foreign-key checks suspended only on the migration connection,
+validate references before commit, and restore enforcement (per Alembic batch guidance).
+**Accept:** all nine move pairs, hidden choices, join/target permissions, concurrent
+duplicate taps, exact-once points, draw/timeout/stop/leave/restart, escaped names,
+GAME priority, independent deadlines, migration of populated linked rows and existing
+regression tests pass; pytest/Ruff, offline startup, PROGRESS entry, commit/push.
+Real Telegram remains a separate manual acceptance check. No dependency or deployment.
+
 ### Later (not now)
 Additional Mini App interactions beyond the read-only scope and further game features.
 

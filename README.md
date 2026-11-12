@@ -721,3 +721,36 @@ Har `data/*.json` faylning element soni, tuzilma/uzunlik va takroriy key/matn xa
 chiqadi. `$LASTEXITCODE` 0 bo‘lsa shakl to‘g‘ri, 1 bo‘lsa tuzatish kerak. .env,
 Telegram yoki baza kerak emas; fayllar o‘zgarmaydi. Hozirgi uchta namuna katta,
 ko‘rib chiqilgan kontent banki o‘rnini bosmaydi. Matn o‘zgarsa botni qayta ishga tushiring.
+
+### Tosh–qaychi–qog‘oz (/tqq)
+
+Avval botni to‘xtating va bazadan nusxa oling. Yangi koddan keyin virtual muhitda:
+
+```powershell
+alembic upgrade head
+python -m bot --check
+python -m bot
+```
+
+1. Guruhda bot admin bo‘lsin; ikkala odam `/qoshilish` bilan qo‘shilsin.
+2. `/tqq` yoki `/toshqaychiqogoz` yuboring. Muayyan odamning xabariga javoban
+   yuborsangiz, faqat o‘sha odam qabul qiladi. Ochiq o‘yinni boshqa qo‘shilgan a’zo oladi.
+3. 90 soniyada qabul qiling. Keyingi 60 soniyada har kim Tosh, Qaychi yoki Qog‘ozni
+   bitta tugma bilan tanlaydi. Birinchi tanlov qulflanadi; boshqalarga faqat
+   “tanladi” holati ko‘rinadi. Ikkalasi tanlagach, ikkala tanlov va natija ochiladi.
+4. Tosh qaychini, qaychi qog‘ozni, qog‘oz toshni yutadi. Bir raund: g‘olibga +2,
+   durangda ball yo‘q. Yana o‘ynash uchun yangi `/tqq` yuboring.
+5. Boshlovchi yoki admin `/stop` bilan bekor qiladi. Vaqt tugashi, bir ishtirokchining
+   chiqishi, bot qayta yoqilishi yoki guruh superguruhga ko‘chishi o‘yinni ballsiz bekor qiladi.
+   Boshqa asosiy o‘yin ketayotgan bo‘lsa, tugashini kuting; zar dueli alohida qoladi.
+
+G‘olib kartalari yoqilgan bo‘lsa odatdagi rasm ham keladi; o‘chiq bo‘lsa matn yetarli.
+Tanlov uchun shaxsiy chatni ochish shart emas. Telefonlarda haqiqiy Telegram sinovi
+hali alohida bajariladi; hech qanday yangi token, server yoki kutubxona kerak emas.
+
+Migratsiya mavjud o‘yin/vazifa bog‘lanishlarini saqlaydi. SQLite da ota jadvalni
+qayta yaratishda faqat migratsiya ulanishida tashqi kalit tekshiruvi vaqtincha
+to‘xtatiladi, yakunda bog‘lanishlar tekshiriladi va yoqiladi; bot ulanishlarida
+tekshiruv doim yoqilgan. RPS tarixli bazani eski sxemaga qaytarish ma’lumot yo‘qotmaslik
+uchun rad etiladi. [Alembic rasmiy batch qo‘llanmasi](https://alembic.sqlalchemy.org/en/latest/batch.html#dealing-with-referencing-foreign-keys)
+shu SQLite jadval-almashtirish cheklovini tushuntiradi. O‘zgarish oldidan nusxa oling.

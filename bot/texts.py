@@ -9,6 +9,7 @@ CARD_WEEKLY_TITLE = "Haftalik top 5"
 CARD_GAME_TITLES = {
     "quiz": "Viktorina natijalari",
     "duel": "Duel g‘olibi",
+    "rps": "Tosh–qaychi–qog‘oz g‘olibi",
     "krokodil": "Krokodil natijalari",
     "hyj": "Haqiqat yoki jasorat",
     "mafia": "Mafia g‘oliblari",
@@ -68,6 +69,9 @@ WEB_COPY = {
         "Video vazifasi +15, ovoz yoki rasm +10, matn +5. O‘tkazilgan vazifa odatda −5; "
         "admin tanlagan boshqa jazo ham bo‘lishi mumkin. /sozlamalar ni tekshiring.\n\n"
         "Viktorinada to‘g‘ri javob +3, birinchi javobga yana +2. Duel g‘olibiga +2. "
+        "Tosh–qaychi–qog‘oz (/tqq) ikki kishi bilan: har kim yashirin tanlaydi, "
+        "ikkala tanlovdan keyin natija ochiladi. Tosh qaychini, qaychi qog‘ozni, "
+        "qog‘oz toshni yutadi. G‘olibga +2, durangda ball yo‘q. "
         "Krokodilda topuvchiga +5, boshlovchiga +3; boshlovchi so‘zni yozsa −3. "
         "Haqiqat javobiga +5, jasoratga vazifa bo‘yicha ball, rad etishga −2.\n\n"
         "Mafia 5–15 kishi bilan: rollar shaxsiy chatda, tunda harakat, kunduzi muhokama va ovoz. "
@@ -214,6 +218,7 @@ GROUP_COMMANDS = {
     "men": "Mening ballarim",
     "top": "Guruh reytingi",
     "duel": "Bot tashlaydigan zar dueli",
+    "tqq": "Tosh–qaychi–qog‘oz dueli",
     "viktorina": "Besh savolli viktorina",
     "tanla": "Ikki variantdan birini tanlash",
     "krokodil": "So‘z topish o‘yini",
@@ -232,6 +237,51 @@ NO_ACTIVE_GAME = "Hozir faol o‘yin yo‘q."
 STOP_DENIED = "O‘yinni faqat uni boshlagan a'zo yoki administrator to‘xtata oladi."
 DUEL_INVALID_TARGET = "O‘zingizdan boshqa, /qoshilish bilan qo‘shilgan a'zoni tanlang."
 DUEL_ACCEPT = "Duelni qabul qilish"
+RPS_ACCEPT = "O‘yinni qabul qilish"
+RPS_ACCEPTED = "O‘yin boshlandi. Yashirin tanlovingizni bosing."
+RPS_CHOICE_LOCKED = "Tanlovingiz saqlandi. Uni almashtirib bo‘lmaydi."
+RPS_MOVES = {"r": "🪨 Tosh", "s": "✂️ Qaychi", "p": "📄 Qog‘oz"}
+RPS_TIMEOUT = "Tosh–qaychi–qog‘oz muddati tugadi. Ball berilmadi. /tqq bilan qayta boshlang."
+RPS_LEFT = "Ishtirokchi o‘yindan chiqdi. Tosh–qaychi–qog‘oz bekor qilindi, ball berilmadi."
+RPS_RESET = (
+    "Bot yoki guruh holati o‘zgardi. Tosh–qaychi–qog‘oz bekor qilindi, ball berilmadi. "
+    "/tqq bilan qayta boshlang."
+)
+
+
+def rps_board(game):
+    state = game.state
+    title = "🪨✂️📄 <b>Tosh–qaychi–qog‘oz</b>"
+
+    def name(user):
+        return mention(user, state["names"][str(user)])
+
+    if state["phase"] == "lobby":
+        target = name(state["target"]) if state.get("target") else "Boshqa bir ishtirokchi"
+        return (
+            f"{title}\n{name(game.started_by)} o‘yinga chaqirdi.\n{target} qabul qilsin.\n"
+            "Kutish: 90 soniya. Bir raund, g‘olibga +2 ball, durangda ball yo‘q."
+        )
+    if game.status == "finished":
+        picks = "\n".join(
+            f"{name(user)}: {RPS_MOVES[state['choices'][str(user)]]}" for user in state["players"]
+        )
+        outcome = (
+            f"🏆 {name(state['winner'])} yutdi! +2 ball."
+            if state.get("winner")
+            else "🤝 Durang! Ball berilmadi."
+        )
+        return f"{title}\n\n{picks}\n\n{outcome}"
+    ready = "\n".join(
+        f"{name(user)} — " + ("tanladi ✅" if str(user) in state["choices"] else "tanlamoqda…")
+        for user in state["players"]
+    )
+    return (
+        f"{title}\n\n{ready}\n\nQabul qilingandan boshlab 60 soniya. Har kim bir marta tanlaydi. "
+        "Ikkala tanlov tayyor bo‘lgach ochiladi."
+    )
+
+
 QUIZ_START = (
     "🧠 Viktorina boshlanmoqda! 5 savol, har biriga 30 soniya. To‘g‘ri javob +3, birinchi +2."
 )
@@ -686,6 +736,7 @@ def group_help(instagram_handle=None) -> str:
         "\n\n🎯 Vazifalar: faqat /qoshilish bilan rozilik berganlar orasidan. "
         "/chiqish istalgan payt ishlaydi.\n"
         "🎲 /duel ni javob tarzida yoki ochiq yuboring; zarni bot tashlaydi.\n"
+        "🪨✂️📄 /tqq — tosh–qaychi–qog‘oz; yashirin tanlov, g‘olibga +2 ball.\n"
         "🧠 /viktorina: 5 savol, har biriga 30 soniya.\n"
         "🤔 /tanla: bir daqiqalik ochiq tanlov.\n"
         "🐊 /krokodil: yashirin so‘z, 10 tur, har biri 3 daqiqa.\n"
@@ -861,7 +912,7 @@ def game_card_data(game):
             for user, score in scores[:5]
             if score > 0
         ]
-    elif game.game == "duel" and state.get("winner"):
+    elif game.game in {"duel", "rps"} and state.get("winner"):
         rows = [(state["names"].get(str(state["winner"]), "Ishtirokchi"), 2)]
     elif game.game == "hyj" and state.get("result") in {"truth_done", "dare_done"}:
         points = 5 if state["result"] == "truth_done" else state.get("result_points", 0)

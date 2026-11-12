@@ -144,5 +144,21 @@ async def test_postgres_migrations_utc_bulk_upserts_ledger_games_and_due_queries
             stored = (await session.get(Chat, chat_id)).next_daily_at
             assert stored > now and stored.tzinfo == UTC
         assert engine.pool.size() == 10 and engine.pool._max_overflow == 0
+        rps = await games.start(
+            chat_id,
+            42,
+            "rps",
+            {"phase": "choosing", "players": [42, 43]},
+            now + timedelta(seconds=60),
+        )
+
+        def rps_finish(row):
+            row.status, row.phase_deadline_at = "finished", None
+            row.state.update(phase="done", winner=42)
+            return [Award(42, 2, "rps", f"game:{row.id}")]
+
+        assert (await games.transition(chat_id, rps.id, rps_finish)).status == "finished"
+        assert await games.transition(chat_id, rps.id, rps_finish) is None
+        assert (await points.stats(chat_id, 42))[0] == 14
     finally:
         await engine.dispose()
