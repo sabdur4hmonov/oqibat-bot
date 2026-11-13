@@ -10,6 +10,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from bot import texts
 from bot.db.models import Challenge, Chat, ContentUsage, ScheduledPost, User
+from bot.keyboards.hub import daily_keyboard
 from bot.services.content import choose_content
 from bot.services.locks import ChatLocks
 from bot.services.sender import Priority
@@ -132,6 +133,7 @@ class DailyService:
                     self.resolve_chat(chat_id),
                     texts.daily_post(content["text"], chat.title)
                     + texts.debtors_suffix([(row.user_id, row.first_name) for row in debtors]),
+                    reply_markup=daily_keyboard(chat_id, date),
                 ),
                 priority=Priority.BULK,
             )

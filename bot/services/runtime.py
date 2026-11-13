@@ -18,6 +18,7 @@ from bot.services.easy_games import EasyGames
 from bot.services.effects import Effects
 from bot.services.error_alerts import ErrorAlerts
 from bot.services.game_cache import GameCache
+from bot.services.game_catalog import GameCatalog
 from bot.services.game_hub import GameHub
 from bot.services.guess_games import GuessGames
 from bot.services.krokodil import Krokodil
@@ -25,6 +26,7 @@ from bot.services.locks import ChatLocks
 from bot.services.mafia import Mafia
 from bot.services.metrics import Metrics
 from bot.services.migrations import ChatMigrations
+from bot.services.onboarding import QuickSetup
 from bot.services.owner import OwnerTools
 from bot.services.participation import Participants
 from bot.services.penalties import Penalties
@@ -136,6 +138,8 @@ class ScaleRuntime:
             self.game_hub, sessions, getattr(settings, "bot_username", "OqibatBot")
         )
         self.game_hub.register(("mafia",), self.mafia_game)
+        self.game_catalog = GameCatalog(self, bot)
+        self.quick_setup = QuickSetup(self, bot)
         self.sessions = sessions
         self.recovery = Recovery(self, bot, settings)
         self.owner_tools = OwnerTools(self, getattr(settings, "owner_id", None))
@@ -209,6 +213,8 @@ class ScaleRuntime:
             "challenge_service": self.challenge_service,
             "migrations": self.migrations,
             "game_hub": self.game_hub,
+            "game_catalog": self.game_catalog,
+            "quick_setup": self.quick_setup,
             "easy_games": self.easy_games,
             "rps_game": self.rps_game,
             "quick_games": self.quick_games,

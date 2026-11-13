@@ -58,7 +58,7 @@ def board_layout(game, body):
     if body.startswith(title + "\nHolat:"):
         return body
     if body.startswith(title):
-        body = body[len(title):].lstrip(" \n")
+        body = body[len(title) :].lstrip(" \n")
     state, phase = (game.state, game.state.get("phase", "lobby"))
     status = {
         "lobby": "Davra yig‘ilyapti",
@@ -464,6 +464,36 @@ GROUP_COMMANDS = {
     "eslaysizmi": "Suratni kim yuborganini topish",
     "stop": "O‘yinni to‘xtatish",
 }
+GROUP_MENU = ("oyinlar", "qoshilish", "men", "top", "yutuqlar", "sozlamalar", "stop", "help")
+HUB_CATEGORIES = {
+    "fast": "Tez o‘yinlar",
+    "word": "So‘z o‘yinlari",
+    "large": "Katta o‘yinlar",
+    "background": "Fon o‘yini",
+}
+HUB_BACK = "← Barcha toifalar"
+HUB_INTRO = (
+    "🎲 <b>Davra qizisinmi?</b>\nToifani tanlang, keyin o‘yinni bosing.\n"
+    "Guruhda avval /qoshilish. /help da barcha buyruq va qoidalar bor."
+)
+HUB_GROUP_ONLY = "Davrani guruhda ochamiz! Guruhda /oyinlar yuboring."
+DAILY_GAME = "🎲 Bugungi o‘yin"
+SETUP_STEPS = (
+    "⚙️ 1/3 · Kunlik post qachon kelsin?\nGuruhning mahalliy vaqtini tanlang.",
+    "⚙️ 2/3 · Kuniga nechta vazifa beray?\n0 — vazifalarsiz davra.",
+    "⚙️ 3/3 · Bajarilmagan vazifaga qanday yo‘l tutamiz?\n"
+    "Jazosiz yoki ball; mute/kick uchun botga cheklash huquqi kerak.",
+)
+SETUP_VALUES = {
+    "off": "Jazosiz",
+    "points": "−5 ball",
+    "mute": "Vaqtincha cheklash",
+    "kick": "Chiqarish",
+}
+SETUP_FULL = "Barcha sozlamalar"
+SETUP_DONE = "Tayyor! Davra sizniki. ✅\nIstalgan payt /sozlamalar bilan o‘zgartiring."
+WELCOME_GROUP += "\n\n" + SETUP_STEPS[0]
+
 GAME_JOIN_FIRST = (
     "O‘yin uchun bot admin bo‘lishi va siz /qoshilish bilan " + "qo‘shilishingiz kerak."
 )

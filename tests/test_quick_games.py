@@ -389,13 +389,13 @@ async def test_all_math_timeouts_finish_and_global_pause_does_not_delay_state_or
 async def test_catalog_private_group_commands_and_main_slot(game_app):
     feed, transport, runtime = game_app
     await feed(command_update("/oyinlar"))
-    assert transport.methods[-1].text == texts.GAME_CATALOG
+    assert transport.methods[-1].text == texts.HUB_INTRO
     message = command_update("/oyinlar").message
     private = message.model_copy(
         update={"chat": message.chat.model_copy(update={"id": 1, "type": "private"})}
     )
     await feed(command_update("/oyinlar").model_copy(update={"message": private}))
-    assert transport.methods[-1].text == texts.GAME_CATALOG
+    assert transport.methods[-1].text == texts.HUB_INTRO
     await start(game_app, "number")
     await feed(command_update("/matematika"))
     assert transport.methods[-1].text == texts.GAME_BUSY

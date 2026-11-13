@@ -1,7 +1,6 @@
 from aiogram import F, Router
 from aiogram.filters import Command, CommandObject
 
-from bot import texts
 from bot.services.sender import Priority
 
 KINDS = {"sontop": "number", "matematika": "math"}
@@ -22,12 +21,12 @@ async def button(query, quick_games, bot, sender):
     await sender.answer_callback_query(bot, query.id, text=result, show_alert=True)
 
 
-async def catalog(message, bot, sender):
-    await sender.send(
-        message.chat.id,
-        lambda: bot.send_message(message.chat.id, texts.GAME_CATALOG),
-        priority=Priority.GAME,
-    )
+async def catalog(message, game_catalog):
+    await game_catalog.show(message)
+
+
+async def hub_button(query, game_catalog):
+    await game_catalog.callback(query)
 
 
 def create_router():
@@ -37,4 +36,5 @@ def create_router():
     )
     router.message.register(start, Command(*KINDS), F.chat.type.in_({"group", "supergroup"}))
     router.callback_query.register(button, F.data.startswith("qm:"))
+    router.callback_query.register(hub_button, F.data.startswith("hc:") | F.data.startswith("hg:"))
     return router

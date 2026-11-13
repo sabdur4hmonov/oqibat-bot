@@ -1,5 +1,15 @@
 # Oqibat Bot
 
+`/oyinlar` — davraning asosiy menyusi: Tez o‘yinlar, So‘z o‘yinlari,
+Katta o‘yinlar va Fon o‘yini. Guruhdagi tugma o‘yinni bosgan odam nomidan
+boshlaydi; `/qoshilish`, bot adminligi va bo‘sh o‘yin joyi talablari saqlanadi.
+Barcha eski o‘yin buyruqlarini qo‘lda yozish mumkin; guruh buyruq menyusi sakkizta
+asosiy buyruqni ko‘rsatadi. Shaxsiy menyudan guruhda o‘ynash tushuntiriladi.
+Bot admin bo‘lganda uchta tez sozlash qadami chiqadi: mahalliy kunlik vaqt,
+kunlik vazifalar soni va jazo turi. Har tanlov bazaga saqlanadi. Bot qayta ishga
+tushsa yoki tugma eskirsa `/sozlamalar` dan davom eting. Kunlik postdagi
+“🎲 Bugungi o‘yin” ham ayni ruxsat tekshiruvlari bilan bir o‘yinni taklif qiladi.
+
 **Guruhda oqibat bo‘lsin.** Telegram group engagement bot for Uzbekistan.
 Python 3.12, aiogram 3, SQLAlchemy 2 async, Alembic. Phase 0 implements the foundation
 and private `/start` and `/help`. Phase 0.5 adds shared scale services. Phase 1 implements group onboarding,

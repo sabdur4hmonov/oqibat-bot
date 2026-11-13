@@ -3,12 +3,12 @@ from aiogram.filters import Command
 from aiogram.types import CallbackQuery, ChatMemberUpdated, Message
 
 from bot import texts
-from bot.keyboards.group import join_keyboard
 from bot.keyboards.private import group_keyboard
+from bot.services.onboarding import setup_keyboard
 from bot.utils.admin import member_is_active, member_is_admin
 
 
-async def bot_membership(event: ChatMemberUpdated, sender, groups) -> None:
+async def bot_membership(event: ChatMemberUpdated, sender, groups, quick_setup) -> None:
     if event.chat.type not in {"group", "supergroup"}:
         return
     chat = await groups.bot_membership(event.chat, event.new_chat_member)
@@ -18,12 +18,18 @@ async def bot_membership(event: ChatMemberUpdated, sender, groups) -> None:
     was_admin = member_is_admin(event.old_chat_member)
     if not was_active or was_admin != chat.bot_is_admin:
         text = texts.WELCOME_GROUP if chat.bot_is_admin else texts.NEED_ADMIN
-        await sender.send(
+        sent = await sender.send(
             chat.id,
             lambda: event.bot.send_message(
-                chat.id, text, reply_markup=join_keyboard() if chat.bot_is_admin else None
+                chat.id, text, reply_markup=setup_keyboard(0) if chat.bot_is_admin else None
             ),
         )
+        if chat.bot_is_admin and sent:
+            quick_setup.remember(chat.id, sent.message_id)
+
+
+async def setup_button(query, quick_setup):
+    await quick_setup.callback(query)
 
 
 async def member_update(event: ChatMemberUpdated, groups) -> None:
@@ -111,4 +117,5 @@ def create_router() -> Router:
     router.message.register(leave, Command("chiqish"))
     router.message.register(help_group, Command("help"))
     router.callback_query.register(join_button, F.data == "join")
+    router.callback_query.register(setup_button, F.data.startswith("qs:"))
     return router

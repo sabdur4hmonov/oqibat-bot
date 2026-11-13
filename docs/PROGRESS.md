@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phase 22 complete; owner authorized Phases 22–26 sequentially, then stop. No deployment or review ZIP.
+- Current phase: Phases 22–23 complete; continuing the authorized 22–26 sequence, then stop. No deployment or review ZIP.
 - Last updated: 2026-11-13 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -663,3 +663,17 @@
   2. /matematika va /sontop ni o‘ynang. Tayyorlanish yozuvi keyin haqiqiy muddatga almashsin, ism xavfsiz ko‘rinsin, ball avvalgidek bo‘lsin. Natijada kuchli uchlik medal bilan chiqsin.
   3. Yetarli odam bilan Mafia oching. Rol kartasi faqat shaxsiy chatda tavsif va maqsad bilan kelsin; guruhda tun/kunduz sarlavhasi bo‘lsin, rollar oldindan ochilmasin.
   4. Yashirin/Kim/Telefon/Eslaysizmi doskalarida maxfiy so‘z, javob, izoh yoki ovoz oldindan chiqmasin. Uzun ism va < & belgilar bilan telefon ekranida tekshiring.
+
+### Phase 23 — Game hub and quick setup — 2026-11-13
+- Status: done for implementation/local verification; real Telegram acceptance remains manual.
+- Commit(s): this phase commit, `phase-23: category game hub and three-step admin setup`; push origin/main before Phase 24.
+- What was built: PLAN added first; Claude review notes re-read, none unresolved. Compact /oyinlar hub with four categories and every one of 13 games exactly once. Human callback actor goes through the same existing start service as the command, preserving membership/consent/slots/scoring/timers. Bot-authored matching-keyboard checks, private-group guidance, bot/foreign/stale rejection and migration-alias guards. All typed commands and full help stay available. Group command menu is exactly the requested eight, in requested order.
+- Onboarding/daily: becoming admin offers daily local time, challenges/day and penalty choice through one edited welcome board; admin checks and sequential state prevent skipping/replaying steps. Selections commit immediately through existing settings writes; full /sozlamalar remains. A stable daily game button uses the same callback, including crash recovery posts. No new dependency, table or migration.
+- Tests: full pytest **632 passed, 4 skipped** (484.46 s); **ruff check . passes**. New hub suite **21 passed**, plus related onboarding/menu/startup/daily regression selection **46 passed**. Covers all service dispatches, actor identity, actual membership/slot checks, categories, stable suggestions, admin choices, stale/nonadmin/foreign/private callbacks and persisted choices. Full suite includes offline startup; optional PostgreSQL and three Docker backup tests skipped, unchanged DB/backup code. A slow subprocess triggered the diagnostic timeout dump but completed successfully; no test failed or was disabled.
+- Acceptance: category hub, eight-command menu, three-step admin setup, full settings and daily suggestion implemented. Real Telegram button/navigation/menu propagation not live-tested.
+- Deviations/open questions: wizard navigation is bounded in memory (20,000 chats); after restart use /sozlamalar, while saved choices persist. Quick time presets offer 08:00/09:00/18:00/21:00; arbitrary time remains in full settings. Penalty enforcement and rights checks stay in the existing penalty service. None blocking; no architecture or game-rule change.
+- Manual test steps (Uzbek):
+  1. Botni guruhga qo‘shib admin qiling. 1/3 da kunlik vaqtni, 2/3 da vazifa sonini, 3/3 da jazo turini tanlang. Oddiy a’zo tanlay olmasin; eski qadamni qayta bosish sozlamani almashtirmasin. /sozlamalar da tanlovlarni ko‘ring.
+  2. /oyinlar yuboring. To‘rtta toifani navbat bilan oching, orqaga qayting. O‘yinni bosgan odam boshlovchi bo‘lsin. Qo‘shilmagan odamga tushuntirish kelsin; band asosiy o‘yinga ikkinchisi kirmasin.
+  3. Shaxsiy chatda /oyinlar ni oching: guruhda o‘ynash tushuntirilsin. Guruh buyruq menyusida sakkiz asosiy buyruq qolsin, /matematika yoki /telefon ni qo‘lda yozish ham ishlasin.
+  4. Kunlik postdagi Bugungi o‘yin tugmasini bosing. O‘sha ruxsatlar amal qilsin. Botni qayta yoqib, saqlangan sozlamalarni tekshiring; tez sozlash tugmasi eskirsa /sozlamalar dan foydalaning.

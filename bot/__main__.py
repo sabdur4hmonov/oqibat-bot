@@ -71,8 +71,8 @@ async def register_commands(bot: Bot, sender: Sender) -> None:
         (private, BotCommandScopeAllPrivateChats()),
         (
             [
-                BotCommand(command=command, description=description)
-                for command, description in texts.GROUP_COMMANDS.items()
+                BotCommand(command=command, description=texts.GROUP_COMMANDS[command])
+                for command in texts.GROUP_MENU
             ],
             BotCommandScopeAllGroupChats(),
         ),

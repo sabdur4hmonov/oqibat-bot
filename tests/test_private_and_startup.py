@@ -154,7 +154,7 @@ async def test_bootstrap_registers_scopes_and_required_updates(database_url, set
         "maxfiylik",
         "malumotlarimni_ochir",
     ]
-    assert {command.command for command in registrations[1].commands} == set(texts.GROUP_COMMANDS)
+    assert {command.command for command in registrations[1].commands} == set(texts.GROUP_MENU)
     assert polling.await_args.kwargs["allowed_updates"] == ALLOWED_UPDATES
     assert set(ALLOWED_UPDATES) == {
         "message",

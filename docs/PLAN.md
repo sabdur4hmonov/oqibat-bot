@@ -612,6 +612,21 @@ HTML/entities, escape names, and bound long lists; media captions stay <=1024.
 Mafia secrecy/role-card tests, placeholder compatibility and unchanged game-engine
 regressions, full pytest/Ruff/offline startup; honest PROGRESS, commit/push.
 
+### Phase 23 — Game hub and quick onboarding
+Make /oyinlar a category hub (fast, word, large, background), starting the existing
+game services with the clicking human as actor and the same command checks. Validate
+bot-authored group keyboards; private hub explains that starts belong in a group.
+Group command menu contains only oyinlar/qoshilish/men/top/yutuqlar/sozlamalar/stop/help;
+all typed commands and detailed help remain available. On becoming admin, offer three
+button steps: local daily time, challenges/day, penalty mode, keeping /sozlamalar.
+Wizard navigation is bounded in memory; choices persist immediately via existing
+settings transactions, and after restart /sozlamalar remains the recovery path.
+Daily posts (including recovered posts) suggest one deterministic fast game through
+the same hub callback. Preserve consent/slots/points/timers and Section 10.
+**Accept:** category coverage, typed/menu parity, actor/permission/bot/foreign/stale
+guards, sequential admin setup and persisted choices, daily suggestion/recovery,
+full pytest/Ruff/offline startup, PROGRESS, commit and push before Phase 24.
+
 ### Later (not now)
 Additional Mini App interactions beyond the read-only scope and further game features.
 

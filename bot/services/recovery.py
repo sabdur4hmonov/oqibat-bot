@@ -165,6 +165,9 @@ class Recovery:
                         stored.status = "skipped"
                 return
             message = texts.daily_post(item["text"], chat.title)
+            from bot.keyboards.hub import daily_keyboard
+
+            markup = daily_keyboard(chat.id, row.local_date)
         else:
             from datetime import datetime, time
             from zoneinfo import ZoneInfo
