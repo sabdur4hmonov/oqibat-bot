@@ -9,6 +9,7 @@ from bot import texts
 from bot.keyboards.cards import story_keyboard
 from bot.services.avatars import Avatars
 from bot.services.cards import render_card
+from bot.services.levels import group_totals, level_for
 from bot.services.sender import Priority
 
 logger = logging.getLogger(__name__)
@@ -34,18 +35,24 @@ class ResultCards:
             logger.exception("Result card rendering failed; text result remains available")
             return None
 
-    async def weekly(self, week, data):
+    async def weekly(self, week, data, *, chat_id=None):
         return await self.ranked(
             texts.CARD_WEEKLY_TITLE,
             data["top"],
             texts.card_week(week),
+            chat_id=chat_id,
         )
 
-    async def ranked(self, title, entries, subtitle=None, *, kind="weekly", story=False):
+    async def ranked(
+        self, title, entries, subtitle=None, *, kind="weekly", story=False, chat_id=None
+    ):
         if not self.enabled:
             return None
         try:
             async with self.workers:
+                totals = await group_totals(
+                    self.repo.sessions, chat_id, [user for user, _, _ in entries[:5]]
+                )
                 photos = await asyncio.gather(
                     *(self.avatars.get(user) for user, _, _ in entries[:5])
                 )
@@ -58,6 +65,10 @@ class ResultCards:
                     kind=kind,
                     story=story,
                     avatars=photos,
+                    levels=[
+                        texts.level_label(level_for(totals.get(user, 0)))
+                        for user, _, _ in entries[:5]
+                    ],
                 )
         except Exception:
             logger.exception("Ranked card unavailable; keep text result")
@@ -72,7 +83,7 @@ class ResultCards:
         if not await self.repo.claim_result_card(game.chat_id, game.id):
             return
         chat_id = self.repo.locks.resolve(game.chat_id)
-        payload = await self.ranked(data["title"], data["entries"], kind=game.game)
+        payload = await self.ranked(data["title"], data["entries"], kind=game.game, chat_id=chat_id)
         if payload is None:
             await self.repo.record_result_card(chat_id, game.id, None)
             return

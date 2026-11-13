@@ -132,7 +132,7 @@ class Weekly:
                 data = await summary(
                     session, chat_id, since, min(until, now + timedelta(microseconds=1))
                 )
-        payload = await self.cards.weekly(week, data) if self.cards else None
+        payload = await self.cards.weekly(week, data, chat_id=chat_id) if self.cards else None
         if generation != self.sender.generations.get(chat.id, 0):
             return True
         if payload is not None:

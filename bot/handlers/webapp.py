@@ -109,7 +109,13 @@ async def group_for(request):
 
 async def profile(request):
     runtime = request.app[STATE_KEY]["runtime"]
-    return web.json_response(await webapp_data.profile(runtime.sessions, request[IDENTITY_KEY]))
+    data = await webapp_data.profile(runtime.sessions, request[IDENTITY_KEY])
+    data["avatar"] = (
+        await runtime.cards.avatars.encoded(data["id"])
+        if data["id"] not in runtime.owner_tools.deleted
+        else None
+    )
+    return web.json_response(data)
 
 
 async def leaderboard(request):
@@ -117,9 +123,14 @@ async def leaderboard(request):
     if scope not in {"season", "all"}:
         raise web.HTTPBadRequest()
     chat = await group_for(request)
-    return web.json_response(
-        await webapp_data.leaderboard(request.app[STATE_KEY]["runtime"], chat, scope)
+    runtime = request.app[STATE_KEY]["runtime"]
+    data = await webapp_data.leaderboard(runtime, chat, scope)
+    avatars = await asyncio.gather(
+        *(runtime.cards.avatars.encoded(item["id"]) for item in data["items"])
     )
+    for item, avatar in zip(data["items"], avatars, strict=True):
+        item["avatar"] = avatar
+    return web.json_response(data)
 
 
 async def achievements(request):

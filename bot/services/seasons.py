@@ -123,6 +123,7 @@ class Seasons:
                 top[:5],
                 texts.season_month(post.local_date),
                 kind="season",
+                chat_id=target,
             )
             if generation != runtime.sender.generations.get(target, 0):
                 return False

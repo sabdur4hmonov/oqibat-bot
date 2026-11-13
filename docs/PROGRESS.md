@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phases 22–24 complete; continuing the authorized 22–26 sequence, then stop. No deployment or review ZIP.
+- Current phase: Phases 22–25 complete; Phase 26 remains in the authorized sequence, then stop. No deployment or review ZIP.
 - Last updated: 2026-11-13 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -692,3 +692,17 @@
   2. Avval botda /start qiling. Kartadagi Story uchun tugmasini bosing: 1080×1920 rasm faqat shaxsiy chatga kelsin. Guruhga yana Story yuborilmasin; tez qayta bosish dubl qilmasin. /top ballari o‘zgarmasin.
   3. Kim/Telefon/Eslaysizmi/Yashirin ijobiy natijalarini ham tekshiring. Balsiz yoki bekor o‘yinga yangi g‘olib o‘ylab topilmasin. Haftalik/mavsum kartasida ham Story tugmasi bo‘lsin.
   4. Eski/boshqa xabar tugmasi, guruhdan chiqish va ma’lumot o‘chirishdan keyin yuborish rad etilsin. Telegramdagi allaqachon yuborilgan rasm avtomatik o‘chmasligini biling. Claude docs/design PNGlarini ko‘rsin; sun’iy ballar o‘yin qoidasi emas.
+
+### Phase 25 — Mini App v2 and passive levels — 2026-11-13
+- Status: done for implementation/local verification; native Telegram themes/haptics remain manual.
+- Commit(s): this phase commit, `phase-25: themed Mini App passive levels and achievement gallery`; push origin/main before Phase 26.
+- What was built: PLAN first, Claude notes re-read, none unresolved. One threshold file (bot/constants.py: 0/50/200/1000), pure bounded level projection with centralized titles, negative-point recovery and top-tier handling. /men and cards show level. Private profile uses all-time points across groups; group leaderboards and square/Story badges use that group's all-time ledger, independently of the game/week/season points shown. No awards, ledger resets, scoring/rule/timer changes, migration or dependency.
+- Mini App: Telegram --tg-theme-* variables/themeParams and themeChanged, supported optional HapticFeedback, initial/async skeletons, profile level/progress/next-tier hint, selected-timezone season countdown, unique locked/unlocked achievement gallery, medals/avatars/levels on leaderboards, canonical game chips and unchanged detailed rules. Safe DOM text rendering; signed HMAC/24-hour age and live group-member/read-only guards retained. Optional metadata-free base64 PNG avatars have a two-second API budget and bounded 64 outstanding fetches; no token/file URL exposed. Card previews regenerated with level labels and an updated card inspected.
+- Tests: final complete pytest **684 passed, 4 skipped** (445.80 s); **ruff check . and node --check bot/webapp/app.js pass**. New level tests **14 passed**; levels/API selection **41 passed**, related cards/API regressions **81 passed**. Covers exact thresholds/negative/top tier, group all-time versus season/global profile, unique achievements/countdown, unchanged ledger, badge source, metadata stripping and bounded optional-avatar backlog. Full suite includes offline startup; optional PG and three unchanged Docker backup cases skipped.
+- UI acceptance: actual build-free assets opened with synthetic local API data and a dummy Telegram shim (only ignored build files, never shipped or connected to Telegram). Browser profile, both leaderboard selector states, unlocked/locked gallery and all 13 rules identities inspected at phone width (360 CSS px); no horizontal overflow. Locked-label contrast improved and refreshed; viewport reset, temporary tab closed and local preview server stopped. Actual Telegram haptics, real client themes and production domain still unverified. All real API auth/membership tests remain enabled; no auth bypass added to production.
+- Deviations/decisions: badges are passive, with owner-adjustable thresholds in one file. Gallery count is distinct achievement types across own groups, while the selected group's gallery reflects its own unlocks. Buffered daily +1 is visible after the existing flush; read-only API never flushes/writes it. None blocking.
+- Manual test steps (Uzbek):
+  1. /men da jami ball bilan daraja chiqsin. 0/50/200/1000 chegaralari mos unvonga o‘tsin; yangi ball berilmasin. /top mavsum va jami ballari avvalgidek qolsin.
+  2. Shaxsiy chatdagi Mini App ni oching. Profil, keyingi darajagacha chiziq, mavsum oxirigacha vaqt va ochilgan/yopiq yutuqlarni ko‘ring. Guruhni almashtirganda mavsum va yutuqlar o‘sha guruhniki bo‘lsin; shaxsiy daraja umumiy jami bo‘yicha.
+  3. Reytingda mavsum/barcha vaqtni almashtiring: medal, avatar/bosh harf va daraja ko‘rinsin. Guruh darajasi o‘yin/mavsum balliga emas jami ballga qarasin. Ilovani ochish /top ga ball qo‘shmasin.
+  4. Telegramda yorug‘/qorong‘i ko‘rinishni, telefon ekranini va sahifa almashishdagi yengil tebranishni sinang; eski qurilmada tebranish bo‘lmasa sahifa ishlayversin. Guruhdan chiqqan odam guruh sahifasini ko‘ra olmasin. Yangilash tugmasi bilan kunlik bufer yozilganidan keyin natijani tekshiring.

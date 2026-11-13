@@ -19,6 +19,17 @@ Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls. Phas
 
 ## Monthly seasons, streaks and achievements
 
+Mini App v2 uses Telegram themes, optional haptics, loading skeletons, avatars and
+medal leaderboards. Profile shows a passive Daraja and next-level progress, a locked/
+unlocked achievement gallery and the selected group's calendar-month countdown.
+Thresholds live only in `bot/constants.py`: 0 (Yangi a’zo), 50 (Faol), 200 (Davra
+yulduzi), 1000 (Oqibat ustasi). These never award/reset points. Private profile uses
+all-time points across groups; `/men`, group leaderboards and card badges use that
+group's all-time ledger. The card's score can still be a game/week/season result.
+Buffered daily check-ins can appear after their normal 60-second flush; refreshing
+the read-only app does not write points. Avatars are optional, metadata-free,
+bounded in memory and removed by self-deletion. Real Telegram haptics need a phone.
+
 `/top` uses calendar months in the group's timezone, with all-time totals alongside.
 The ledger is never reset by a season change. On the first day, the previous month's
 top five post from local 09:00 with a stable 0–15 minute offset; quiet hours defer it.

@@ -23,6 +23,11 @@ GAME_STYLE = {
 GAME_EMOJIS = {key: value[0] for key, value in GAME_STYLE.items()}
 GAME_NAMES = {key: value[1] for key, value in GAME_STYLE.items()}
 MEDALS = ("🥇", "🥈", "🥉")
+LEVEL_TITLES = ("Yangi a’zo", "Faol", "Davra yulduzi", "Oqibat ustasi")
+
+
+def level_label(level):
+    return f"Daraja {level['number']} · {level['title']}"
 
 
 def game_title(kind):
@@ -320,6 +325,22 @@ WEB_COPY = {
     "error": "Ma’lumot yuklanmadi. Birpasdan so‘ng yana urinib ko‘ring.",
 }
 START_DESCRIPTION = "Davrani boshlaymiz"
+WEB_COPY.update(
+    {
+        "level": "Daraja",
+        "next_level": "Keyingi darajagacha {points} ball",
+        "max_level": "Eng yuqori daraja — davra siz bilan qiziydi!",
+        "season_ends": "Mavsum yakunigacha",
+        "days": "kun",
+        "hours": "soat",
+        "minutes": "daqiqa",
+        "unlocked": "Ochilgan",
+        "locked": "Hali oldinda",
+        "gallery": "Yutuqlar davrasi",
+        "medals": list(MEDALS),
+        "games": [f"{emoji} {name}" for emoji, name, _ in GAME_STYLE.values()],
+    }
+)
 HELP_DESCRIPTION = "Davra uchun yordam"
 CONFIG_ERROR = "Sozlamalarda xato bor. .env faylini README bo‘yicha tekshiring."
 STARTUP_ERROR = "Bot ishga tushmadi. Sozlamalar, baza va internet aloqasini " + "tekshiring."
@@ -1182,6 +1203,8 @@ def debtors_suffix(debtors) -> str:
 
 
 def my_stats(name: str, total: int, done: int, missed: int) -> str:
+    from bot.services.levels import level_for
+
     return (
         format(escape(name), "")
         + "\n⭐ Jami: "
@@ -1190,6 +1213,8 @@ def my_stats(name: str, total: int, done: int, missed: int) -> str:
         + format(done, "")
         + "\n⌛ O‘tkazilgan: "
         + format(missed, "")
+        + "\n"
+        + level_label(level_for(total))
     )
 
 
@@ -1588,7 +1613,7 @@ PRIVATE_GAME_CLOSED = (
 PRIVATE_GAME_JOINED = "Roziligingiz qabul qilindi. Lobby tugagach topshiriq shu yerga " + "keladi."
 PRIVATE_GAME_INPUT_WAIT = "Hozir shaxsiy javob qabul qilmayman. O‘yin ko‘rsatmasini kuting."
 PRIVATE_GAME_INVALID = (
-    "Havola, @eslatma va uzatilgan xabar qabul qilmayman. "
+    "Yangi javob yuboring: havolasiz, @eslatmasiz va forward qilmasdan. "
     + "Ko‘rsatmadagi tur va uzunlikda yangi javob yuboring."
 )
 PRIVATE_GAME_SAVED = "Javobingiz joyida! Yana yuborish shart emas. ✅"

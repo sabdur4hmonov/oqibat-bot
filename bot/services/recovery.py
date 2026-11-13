@@ -176,7 +176,7 @@ class Recovery:
             until = min(since + timedelta(days=7), now)
             async with self.sessions() as session:
                 data = await summary(session, chat.id, since, until)
-            payload = await self.runtime.cards.weekly(row.local_date, data)
+            payload = await self.runtime.cards.weekly(row.local_date, data, chat_id=chat.id)
             message = texts.weekly_summary(
                 row.local_date, data, self.instagram, compact=payload is not None
             )

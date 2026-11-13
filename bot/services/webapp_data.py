@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 
 from bot import texts
 from bot.db.models import Achievement, Chat, Membership, PointEvent, User
+from bot.services.levels import group_totals, level_for
 from bot.services.seasons import month_bounds
 from bot.utils.time import utc_now
 
@@ -17,10 +18,18 @@ async def profile(sessions, identity):
             )
         )
         achievements = await session.scalar(
-            select(func.count())
+            select(func.count(func.distinct(Achievement.key)))
             .select_from(Achievement)
             .where(Achievement.user_id == identity.user_id)
         )
+        unlocked_rows = (
+            await session.execute(
+                select(Achievement.key, func.min(Achievement.unlocked_at))
+                .where(Achievement.user_id == identity.user_id)
+                .group_by(Achievement.key)
+            )
+        ).all()
+        unlocked = {key: at.isoformat() for key, at in unlocked_rows}
         groups = (
             await session.execute(
                 select(Chat.id, Chat.title, Chat.tz, Membership.opted_in)
@@ -41,6 +50,12 @@ async def profile(sessions, identity):
         "username": user.username if user else identity.username,
         "points": points,
         "achievements": achievements,
+        "level": level_for(points),
+        "season_ends_at": month_bounds(utc_now(), "Asia/Tashkent")[1].isoformat(),
+        "gallery": [
+            {"key": key, "label": label, "unlocked_at": unlocked.get(key)}
+            for key, label in texts.ACHIEVEMENTS.items()
+        ],
         "groups": [
             {"id": row.id, "title": row.title, "tz": row.tz, "opted_in": row.opted_in}
             for row in groups
@@ -55,13 +70,19 @@ async def leaderboard(runtime, chat, scope):
     )
     from zoneinfo import ZoneInfo
 
+    totals = await group_totals(runtime.sessions, chat.id, [row[0] for row in rows])
+
     return {
         "group": {"id": chat.id, "title": chat.title, "tz": chat.tz},
         "scope": scope,
         "label": texts.season_month(since.astimezone(ZoneInfo(chat.tz)).date())
         if scope == "season"
         else texts.WEB_COPY["all_time"],
-        "items": [{"id": user, "name": name, "points": points} for user, name, points in rows],
+        "season_ends_at": until.isoformat(),
+        "items": [
+            {"id": user, "name": name, "points": points, "level": level_for(totals.get(user, 0))}
+            for user, name, points in rows
+        ],
     }
 
 
@@ -77,6 +98,7 @@ async def achievements(sessions, chat, user):
     unlocked = {row.key: row.unlocked_at.isoformat() for row in rows}
     return {
         "group": {"id": chat.id, "title": chat.title, "tz": chat.tz},
+        "season_ends_at": month_bounds(utc_now(), chat.tz)[1].isoformat(),
         "items": [
             {"key": key, "label": label, "unlocked_at": unlocked.get(key)}
             for key, label in texts.ACHIEVEMENTS.items()

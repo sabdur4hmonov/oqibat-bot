@@ -110,7 +110,9 @@ class Stories:
     async def send(self, query, source):
         title, entries, subtitle, kind = source
         runtime = self.runtime
-        payload = await runtime.cards.ranked(title, entries, subtitle, kind=kind, story=True)
+        payload = await runtime.cards.ranked(
+            title, entries, subtitle, kind=kind, story=True, chat_id=query.message.chat.id
+        )
         if not payload:
             return
 

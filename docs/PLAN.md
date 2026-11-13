@@ -644,6 +644,24 @@ weekly/season in docs/design. **Accept:** render/dimensions/glyph/avatars/fallba
 cache/Story guards/privacy tests, preview inspection, full pytest/Ruff/startup,
 PROGRESS/commit/push. Real Telegram photos/uploads remain manual acceptance.
 
+### Phase 25 — Mini App v2 and passive levels
+Build-free frontend retains initData HMAC/24-hour age checks, read-only API, live
+group-member authorization, no session/private-role exposure. Use Telegram theme
+CSS variables/themeParams, optional supported HapticFeedback, skeletons and accessible
+mobile profile/leaderboard/locked-unlocked achievement gallery/rules. Profile displays
+level and progress to next level, season countdown (selected chat timezone; Tashkent
+without a group). Thresholds defined once in bot/constants.py: 0/50/200/1000; titles
+Yangi a’zo/Faol/Davra yulduzi/Oqibat ustasi in centralized texts. These are badges only,
+never awards or resets. Private profile level uses all-time points across groups;
+/men, group leaderboards and cards use that group's all-time ledger, even when the
+rank/score shown is a season/week/game result. Render levels on cards and /men.
+API avatars reuse bounded cache, optional two-second budget, no photo URLs/tokens;
+bound outstanding fetches and remove image metadata. Add season end/achievement
+gallery projections without writes. Regenerate design previews with level labels.
+**Accept:** level boundaries/negative/top tier, all-time vs season scope, gallery/
+countdown/API read-only/membership regressions, card badges, static frontend syntax/
+theme/haptics/skeleton checks, full pytest/Ruff/startup, PROGRESS/commit/push.
+
 ### Later (not now)
 Additional Mini App interactions beyond the read-only scope and further game features.
 

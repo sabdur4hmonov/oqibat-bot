@@ -1,5 +1,5 @@
-:root { color-scheme: light dark; --bg:#f0f6f5; --panel:#fff; --text:#15372f; --hint:#607b75; --accent:#007e68; --button-text:#fff; }
-@media (prefers-color-scheme: dark) { :root { --bg:#0e1d24; --panel:#18303a; --text:#ecf5f3; --hint:#aac3c0; --accent:#64ddbd; --button-text:#09251f; } }
+:root { color-scheme:light dark; --bg:var(--tg-theme-bg-color,#f0f6f5); --panel:var(--tg-theme-secondary-bg-color,#fff); --text:var(--tg-theme-text-color,#15372f); --hint:var(--tg-theme-hint-color,#607b75); --accent:var(--tg-theme-button-color,#007e68); --button-text:var(--tg-theme-button-text-color,#fff); }
+@media (prefers-color-scheme:dark) { :root { --bg:var(--tg-theme-bg-color,#0e1d24); --panel:var(--tg-theme-secondary-bg-color,#18303a); --text:var(--tg-theme-text-color,#ecf5f3); --hint:var(--tg-theme-hint-color,#aac3c0); --accent:var(--tg-theme-button-color,#64ddbd); --button-text:var(--tg-theme-button-text-color,#09251f); } }
 * { box-sizing:border-box; }
 body { margin:0; background:var(--bg); color:var(--text); font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
 main { max-width:680px; margin:auto; padding:calc(20px + env(safe-area-inset-top)) 18px calc(20px + env(safe-area-inset-bottom)); }
@@ -29,7 +29,7 @@ ol,ul { list-style:none; padding:0; margin:16px 0 0; }
 li { padding:14px 0; border-bottom:1px solid var(--hint); display:flex; gap:12px; align-items:center; }
 li:last-child { border:0; }
 .rank { color:var(--hint); min-width:22px; font-variant-numeric:tabular-nums; }
-.name { flex:1; overflow-wrap:anywhere; }
+.name { flex:1; min-width:0; overflow-wrap:anywhere; }
 .score { font-weight:700; color:var(--accent); }
 .locked { color:var(--hint); }
 .rules { white-space:pre-wrap; }
@@ -37,3 +37,25 @@ li:last-child { border:0; }
 .footer { margin-top:20px; }
 #privacy-note { margin-top:16px; }
 @media (max-width:360px) { main { padding-left:10px; padding-right:10px; } .panel { padding:18px 14px; } nav button { font-size:12px; } }
+.profile-heading { display:flex; gap:16px; align-items:center; margin-bottom:18px; }
+.profile-heading h2 { margin:0; }
+.avatar { flex-shrink:0; display:grid; place-items:center; width:56px; height:56px; border-radius:50%; overflow:hidden; background:var(--accent); color:var(--button-text); font-weight:700; font-size:18px; }
+.avatar img { width:100%; height:100%; object-fit:cover; }
+li .avatar { width:42px; height:42px; font-size:14px; }
+.name small { display:block; font-size:11px; }
+.score { max-width:100px; overflow-wrap:anywhere; text-align:right; font-size:14px; }
+.level-badge { display:inline-block; font-weight:700; color:var(--accent); }
+progress { width:100%; height:12px; border:0; border-radius:12px; overflow:hidden; accent-color:var(--accent); }
+progress::-webkit-progress-bar { background:var(--bg); border-radius:12px; }
+progress::-webkit-progress-value { background:var(--accent); border-radius:12px; }
+.season-countdown { margin:22px 0; font-size:13px; color:var(--hint); }
+.gallery { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.achievement { display:flex; flex-direction:column; align-items:flex-start; border:1px solid var(--hint); border-radius:16px; padding:14px; overflow-wrap:anywhere; }
+.achievement-mark { font-size:25px; color:var(--accent); }
+.achievement small { margin-top:8px; font-size:11px; }
+.locked .achievement-mark { opacity:.65; }
+.game-chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; }
+.game-chips span { border:1px solid var(--hint); border-radius:20px; padding:5px 9px; font-size:12px; }
+.podium-0 .rank { color:#c19122; }.podium-1 .rank { color:#95a6b5; }.podium-2 .rank { color:#b47b51; }
+.skeletons { display:grid; gap:18px; }.skeleton { height:18px; background:var(--hint); opacity:.18; border-radius:8px; animation:breathe 1.2s ease-in-out infinite alternate; }.skeleton-avatar { width:64px; height:64px; border-radius:50%; }
+@keyframes breathe { to { opacity:.4; } } @media (prefers-reduced-motion:reduce) { .skeleton { animation:none; } }

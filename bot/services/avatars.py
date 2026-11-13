@@ -1,6 +1,7 @@
 """Short-lived, bounded public-avatar cache; image bytes keyed by Telegram file_id."""
 
 import asyncio
+import base64
 import time
 from collections import OrderedDict
 from io import BytesIO
@@ -24,6 +25,7 @@ def thumbnail(payload):
             return None
         result = ImageOps.fit(image.convert("RGB"), (128, 128))
     output = BytesIO()
+    result.info.clear()
     result.save(output, "PNG")
     return output.getvalue()
 
@@ -59,6 +61,8 @@ class Avatars:
                 self.files.move_to_end(entry[1])
                 return self.files[entry[1]]
         if user not in self.pending:
+            if len(self.pending) >= 64:
+                return None  # Optional decoration must not create an unbounded HTTP backlog.
             self.pending[user] = asyncio.create_task(self._fetch(user))
             self.pending[user].add_done_callback(lambda task: self._done(user, task))
         task = self.pending[user]
@@ -109,6 +113,16 @@ class Avatars:
             if len(self.files) > 256:
                 self.files.popitem(last=False)
         return payload
+
+    async def encoded(self, user):
+        try:
+            async with asyncio.timeout(2):
+                payload = await self.get(user)
+            return (
+                "data:image/png;base64," + base64.b64encode(payload).decode() if payload else None
+            )
+        except TimeoutError:
+            return None
 
     async def close(self):
         tasks = list(self.pending.values())
