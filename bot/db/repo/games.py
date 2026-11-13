@@ -196,6 +196,9 @@ class GameSessionRepository:
                         **row.state,
                         "result_card_status": "sent" if sent is not None else "failed",
                         "result_card_message_id": getattr(sent, "message_id", None),
+                        "result_card_origin_chat_id": getattr(
+                            getattr(sent, "chat", None), "id", None
+                        ),
                     }
 
     async def change(self, chat_id: int, game_id: int, transform) -> bool:

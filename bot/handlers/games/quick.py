@@ -29,6 +29,10 @@ async def hub_button(query, game_catalog):
     await game_catalog.callback(query)
 
 
+async def story_button(query, stories):
+    await stories.callback(query)
+
+
 def create_router():
     router = Router(name="quick_games")
     router.message.register(
@@ -37,4 +41,5 @@ def create_router():
     router.message.register(start, Command(*KINDS), F.chat.type.in_({"group", "supergroup"}))
     router.callback_query.register(button, F.data.startswith("qm:"))
     router.callback_query.register(hub_button, F.data.startswith("hc:") | F.data.startswith("hg:"))
+    router.callback_query.register(story_button, F.data.startswith("sc:"))
     return router

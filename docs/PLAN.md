@@ -627,6 +627,23 @@ the same hub callback. Preserve consent/slots/points/timers and Section 10.
 guards, sequential admin setup and persisted choices, daily suggestion/recovery,
 full pytest/Ruff/offline startup, PROGRESS, commit and push before Phase 24.
 
+### Phase 24 — Result cards v2
+Render 1080×1080 chat cards and opt-in 1080×1920 Stories. Use original Pillow-drawn
+icons instead of emoji text (no new artwork dependency); filter unsupported glyphs
+with the bundled OFL Noto font, including user names. Gold/silver/bronze top three,
+per-game accent/icon, brand mark and clear Instagram attribution. Bounded in-memory
+profile photo cache keyed by Telegram file_id, short user lookup TTL, circular photos
+and initials on failure/no photo. Fetch/render off state locks with bounded workers;
+forget avatars on erasure and guard delayed uploads against erased/migrated sources.
+Story is generated only on a matching bot-card button press and sent privately to
+that human after membership validation, with short duplicate-click throttling. Saved
+game/post rows identify the source; no durable queue or points in rendering paths.
+Cover all existing card types and positive-score private-game results; draws/no-score
+games remain text-only. Save synthetic square/Story previews for all 13 styles plus
+weekly/season in docs/design. **Accept:** render/dimensions/glyph/avatars/fallback/
+cache/Story guards/privacy tests, preview inspection, full pytest/Ruff/startup,
+PROGRESS/commit/push. Real Telegram photos/uploads remain manual acceptance.
+
 ### Later (not now)
 Additional Mini App interactions beyond the read-only scope and further game features.
 

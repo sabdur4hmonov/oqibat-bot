@@ -10,6 +10,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from bot import texts
 from bot.db.models import Challenge, Chat, PointEvent, ScheduledPost, User
+from bot.keyboards.cards import story_keyboard
 from bot.keyboards.private import add_to_group_keyboard
 from bot.services.sender import Priority
 from bot.utils.time import UTC, after_quiet, is_quiet, week_start
@@ -141,7 +142,8 @@ class Weekly:
                     chat_id,
                     BufferedInputFile(payload, filename="oqibat-weekly.png"),
                     caption=texts.weekly_summary(week, data, self.instagram, compact=True),
-                    reply_markup=add_to_group_keyboard(self.username),
+                    reply_markup=story_keyboard(f"w:{chat_id}:{week}",
+                                                add_to_group_keyboard(self.username)),
                 ),
                 priority=Priority.BULK,
             )

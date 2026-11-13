@@ -181,6 +181,10 @@ class Recovery:
                 row.local_date, data, self.instagram, compact=payload is not None
             )
             markup = add_to_group_keyboard(self.username)
+            if payload:
+                from bot.keyboards.cards import story_keyboard
+
+                markup = story_keyboard(f"w:{chat.id}:{row.local_date}", markup)
         target = self.runtime.locks.resolve(row.chat_id)
         if generation != self.sender.generations.get(row.chat_id, 0):
             return

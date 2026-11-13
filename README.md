@@ -491,7 +491,18 @@ still uses the indexed 500-row batches, never a scan of chats.
 Private and group `/help` now list every implemented command and game timing, plus
 the footer and add-to-group button. Routine game/task/daily messages have no footer.
 
-### Result cards (Phase 9)
+### Result cards (Phases 9, 24)
+
+Chat cards are 1080×1080; the “📲 Story uchun” button prepares a 1080×1920
+version and DMs only the human who pressed it (open /start first). Stories are not
+automatically posted to the group. Original vector icons replace emoji text; the
+bundled font filters unsupported glyphs. Top three use gold/silver/bronze, with
+game accents and the configured Instagram handle. Small profile pictures are
+cached in memory by file_id; missing/failed pictures use initials. Erasure clears
+the relevant cache and prevents delayed source uploads. Already delivered Telegram
+images remain outside the deletion boundary. Synthetic previews for every style,
+both formats, live in [docs/design](docs/design/README.md); regenerate with
+`python scripts/preview_cards.py`. Private-game positive-score results also get cards.
 
 Weekly top-five reports are a single PNG with the full report in its caption. Completed
 quiz/Krokodil scores, duel wins, completed truth/dares and Mafia winning teams get a

@@ -120,6 +120,10 @@ class OwnerTools:
                     await stack.enter_async_context(runtime.locks.hold(chat))
                 runtime.sender.discard_chats(chats | {user})
                 self.deleted.add(user)
+                runtime.cards.avatars.forget(user)
+                runtime.stories.recent = type(runtime.stories.recent)(
+                    (key, value) for key, value in runtime.stories.recent.items() if key[0] != user
+                )
                 runtime.activity.users.pop(user, None)
                 runtime.activity.names.pop(user, None)
                 runtime.activity.members = {

@@ -42,6 +42,7 @@ from bot.services.scheduler import Scheduler
 from bot.services.seasons import Seasons
 from bot.services.sender import Sender
 from bot.services.settings import SettingPrompts
+from bot.services.stories import Stories
 from bot.services.telephone import Telephone
 from bot.services.truth_dare import TruthDare
 from bot.services.weekly import Weekly
@@ -143,6 +144,7 @@ class ScaleRuntime:
         self.sessions = sessions
         self.recovery = Recovery(self, bot, settings)
         self.owner_tools = OwnerTools(self, getattr(settings, "owner_id", None))
+        self.stories = Stories(self, bot)
         self.achievements = Achievements(self)
         self.seasons = Seasons(self)
         self.scheduler.hooks["season"] = self.seasons.post
@@ -184,6 +186,7 @@ class ScaleRuntime:
             task.cancel()
         await asyncio.gather(*self.tasks, return_exceptions=True)
         await self.effects.close()
+        await self.cards.avatars.close()
         try:
             await self.activity.flush()
             await self.checkins.flush()
@@ -214,6 +217,7 @@ class ScaleRuntime:
             "migrations": self.migrations,
             "game_hub": self.game_hub,
             "game_catalog": self.game_catalog,
+            "stories": self.stories,
             "quick_setup": self.quick_setup,
             "easy_games": self.easy_games,
             "rps_game": self.rps_game,
@@ -303,6 +307,7 @@ class ScaleMiddleware(BaseMiddleware):
         ):
             if (message.text or "").split(" ")[0].split("@")[0] == "/start":
                 self.runtime.owner_tools.deleted.discard(message.from_user.id)
+                self.runtime.cards.avatars.allow(message.from_user.id)
             elif (message.text or "").split(" ")[0] not in {
                 "/maxfiylik",
                 "/help",

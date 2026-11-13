@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phases 22–23 complete; continuing the authorized 22–26 sequence, then stop. No deployment or review ZIP.
+- Current phase: Phases 22–24 complete; continuing the authorized 22–26 sequence, then stop. No deployment or review ZIP.
 - Last updated: 2026-11-13 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -677,3 +677,18 @@
   2. /oyinlar yuboring. To‘rtta toifani navbat bilan oching, orqaga qayting. O‘yinni bosgan odam boshlovchi bo‘lsin. Qo‘shilmagan odamga tushuntirish kelsin; band asosiy o‘yinga ikkinchisi kirmasin.
   3. Shaxsiy chatda /oyinlar ni oching: guruhda o‘ynash tushuntirilsin. Guruh buyruq menyusida sakkiz asosiy buyruq qolsin, /matematika yoki /telefon ni qo‘lda yozish ham ishlasin.
   4. Kunlik postdagi Bugungi o‘yin tugmasini bosing. O‘sha ruxsatlar amal qilsin. Botni qayta yoqib, saqlangan sozlamalarni tekshiring; tez sozlash tugmasi eskirsa /sozlamalar dan foydalaning.
+
+### Phase 24 — Result cards v2 and opt-in Stories — 2026-11-13
+- Status: done for implementation/local verification; real Telegram avatar/upload acceptance remains manual.
+- Commit(s): this phase commit, `phase-24: glyph-safe cards avatars and opt-in Stories`; push origin/main before Phase 25.
+- What was built: PLAN first; Claude notes re-read, none outstanding. 1080×1080 and 1080×1920 Pillow layouts, original per-game vector icons/accent, brand mark, clear Instagram footer, top-three gold/silver/bronze and circular avatars/initials. Unsupported text glyphs are removed or replaced with supported question marks; no emoji font or Twemoji artwork dependency. Existing bundled Uzbek-capable Noto/OFL retained. Fifteen styles (13 games plus weekly/season), 30 synthetic previews in docs/design, regeneration script and guide; gallery of all styles and representative full square/Story visually inspected.
+- Sources/privacy: cards use existing game/post claims and points, with identity-preserving read-only result projections; positive-score private-game results now also render. No-score/draw/cancelled games stay text-only. Profile photos fetched with bounded concurrency/timeouts, 256 KB streaming cap and pixel cap, 256 file_id image entries, 20,000 short-lived user lookups; optional failures use initials. Erasure clears avatar data and pending fetches, prunes Story cooldowns and blocks delayed erased-source uploads. Completed shielded fetches clean themselves up after a caller cancels; shutdown closes them. Normal messages still do zero new SQL.
+- Story: matching bot-card button only, live member check, group/origin/message/source validation, direct callback answer, duplicate-click throttle, bounded rendering and GAME-priority private send. Game/post source is re-read before upload; erased/changed/migrated sources fail closed. Weekly/season and recovered weekly cards have the same button. No automatic Story sends, social publishing, points in render/send paths, schema change or dependency. JSON card-origin metadata uses existing rows. Existing ambiguous-upload/crash limitations remain.
+- Tests: final full pytest **670 passed, 4 skipped** (774.07 s); **ruff check . passes**. New card suite **38 passed**, including independent font-mask verification of every drawn text in every card type/format, dimensions, circular/corrupt/missing avatars, cache reuse/TTL/erasure/cancel cleanup/streaming bounds, source validation, private-only button delivery, deduplication and erasure during rendering. Related cards/seasons selection **62 passed** before the added cleanup/bounds regressions. Full suite includes offline startup and ledger/lifecycle regressions. Optional PostgreSQL and three Docker backup tests skipped; no schema/backup changes. Slow migration subprocess diagnostics completed without test failures; superseded checks were stopped only in this project's verified process tree.
+- Acceptance/unverified: all requested implementation paths and synthetic previews complete. Actual Telegram profile-photo permissions, DM blocking, uploads and client display remain manual. No deployment, real Telegram messages or external font/artwork download. Images already delivered to Telegram are outside self-deletion; previews contain only synthetic names/scores.
+- Deviations/decisions: use own drawn icons instead of licensed Twemoji PNGs as explicitly allowed; Story goes privately to the pressing human to avoid group spam. Stored surviving source rows rebuild the Story; no extra snapshot journal. None blocking; scoring/rules unchanged.
+- Manual test steps (Uzbek):
+  1. RESULT_CARDS_ENABLED=true bo‘lsin. Profil rasmi bor A va rasmi yo‘q yoki yopiq B bilan o‘yin tugating. Kvadrat kartada rasm/bosh harf, kuchli uchlik ranglari, o‘yin belgisi va Instagram nomini ko‘ring; bo‘sh katakcha chiqmasin.
+  2. Avval botda /start qiling. Kartadagi Story uchun tugmasini bosing: 1080×1920 rasm faqat shaxsiy chatga kelsin. Guruhga yana Story yuborilmasin; tez qayta bosish dubl qilmasin. /top ballari o‘zgarmasin.
+  3. Kim/Telefon/Eslaysizmi/Yashirin ijobiy natijalarini ham tekshiring. Balsiz yoki bekor o‘yinga yangi g‘olib o‘ylab topilmasin. Haftalik/mavsum kartasida ham Story tugmasi bo‘lsin.
+  4. Eski/boshqa xabar tugmasi, guruhdan chiqish va ma’lumot o‘chirishdan keyin yuborish rad etilsin. Telegramdagi allaqachon yuborilgan rasm avtomatik o‘chmasligini biling. Claude docs/design PNGlarini ko‘rsin; sun’iy ballar o‘yin qoidasi emas.

@@ -9,6 +9,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from bot import texts
 from bot.db.models import Chat, ScheduledPost
+from bot.keyboards.cards import story_keyboard
 from bot.services.locks import ChatLocks
 from bot.services.schedule_times import stable_offset
 from bot.services.sender import Priority
@@ -117,10 +118,11 @@ class Seasons:
             local = datetime.combine(post.local_date, time(), ZoneInfo(chat.tz))
             since, until = month_bounds(local, chat.tz)
             top = await runtime.points.top(target, since, until)
-            payload = await runtime.cards.render(
+            payload = await runtime.cards.ranked(
                 texts.SEASON_TITLE,
-                [(name, points) for _, name, points in top[:5]],
+                top[:5],
                 texts.season_month(post.local_date),
+                kind="season",
             )
             if generation != runtime.sender.generations.get(target, 0):
                 return False
@@ -131,6 +133,7 @@ class Seasons:
                         target,
                         BufferedInputFile(payload, filename="oqibat-season.png"),
                         caption=texts.season_result(post.local_date, top),
+                        reply_markup=story_keyboard(f"s:{target}:{post.local_date}"),
                     )
             else:
 
