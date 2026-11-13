@@ -590,6 +590,28 @@ README and complete Uzbek LIVE_TEST checklist for Phases 0–21 (four people nee
 for Kim/Telephone, extra Mafia participants as before). Write PROGRESS entry and
 final honest summary, commit/push, stop. No Phase 22, deployment or review ZIP.
 
+### Phase 22 — Davrakash voice and visual system
+Owner authorizes Phases 22–26 sequentially, each with PLAN before code, tests,
+full pytest/Ruff, PROGRESS entry, commit/push. Stop after Phase 26. Preserve all
+game rules, role distributions, scoring and production timers (Phase 26's explicit
+owner-only test mode is the sole timing exception). Section 10 still applies.
+Use a short, friendly Uzbek Latin davrakash voice throughout centralized texts,
+including prompts/errors/consent; keep technical instructions, meaning, interpolation
+fields and privacy warnings. Define each game's name, emoji and accent once in
+texts.py and reuse in boards, menus, rules and card captions. Dice action symbols
+and Mafia day/night/role symbols are semantic indicators, not alternative game icons.
+Shared boards: title, phase/status, bounded five-cell progress, local deadline
+"⏳ HH:MM gacha", escaped/bounded player lines with ready/waiting marks, ranked
+results with medals. Do not show hidden choices/roles/words or unannounced answers;
+keep payloads/keyboard/state semantics unchanged, and never edit just to count down.
+Use the chat timezone snapshotted at game creation, Tashkent for legacy sessions.
+Mafia private role cards add role emoji, concise description and alignment goal;
+group night/day headers remain role-safe. Fit Telegram UTF-16 limits without slicing
+HTML/entities, escape names, and bound long lists; media captions stay <=1024.
+**Accept:** all game types/layout/progress/timezone/rank/escaping/limit tests,
+Mafia secrecy/role-card tests, placeholder compatibility and unchanged game-engine
+regressions, full pytest/Ruff/offline startup; honest PROGRESS, commit/push.
+
 ### Later (not now)
 Additional Mini App interactions beyond the read-only scope and further game features.
 

@@ -1,0 +1,31 @@
+{
+  "CONTENT_ERRORS.placeholder": [
+    "group"
+  ],
+  "SECRET_DURATION": [
+    "hours"
+  ],
+  "SECRET_REVEAL": [
+    "hunter",
+    "target",
+    "word"
+  ],
+  "SECRET_EXPOSED": [
+    "accuser",
+    "hunter",
+    "word"
+  ],
+  "SECRET_WORD_DM": [
+    "target",
+    "word"
+  ],
+  "TELEPHONE_FIRST": [
+    "phrase"
+  ],
+  "TELEPHONE_ORIGINAL": [
+    "phrase"
+  ],
+  "KIM_QUESTION": [
+    "question"
+  ]
+}

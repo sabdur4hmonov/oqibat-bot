@@ -256,7 +256,8 @@ async def test_secret_duration_stale_foreign_bot_and_insufficient_bank(game_app)
     await runtime.effects.drain()
     assert runtime.game_cache.get(game.id) is None
     assert any(
-        isinstance(method, EditMessageText) and texts.PRIVATE_GAME_NOT_ENOUGH == method.text
+        isinstance(method, EditMessageText)
+        and " ".join(texts.PRIVATE_GAME_NOT_ENOUGH.split()) in " ".join(method.text.split())
         for method in transport.methods
     )
     assert any(isinstance(method, AnswerCallbackQuery) for method in transport.methods)

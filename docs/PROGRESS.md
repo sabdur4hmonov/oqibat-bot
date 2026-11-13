@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phases 18–21 implementation/local verification complete, including final discovery and LIVE_TEST updates. Stop after Phase 21 commit/push; no Phase 22, deployment or review ZIP.
+- Current phase: Phase 22 complete; owner authorized Phases 22–26 sequentially, then stop. No deployment or review ZIP.
 - Last updated: 2026-11-13 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -649,3 +649,17 @@
 - Remaining manual acceptance: real Telegram media rendering/playback and bot rights; actual own-domain TLS/webhook/client behavior; long 2/6/24-hour games and real production capacity. Three testers can play Yashirin/Memory; Kim/Telephone need a fourth, Mafia still needs its documented larger groups. These are not represented as completed live checks.
 - Content/operator limits: secret_words.json intentionally has only the three requested samples; add at least a fourth distinct authored word for the smallest playable match, or players+1 words for larger lobbies. Admin caption fallback does not remove media; missing rights/deletion limits and migrated old history need human moderation. Running games cancel on restart and accepted in-memory crash losses remain per Claude's approved contract; no general durable queue or exactly-once delivery promise. Confirmed data deletion excludes already-delivered Telegram messages and operator backups.
 - Stop: after publishing this final phase, wait for Sardorbek/Claude review. No blocking code/design question remains.
+
+### Phase 22 — Davrakash voice and shared boards — 2026-11-13
+- Status: done for implementation/local verification; real Telegram visual acceptance remains manual.
+- Commit(s): this phase commit, `phase-22: davrakash voice and shared game boards`; push origin/main before Phase 23.
+- What was built: PLAN first, all Claude notes already resolved. Friendly concise centralized Uzbek copy, canonical name/emoji/accent registry for all 13 games, unchanged interpolation fields (snapshot compatibility tests). Shared title/status/five-cell progress/local deadline/player marks/medal results on game boards; duplicate titles removed. Mafia night/day headers and seven private role cards with description and goal, never exposed by the shared board. UTC deadlines use the chat timezone snapshotted in session JSON; legacy sessions use Tashkent. No schema/dependency change.
+- Safety/semantics: HTML-safe wrapping and UTF-16 bounds preserve tags/entities and escaped names; hidden roles, words, choices and unannounced submissions stay private. Preparing/send watchdogs are labelled as preparation, confirmed delivery updates show actual response deadlines; no countdown-only edits. Existing role distribution, points, membership, moderation, consent and production timers unchanged. More outbound effects exposed an existing completed-task busy loop in Effects.drain; yielding to cleanup callbacks fixes it and has a regression test.
+- Tests: final complete suite **611 passed, 4 skipped** (384.65 s); **ruff check . passes**. New presentation suite **25 passed**, covering 13 layouts, timezone, bounds/HTML, medals, preserved placeholders, seven role cards and effect cleanup. Full suite includes offline python -m bot startup, migrations, both Mafia fuzz suites and unchanged game/ledger regressions. Skips: opt-in PostgreSQL and three Docker backup cases; no database or backup code changed. Earlier presentation assertions were updated to verify the new layout while retaining score/secrecy/deduplication checks.
+- Acceptance: requested copy/identity/boards/role cards/mobile bounds implemented and locally verified. Real phone display/Telegram edits not exercised; no live Telegram or deployment. Readability uses bounded names/lists and wrapping; the visual deadline is HH:MM, not a repeatedly edited countdown.
+- Deviations/open questions: readiness marks deliberately do not disclose who submitted a private answer or acted at night. None blocking. No new scoring or game logic.
+- Manual test steps (Uzbek):
+  1. Guruhda /qoshilish qiling. /oyinlar dan o‘yin tanlab, doskada nom, holat, jarayon chizig‘i va mahalliy tugash vaqtini ko‘ring; vaqt har soniya tahrirlanmasin.
+  2. /matematika va /sontop ni o‘ynang. Tayyorlanish yozuvi keyin haqiqiy muddatga almashsin, ism xavfsiz ko‘rinsin, ball avvalgidek bo‘lsin. Natijada kuchli uchlik medal bilan chiqsin.
+  3. Yetarli odam bilan Mafia oching. Rol kartasi faqat shaxsiy chatda tavsif va maqsad bilan kelsin; guruhda tun/kunduz sarlavhasi bo‘lsin, rollar oldindan ochilmasin.
+  4. Yashirin/Kim/Telefon/Eslaysizmi doskalarida maxfiy so‘z, javob, izoh yoki ovoz oldindan chiqmasin. Uzun ism va < & belgilar bilan telefon ekranida tekshiring.

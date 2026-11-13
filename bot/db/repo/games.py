@@ -78,7 +78,7 @@ class GameSessionRepository:
                     game=game,
                     status=status,
                     started_by=user_id,
-                    state={**state, "rev": 0},
+                    state={"display_tz": chat.tz, **state, "rev": 0},
                     phase_deadline_at=deadline,
                 )
                 session.add(row)

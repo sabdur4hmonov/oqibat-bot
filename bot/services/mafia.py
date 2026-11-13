@@ -183,7 +183,7 @@ class Mafia:
                     if game.state["phase"] == "lobby"
                     else keyboards.actions(game)
                 )
-                text = texts.mafia_group(game)
+                text = texts.board_layout(game, texts.mafia_group(game))
                 message_id = game.state.get("board_id")
                 signature = (message_id, text, markup.model_dump_json() if markup else None)
                 if self.last_render.get((game.id, 0)) == signature:

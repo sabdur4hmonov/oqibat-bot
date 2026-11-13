@@ -23,6 +23,8 @@ class GameHub:
             self.services[kind] = service
 
     async def board(self, game, text: str, markup=None):
+        text = texts.board_layout(game, text)
+
         async def operation():
             from bot.db.models import GameSession
 

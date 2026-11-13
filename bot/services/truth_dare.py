@@ -144,6 +144,10 @@ class TruthDare:
             game.chat_id, game.id, ready, expected_rev=game.state["rev"]
         )
         early = self.early_messages.pop(game.id, None)
+        if updated:
+            self.hub.effects.start(
+                self.hub.board(updated, texts.hyj_truth(updated), buttons(updated))
+            )
         if updated and early:
             await self.observe(updated, early)
 

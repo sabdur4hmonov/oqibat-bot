@@ -248,9 +248,9 @@ async def test_leave_or_opt_out_cancels_without_revealing_choice(
     await runtime.groups.membership(-1, tg_user(leaver), opted_in=False, active=active)
     await runtime.effects.drain()
     assert runtime.game_cache.main(-1) is None and await point_count(sessions) == 0
-    assert [m for m in transport.methods if isinstance(m, EditMessageText)][
-        -1
-    ].text == texts.RPS_LEFT
+    final = [m for m in transport.methods if isinstance(m, EditMessageText)][-1].text
+    assert " ".join(texts.RPS_LEFT.split()) in " ".join(final.split())
+    assert texts.RPS_MOVES["r"] not in final
 
 
 async def test_restart_migration_and_privacy_cancel_unfinished_games(game_app, sessions):

@@ -77,7 +77,7 @@ async def test_expiry_penalty_and_daily_debtor_announcement(
     assert (await runtime.points.stats(-1, 1))[0] == expected
     chat = await runtime.groups.get(-1)
     await runtime.daily.post(chat, utc_now())
-    assert ("qarzdor" in transport.methods[-1].text) == (mode == "points")
+    assert ("Vazifasi qolgan" in transport.methods[-1].text) == (mode == "points")
 
 
 async def test_one_pending_per_chat_and_database_constraint(challenge_app):

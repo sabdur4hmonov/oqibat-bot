@@ -32,6 +32,9 @@ class Effects:
     async def drain(self) -> None:
         while self.tasks:
             await asyncio.gather(*list(self.tasks))
+            # gather(done_tasks) can finish synchronously. Let their done callbacks
+            # remove them and start dependent effects before checking the set again.
+            await asyncio.sleep(0)
 
     async def close(self) -> None:
         tasks = list(self.tasks)

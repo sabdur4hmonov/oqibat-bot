@@ -69,7 +69,17 @@ class QuickGames:
                 seconds=180 if row.game == "number" else 20
             )
 
-        await self.repo.transition(game.chat_id, game.id, ready, expected_rev=game.state["rev"])
+        updated = await self.repo.transition(
+            game.chat_id, game.id, ready, expected_rev=game.state["rev"]
+        )
+        if updated:
+            self.hub.effects.start(
+                self.hub.board(
+                    updated,
+                    texts.quick_board(updated),
+                    math_keyboard(updated) if updated.game == "math" else None,
+                )
+            )
 
     async def display(self, game):
         if game.status == "finished":

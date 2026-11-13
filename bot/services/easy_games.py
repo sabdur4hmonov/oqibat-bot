@@ -214,6 +214,8 @@ class EasyGames:
                 await self.answer(answer)
             if game.game == "quiz":
                 await self.hub.board(updated, texts.quiz_board(updated))
+            else:
+                await self.hub.board(updated, texts.WYR_START)
         if not self.sending_polls:
             self.early_answers.clear()
 

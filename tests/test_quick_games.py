@@ -190,6 +190,7 @@ async def test_math_complete_five_rounds_wrong_attempts_stale_buttons_no_double_
 ):
     feed, transport, runtime = game_app
     game = await start(game_app, "math")
+    await runtime.effects.drain()
     before = len([m for m in transport.methods if isinstance(m, EditMessageText)])
     for round_number in range(1, 6):
         current = runtime.game_cache.main(-1)
@@ -202,7 +203,8 @@ async def test_math_complete_five_rounds_wrong_attempts_stale_buttons_no_double_
         await tap(game_app, current, 3, correct)
         assert transport.methods[-1].text == texts.MATH_ALREADY_TRIED
         await tap(game_app, current, 2, correct)
-        before += 1
+        # Next question's preparing board, then its confirmed-delivery deadline.
+        before += 2 if round_number < 5 else 1
         await tap(game_app, current, 1, correct)
         assert len(await ledger(sessions)) == round_number
     assert runtime.game_cache.main(-1) is None

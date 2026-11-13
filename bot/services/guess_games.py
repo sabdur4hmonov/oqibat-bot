@@ -255,7 +255,9 @@ class GuessGames:
             row.state["phase"] = "guess"
             row.phase_deadline_at = utc_now() + timedelta(seconds=30)
 
-        await self.repo.transition(game.chat_id, game.id, delivered)
+        updated = await self.repo.transition(game.chat_id, game.id, delivered)
+        if updated:
+            await self.base.render(updated.id)
 
     async def callback(self, query):
         try:
