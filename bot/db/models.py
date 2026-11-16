@@ -73,6 +73,7 @@ class Chat(Timestamps, Base):
     title: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     bot_is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    fast_mode: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
     tz: Mapped[str] = mapped_column(String(64), default="Asia/Tashkent")
     daily_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     daily_time: Mapped[time] = mapped_column(Time, default=time(9))

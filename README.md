@@ -17,7 +17,32 @@ member consent and admin settings; Phase 2 adds daily posts, content rotation, q
 and daily check-in points. Phase 3 adds challenges, point ledgers, penalties and leaderboards.
 Phase 4 adds dice duels, five-question quizzes, and would-you-rather polls. Phase 5 adds Krokodil; Phase 6 adds Haqiqat yoki jasorat. Phase 7 adds Mafia; Phase 8 adds weekly summaries and full help. Phase 9 adds shareable result cards and deployment examples. Phase 10 adds recovery/owner/privacy tools; Phase 11 adds monthly seasons, streak bonuses and achievements.
 
-## Monthly seasons, streaks and achievements
+## Owner live checks (26)
+
+Owner live checks (Phase 26): after `alembic upgrade head`, the configured OWNER_ID
+can run `/selftest` in a test group where the bot has admin/delete/pin rights. It
+exercises message/edit/delete, regular poll/stop, quiz, dice, spoiler/card upload and
+pin/unpin of its own card, then deletes its synthetic messages and reports ✅/❌.
+Existing pins are untouched. Failures are reported and residual messages may need
+an admin; rate limits still apply, so a busy chat can delay the report. Diagnostic
+actions award no points (ordinary incoming commands retain existing check-in rules).
+
+`/tezrejim on` or `off` is owner-only, per chat, persisted and only changeable with
+no active main/background/duel game. New sessions snapshot ×0.1 timers and visibly
+mark every board; roles, scoring, player counts and content/media limits stay the
+same. Daily/weekly posts and ordinary challenge schedules stay normal; linked game
+dares scale. A fast quiz scores/closes at 3 seconds by the independent game tick,
+while Telegram's native auto-close minimum is 5 seconds. Outbound limits, network
+delivery and dice animations remain normal. Turn it off after testing.
+
+Run `python scripts/smoke_live.py` explicitly for read-only getMe/username,
+getWebhookInfo/transport, configured WEBAPP_URL and `/healthz` checks. It prints
+Uzbek results without tokens, URLs with secrets or user text, and exits 1 on failure.
+A local setup with empty WEBAPP_URL intentionally cannot pass the web checks. No
+deployment or live messages happen merely by installing these tools. Follow the
+complete [0–26 checklist](docs/LIVE_TEST.md), starting with /selftest and /tezrejim.
+
+## Mini App v2 and levels
 
 Mini App v2 uses Telegram themes, optional haptics, loading skeletons, avatars and
 medal leaderboards. Profile shows a passive Daraja and next-level progress, a locked/
@@ -29,6 +54,8 @@ group's all-time ledger. The card's score can still be a game/week/season result
 Buffered daily check-ins can appear after their normal 60-second flush; refreshing
 the read-only app does not write points. Avatars are optional, metadata-free,
 bounded in memory and removed by self-deletion. Real Telegram haptics need a phone.
+
+## Monthly seasons, streaks and achievements
 
 `/top` uses calendar months in the group's timezone, with all-time totals alongside.
 The ledger is never reset by a season change. On the first day, the previous month's

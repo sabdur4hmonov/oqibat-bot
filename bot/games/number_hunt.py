@@ -43,7 +43,10 @@ def guess(state, user, name, value, message_id, now):
         or not state["low"] <= value <= state["high"]
         or type(message_id) is not int
         or message_id <= state["last_message_id"]
-        or (key in state["cooldowns"] and now - state["cooldowns"][key] < COOLDOWN)
+        or (
+            key in state["cooldowns"]
+            and now - state["cooldowns"][key] < COOLDOWN * state.get("timer_multiplier", 1)
+        )
     ):
         return None
     result = deepcopy(state)

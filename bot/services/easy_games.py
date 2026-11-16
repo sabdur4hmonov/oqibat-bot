@@ -179,7 +179,12 @@ class EasyGames:
                 item["question"],
                 item["options"],
                 is_anonymous=False,
-                open_period=30 if game.game == "quiz" else 60,
+                open_period=max(
+                    5,
+                    int(
+                        (30 if game.game == "quiz" else 60) * game.state.get("timer_multiplier", 1)
+                    ),
+                ),
                 **kwargs,
             )
 
@@ -205,7 +210,7 @@ class EasyGames:
             row.phase_deadline_at = sent.date + timedelta(seconds=30 if game.game == "quiz" else 60)
 
         updated = await self.repo.transition(
-            game.chat_id, game.id, save, expected_rev=game.state["rev"]
+            game.chat_id, game.id, save, expected_rev=game.state["rev"], deadline_base=sent.date
         )
         if updated is None:
             await self.stop_poll(game.chat_id, sent.message_id)

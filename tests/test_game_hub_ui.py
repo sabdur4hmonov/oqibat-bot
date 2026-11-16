@@ -140,6 +140,10 @@ async def test_daily_suggestion_and_hub_command_are_wired(game_app):
 
     await feed(command_update("/oyinlar"))
     assert transport.methods[-1].reply_markup == hub_keyboard()
+    # This is the delivery/keyboard test; quiet-hour deferral has separate coverage.
+    # Keep it independent of the wall-clock time when pytest runs.
+    await runtime.groups.change_setting(-1, "quiet_start", time())
+    await runtime.groups.change_setting(-1, "quiet_end", time())
     chat = await runtime.groups.get(-1)
     from bot.utils.time import utc_now
 

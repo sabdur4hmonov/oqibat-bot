@@ -8,6 +8,7 @@ from sqlalchemy import select
 from bot.db.models import Challenge, Chat, GameSession, Membership
 from bot.services.game_cache import view
 from bot.services.points import record_event
+from bot.utils.game_timers import scale_times
 from bot.utils.time import utc_now
 
 
@@ -78,16 +79,24 @@ class GameSessionRepository:
                     game=game,
                     status=status,
                     started_by=user_id,
-                    state={"display_tz": chat.tz, **state, "rev": 0},
+                    state={
+                        "display_tz": chat.tz,
+                        **state,
+                        "rev": 0,
+                        "timer_multiplier": 0.1 if chat.fast_mode else 1,
+                    },
                     phase_deadline_at=deadline,
                 )
+                scale_times(row, {}, None, utc_now())
                 session.add(row)
                 await session.flush()
             if self.cache:
                 self.cache.sync(row)
             return view(row)
 
-    async def transition(self, chat_id: int, game_id: int, transform, *, expected_rev=None):
+    async def transition(
+        self, chat_id: int, game_id: int, transform, *, expected_rev=None, deadline_base=None
+    ):
         async with self.locks.hold(chat_id) as chat_id:
             async with self.sessions.begin() as session:
                 row = await session.get(GameSession, game_id)
@@ -95,6 +104,7 @@ class GameSessionRepository:
                     return None
                 if expected_rev is not None and row.state.get("rev", 0) != expected_rev:
                     return None
+                previous, previous_deadline = row.state, row.phase_deadline_at
                 row.state = deepcopy(row.state)
                 chat = await session.get(Chat, chat_id)
                 allowed = chat is not None and chat.is_active and chat.bot_is_admin
@@ -102,6 +112,7 @@ class GameSessionRepository:
                     awards = transform(row)
                     if awards is False:
                         return None
+                    scale_times(row, previous, previous_deadline, deadline_base or utc_now())
                 else:
                     row.status, row.phase_deadline_at = "cancelled", None
                     row.state["phase"] = "done"

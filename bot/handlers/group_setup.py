@@ -32,6 +32,10 @@ async def setup_button(query, quick_setup):
     await quick_setup.callback(query)
 
 
+async def pin_notice(message, live_tools):
+    live_tools.observe_pin(message)
+
+
 async def member_update(event: ChatMemberUpdated, groups) -> None:
     if event.chat.type not in {"group", "supergroup"} or event.new_chat_member.user.is_bot:
         return
@@ -113,6 +117,7 @@ def create_router() -> Router:
     router.my_chat_member.register(bot_membership)
     router.chat_member.register(member_update)
     router.message.register(migrate_chat, F.migrate_to_chat_id | F.migrate_from_chat_id)
+    router.message.register(pin_notice, F.pinned_message)
     router.message.register(join, Command("qoshilish"))
     router.message.register(leave, Command("chiqish"))
     router.message.register(help_group, Command("help"))

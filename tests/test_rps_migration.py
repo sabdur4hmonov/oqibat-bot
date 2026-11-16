@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import MetaData, Table, select
 from sqlalchemy.exc import IntegrityError
 
 from bot.db.models import Challenge, Chat, GameSession, PointEvent, User
@@ -37,8 +37,23 @@ async def seeded_previous(path):
     engine = create_engine(url)
     sessions = create_session_factory(engine)
     try:
+        # Seed the actual historical schema, not today's ORM INSERT shape. New
+        # chat settings must not silently be added to or required by old revisions.
+        async with engine.connect() as connection:
+            legacy = await connection.run_sync(
+                lambda conn: Table("chats", MetaData(), autoload_with=conn)
+            )
+        defaults = {}
+        for column in Chat.__table__.columns:
+            if column.name in legacy.c and column.default is not None:
+                default = column.default
+                defaults[column.name] = default.arg(None) if default.is_callable else default.arg
         async with sessions.begin() as session:
-            session.add(Chat(id=-1, title="Existing", bot_is_admin=True))
+            await session.execute(
+                legacy.insert().values(
+                    **{**defaults, "id": -1, "title": "Existing", "bot_is_admin": True}
+                )
+            )
             session.add(User(id=1, first_name="<User>"))
         async with sessions.begin() as session:
             session.add(

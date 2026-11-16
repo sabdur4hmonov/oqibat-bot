@@ -8,6 +8,7 @@ from bot.services.game_cache import view
 from bot.services.penalties import challenge_deadline
 from bot.services.picker import Candidate, pick_member
 from bot.services.points import challenge_points, record_event
+from bot.utils.game_timers import scale_at
 from bot.utils.time import is_quiet, utc_now
 
 
@@ -158,6 +159,10 @@ class ChallengeRepository:
                         chat.quiet_end,
                     ),
                 )
+                if game:
+                    challenge.deadline_at = scale_at(
+                        challenge.deadline_at, now, game.state.get("timer_multiplier", 1)
+                    )
                 session.add(challenge)
                 member.last_picked_at = now
                 await session.merge(

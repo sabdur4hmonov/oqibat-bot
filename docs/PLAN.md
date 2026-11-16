@@ -662,6 +662,32 @@ gallery projections without writes. Regenerate design previews with level labels
 countdown/API read-only/membership regressions, card badges, static frontend syntax/
 theme/haptics/skeleton checks, full pytest/Ruff/startup, PROGRESS/commit/push.
 
+### Phase 26 — Owner live self-test tools
+Owner-only group /selftest freshly checks bot admin/delete/pin rights, then tests
+send/edit/delete, regular poll+stop, quiz, dice, spoiler photo, rendered card and
+pin/unpin of its own message. All actions use Sender/GAME priority, cleanup deletes
+only its own synthetic messages, independent failures produce an honest Uzbek report.
+No points/session/content awards. Track concurrent runs per chat; stop cleanly.
+Owner-only /tezrejim on|off persists a per-chat fast_mode flag in a new migration.
+Toggle only with no active games, snapshot factor 0.1 in new sessions, show a group
+notice and a persistent mark on every fast-game board. Central pure deadline policy
+scales newly assigned deadlines and matching UTC JSON caps/windows once; preserves
+existing caps/timestamps, production factor 1, start times, rounds, roles and scoring.
+Scale number cooldown, secret accusation cooldown, Mafia hard cap and linked dare
+deadline as well as all normal lobby/turn/send-watchdog timers. Daily/weekly/business
+challenge schedules are unchanged. Telegram native poll auto-close minimum is five
+seconds; the independent game deadline still closes/scores a fast quiz at three
+seconds (subject to the existing one-second tick/outbound limiter). Animations and
+actual Telegram delivery cannot be accelerated; test mode never bypasses rate limits.
+scripts/smoke_live.py performs read-only getMe/getWebhookInfo/configured WebApp/
+healthz checks with bounded timeouts, redacted clear Uzbek results and a useful exit
+code. Do not run it on real credentials automatically or deploy. LIVE_TEST starts
+with owner /selftest and /tezrejim, covers polish/Story/levels as well as all prior
+features and minimum human counts. **Accept:** owner/rights/API cleanup/failure,
+timer isolation/caps/windows/cooldowns/linked dare/migration tests, smoke mocks,
+full pytest/Ruff/startup and isolated PG if available, final honest summary,
+commit/push, stop after Phase 26. No ZIP or further phase.
+
 ### Later (not now)
 Additional Mini App interactions beyond the read-only scope and further game features.
 

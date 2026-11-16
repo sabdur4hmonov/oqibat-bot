@@ -1,4 +1,19 @@
-# Oqibat: to‘liq jonli sinov ro‘yxati (0–21-bosqichlar)
+# Oqibat: to‘liq jonli sinov ro‘yxati (0–26-bosqichlar)
+
+**Boshlash tartibi:** muhitni tayyorlang → botni sinov guruhida admin qiling →
+A `/selftest` qilsin → A `/tezrejim on` qilsin → qolgan ro‘yxatni bajaring.
+Sinov tugagach barcha o‘yinlarni tugatib `/tezrejim off` qiling. Bu buyruqlar
+faqat OWNER_ID egasiga va guruhda ishlaydi; anonim nomdan emas, o‘z nomidan yozing.
+
+**Tez vaqt:** quyida yozilgan odatiy o‘yin muddatlarini 0.1 ga ko‘paytiring:
+90 soniya → 9 soniya; 30 soniya → 3 soniya; 3 daqiqa → 18 soniya;
+5 daqiqa → 30 soniya; 2 daqiqa → 12 soniya; 1 soat → 6 daqiqa;
+2 soat → 12 daqiqa; 24 soat → 2 soat 24 daqiqa. Ball, odam soni va
+ovozning 30 soniyalik chegarasi o‘zgarmaydi — tez telefon sinoviga qisqa ovoz yozing.
+Kunlik/haftalik jadval va oddiy vazifalar tezlashmaydi. Telegram so‘rovining
+avtomatik yopilishi kamida 5 soniya, lekin tez viktorina javoblari 3 soniya bilan
+cheklanadi. Haqiqiy yuborish, navbat va zar animatsiyasi tezlashmaydi. Navbat bo‘lsa
+xabar keyinroq ko‘rinishi mumkin; bu yangi ball yoki muddat uzayishi degani emas.
 
 Faqat alohida **sinov botida va sinov guruhida** bajaring. Uch odam: **A** — bot egasi
 va guruh admini, **B** va **C** — oddiy a’zolar. Har qadamni faqat o‘tgach belgilang.
@@ -46,7 +61,7 @@ kamida 4 ta turli so‘z tayyorlang: repodagi uchta namuna formatni ko‘rsatadi
   tasdiqlaydi; bot ishlaydi. Xatoda shu yerda to‘xtab sozlamani tuzating.
 - [ ] A, B, C botning shaxsiy chatida `/start`, keyin `/help` va `/oyinlar` yuborsin.
   **Natija:** o‘zbekcha javob, shior va kerakli qo‘shish tugmasi; muallif satri /start
-  va /help da bor, oddiy o‘yin xabarlariga har safar qo‘shilmaydi. /oyinlar 9 o‘yinni ko‘rsatadi.
+  va /help da bor, oddiy o‘yin xabarlariga har safar qo‘shilmaydi. /oyinlar to‘rtta toifada 13 o‘yinni ochadi.
 - [ ] Ismda `Oʻtkir`, `Gʻulom`, `<Sinov & do‘st>` kabi belgilarni sinab ko‘ring.
   **Natija:** ism matn sifatida chiqadi, HTML buyruqqa aylanmaydi. Keyin asl ismni tiklang.
 
@@ -56,6 +71,16 @@ kamida 4 ta turli so‘z tayyorlang: repodagi uchta namuna formatni ko‘rsatadi
   **Natija:** bot admin qilishni tushuntiradi; o‘yin/vazifalar boshlanmaydi.
 - [ ] Botni admin qiling, xabar o‘chirish va a’zolarni cheklash huquqlarini bering.
   **Natija:** salomlashuv va qo‘shilish tugmasi chiqadi; adminlikda kerakli xabarlarni ko‘radi.
+- [ ] Pin huquqini ham bering. A **birinchi bo‘lib `/selftest`** yuborsin; hisobotni kuting.
+  **Natija:** admin/o‘chirish/pin, xabar/tahrir/o‘chirish, oddiy so‘rov+yopish, quiz,
+  zar, spoiler surat, karta va faqat o‘z xabarini pin/unpin qilishda ✅. Vaqtinchalik
+  xabarlar tozalanadi, mavjud pinlar tegilmaydi; hech kimga ball yozilmaydi.
+  ❌ bo‘lsa tegishli huquq va jurnalni tuzating; qolgan sinov xabarlarini A o‘chirsin.
+  Telegram limiti sabab hisobot bir daqiqadan ko‘proq kelsa kuting, buyruqni spam qilmang.
+- [ ] B `/selftest` va `/tezrejim on` ni sinasin; keyin A `/tezrejim on` qilsin.
+  **Natija:** B rad etiladi, A da guruhda tezrejim xabari va har yangi o‘yin doskasida
+  `TEZREJIM · vaqtlar ×0.1` chiqadi. O‘yin ochiq bo‘lsa on/off almashtirish rad etiladi.
+  Ikkinchi odatiy guruhdagi o‘yin tezlashmasin; qayta ishga tushganda tanlov saqlansin.
 - [ ] A/B/C `/qoshilish` yoki qo‘shilish tugmasini bossin; yana bosib ko‘rsin.
   **Natija:** har kim bir marta ro‘yxatga olinadi, takror bosish dubl yaratmaydi.
 - [ ] B `/chiqish` qilsin; keyin yangi rozilik bilan qayta qo‘shilsin.
@@ -381,7 +406,65 @@ kamida 4 ta turli so‘z tayyorlang: repodagi uchta namuna formatni ko‘rsatadi
   **Natija:** o‘yin bekor, fayl identifikatori/izoh o‘chiriladi yoki restartda yangi topshiriq talab qilinadi;
   kechikkan surat yuborilmaydi, eski tugmalar ishlamaydi. Avval yetkazilgan Telegram suratlari avtomatik o‘chmaydi.
 
-## 19. Xato bo‘lsa jurnalni qanday topish
+## 19. Dizayn, o‘yinlar markazi va tez sozlash (22–23)
+
+- [ ] Har o‘yin doskasida bir xil nom/belgi, holat, jarayon chizig‘i, mahalliy
+  `⏳ HH:MM gacha`, kutayotgan/tayyor odamlar va natijadagi medallarni ko‘ring.
+  **Natija:** qisqa va hurmatli o‘zbekcha matn; HTML belgili ism buzmaydi; yashirin
+  so‘z/rol/javob oldindan ochilmaydi. Xabar har soniya tahrirlanmaydi.
+- [ ] Mafia shaxsiy rol kartasini va guruhdagi tun/kunduz sarlavhalarini sinang.
+  **Natija:** tavsif va maqsad shaxsiyda; guruhda maxfiy rol ko‘rinmaydi.
+- [ ] /oyinlar dagi to‘rtta toifani oching, orqaga qayting va o‘yinni tugmadan boshlang.
+  **Natija:** bosgan odam boshlovchi, rozilik/band joy talablari avvalgidek; shaxsiy
+  menyu guruhda o‘ynashni tushuntiradi. Eski barcha o‘yin buyruqlari qo‘lda ishlaydi.
+- [ ] Guruh buyruq menyusini tekshiring.
+  **Natija:** faqat oyinlar/qoshilish/men/top/yutuqlar/sozlamalar/stop/help.
+- [ ] Botni yangi sinov guruhida admin qilib uch qadamni tanlang: kunlik vaqt,
+  vazifalar soni, jazo. B ham bosib ko‘rsin; eski qadamni takror bosing.
+  **Natija:** faqat admin o‘zgartiradi, tanlovlar /sozlamalar da saqlanadi; eski qadam
+  yangi tanlovni buzmaydi. Restartdan keyin /sozlamalar bilan davom etish mumkin.
+- [ ] Kunlik postdagi Bugungi o‘yin tugmasini bosing.
+  **Natija:** taklifdagi o‘yin boshlanadi yoki to‘g‘ri ruxsat/bandlik izohi keladi;
+  yangi qoida yoki ball yaratilmaydi.
+
+## 20. Karta va Story (24)
+
+- [ ] Rasmli natijalarni yoqing. A ning profil rasmi ochiq, B niki yo‘q/yopiq bo‘lsin.
+  **Natija:** kvadrat 1080×1080, aylana rasm/bosh harf, kuchli uchlik ranglari,
+  o‘yin belgisi, daraja va Instagram nomi; o‘zbek harflari bor, bo‘sh katakcha yo‘q.
+- [ ] /start dan keyin Story uchun tugmasini bosing va tez yana bosing.
+  **Natija:** 1080×1920 Story faqat bosgan odamning shaxsiy chatiga bir marta keladi,
+  guruhga avtomatik chiqmaydi. /top yoki /men da yangi ball yozilmaydi.
+- [ ] Haftalik/mavsum Storysini, bot bloklangan holatni, guruhdan chiqish va
+  ma’lumotni o‘chirishdan keyingi eski tugmani sinang.
+  **Natija:** mos manba/a’zo bo‘lsa rasm; xato/yopiq/eskirgan bo‘lsa xavfsiz rad.
+  Profil keshini o‘chirish va kechikkan rasmni to‘xtatish ishlaydi. Oldin yuborilgan
+  Telegram rasmlari alohida boshqariladi. docs/design namunalari sun’iy ekanini biling.
+
+## 21. Mini App v2 va darajalar (25)
+
+- [ ] Telefon Telegramida profil, mavsum/barcha vaqt reytingi, yutuqlar va qoidalarni oching.
+  **Natija:** tema ranglari mos, yuklanishda skelet, sahifa almashganda qo‘llansa
+  yengil tebranish; qo‘llanmaydigan qurilmada ham ishlaydi. Yoniga chiqib ketmaydi.
+- [ ] 0/50/200/1000 jami ball chegaralari va minus ball holatini ko‘ring.
+  **Natija:** Yangi a’zo/Faol/Davra yulduzi/Oqibat ustasi, keyingi darajagacha chiziq.
+  Daraja o‘zi ball bermaydi. Shaxsiy profil barcha guruhlar jamisi, /men va karta
+  o‘sha guruh jamisi; kartadagi natija bali alohida. Mavsum yangilansa ledger qoladi.
+- [ ] Guruhni va mavsum/all-time ni almashtiring, ochilgan/yopiq yutuqlarni tekshiring.
+  **Natija:** mavsum muddatining oxiri guruh vaqt mintaqasiga mos; medal/rasm va
+  daraja bor. Guruhdan chiqqan odam uning sahifasini ko‘ra olmaydi; app ochish ball bermaydi.
+
+## 22. Jonli ulanish va sinovni tugatish (26)
+
+- [ ] HTTPS domen tayyor bo‘lsa `python scripts/smoke_live.py` bajaring.
+  **Natija:** getMe/username, getWebhookInfo/rejim, WEBAPP_URL va /healthz bo‘yicha
+  o‘zbekcha [OK]/[X]. Tick 2 daqiqadan eski bo‘lsa xato, token yoki shaxsiy matn chiqmaydi.
+  URL sozlanmagan mahalliy rejimda web tekshiruvlari o‘tmaydi — buni to‘liq jonli sinov deb belgilamang.
+- [ ] A barcha asosiy/fon/duel o‘yinlarini tegishli doskaga /stop bilan tugatsin,
+  keyin **/tezrejim off** qilsin va odatiy yangi o‘yinni tekshirsin.
+  **Natija:** tez belgi yo‘q, odatiy vaqt qaytadi. Boshqa guruh va kunlik jadval o‘zgarmagan.
+
+## 23. Xato bo‘lsa jurnalni qanday topish
 
 - [ ] Muammo vaqtini va qadam raqamini yozing, so‘ng tegishli satrlarni toping:
 

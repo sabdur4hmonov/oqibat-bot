@@ -57,6 +57,17 @@ async def erase_confirm(callback, bot, sender, owner_tools):
     )
 
 
+async def selftest(message, live_tools, bot, sender):
+    result = live_tools.start(message)
+    if result:
+        await sender.send(message.chat.id, lambda: bot.send_message(message.chat.id, result))
+
+
+async def fast_mode(message, command, live_tools, bot, sender):
+    result = await live_tools.fast(message, (command.args or "").strip().lower())
+    await sender.send(message.chat.id, lambda: bot.send_message(message.chat.id, result))
+
+
 def create_router():
     router = Router(name="owner_privacy")
     router.message.register(privacy, Command("maxfiylik"))
@@ -65,4 +76,8 @@ def create_router():
         erase_request, F.chat.type == "private", Command("malumotlarimni_ochir")
     )
     router.callback_query.register(erase_confirm, F.data.startswith("erase:"))
+    router.message.register(selftest, F.chat.type.in_({"group", "supergroup"}), Command("selftest"))
+    router.message.register(
+        fast_mode, F.chat.type.in_({"group", "supergroup"}), Command("tezrejim")
+    )
     return router

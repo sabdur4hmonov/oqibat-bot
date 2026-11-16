@@ -22,6 +22,7 @@ from bot.services.game_catalog import GameCatalog
 from bot.services.game_hub import GameHub
 from bot.services.guess_games import GuessGames
 from bot.services.krokodil import Krokodil
+from bot.services.live_tools import LiveTools
 from bot.services.locks import ChatLocks
 from bot.services.mafia import Mafia
 from bot.services.metrics import Metrics
@@ -144,6 +145,7 @@ class ScaleRuntime:
         self.sessions = sessions
         self.recovery = Recovery(self, bot, settings)
         self.owner_tools = OwnerTools(self, getattr(settings, "owner_id", None))
+        self.live_tools = LiveTools(self, bot)
         self.stories = Stories(self, bot)
         self.achievements = Achievements(self)
         self.seasons = Seasons(self)
@@ -200,6 +202,7 @@ class ScaleRuntime:
             "runtime": self,
             "error_alerts": self.alerts,
             "owner_tools": self.owner_tools,
+            "live_tools": self.live_tools,
             "achievements": self.achievements,
             "sender": self.sender,
             "activity": self.activity,

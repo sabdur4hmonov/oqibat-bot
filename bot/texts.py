@@ -24,6 +24,66 @@ GAME_EMOJIS = {key: value[0] for key, value in GAME_STYLE.items()}
 GAME_NAMES = {key: value[1] for key, value in GAME_STYLE.items()}
 MEDALS = ("🥇", "🥈", "🥉")
 LEVEL_TITLES = ("Yangi a’zo", "Faol", "Davra yulduzi", "Oqibat ustasi")
+FAST_BOARD = "⚡ TEZREJIM · vaqtlar ×0.1"
+SMOKE_CONFIG = "[X] .env sozlamalari noto‘g‘ri. Avval scripts/check_env.py bilan tekshiring."
+SMOKE_OK = "[OK] Jonli ulanish tekshiruvlari o‘tdi. Bu to‘liq o‘yin sinovi emas."
+SMOKE_BAD = "[X] Ayrim tekshiruvlar o‘tmadi. .env, bot jurnali, domen va serverni tekshiring."
+SMOKE_LABELS = {
+    "get_me": ("getMe va BOT_USERNAME mos", "getMe/token/username tekshiruvi o‘tmadi"),
+    "webhook": (
+        "getWebhookInfo tanlangan rejimga mos",
+        "Webhook rejimi yoki so‘nggi xatoni tekshiring",
+    ),
+    "webapp": ("WEBAPP_URL ochildi", "WEBAPP_URL yo‘q yoki ochilmadi; HTTPS/domenni tekshiring"),
+    "health": ("/healthz sog‘lom", "/healthz ochilmadi yoki tick 2 daqiqadan eski"),
+}
+
+
+def smoke_result(key, ok):
+    return ("[OK] " if ok else "[X] ") + SMOKE_LABELS[key][0 if ok else 1]
+
+
+FAST_ON = (
+    "⚡ Tezrejim yoqildi: yangi o‘yin vaqtlari 10 baravar qisqa.\n"
+    "Bu sinov guruhi rejimi. Ball va odam soni o‘zgarmaydi; yuborish chegarasi qoladi."
+)
+FAST_OFF = "Tezrejim o‘chirildi. Yangi o‘yinlar odatdagi vaqt bilan yuradi."
+FAST_USAGE = "Faqat bot egasi: /tezrejim on yoki /tezrejim off — guruhda."
+FAST_BUSY = "Avval guruhdagi barcha o‘yinlarni /stop bilan tugating, keyin rejimni almashtiring."
+SELFTEST_BUSY = "Bu guruhda tekshiruv ketmoqda. Hisobotni kutamiz."
+SELFTEST_START = "🛠 Jonli sinov boshlandi. Bu vaqtinchalik xabar keyin tozalanadi."
+SELFTEST_EDIT = "🛠 Tahrirlash ishladi. Sinov davom etyapti."
+SELFTEST_CARD = "Oqibat sinov kartasi"
+SELFTEST_POLL = "Sinov: davra tayyormi?"
+SELFTEST_QUIZ = "Sinov: 2 + 2 nechchi?"
+SELFTEST_OPTIONS = ("3", "4")
+SELFTEST_LABELS = {
+    "admin": "Bot admin",
+    "delete_right": "O‘chirish huquqi",
+    "pin_right": "Pin huquqi",
+    "send": "Xabar yuborish",
+    "edit": "Xabarni tahrirlash",
+    "delete": "Xabarni o‘chirish",
+    "poll": "Oddiy so‘rov",
+    "stop_poll": "So‘rovni yopish",
+    "quiz": "Viktorina so‘rovi",
+    "dice": "Zar",
+    "spoiler": "Spoiler surat",
+    "card": "Karta yuklash",
+    "pin": "O‘z xabarini pin qilish",
+    "unpin": "O‘z pinini olish",
+    "cleanup": "Sinovni tozalash",
+}
+
+
+def selftest_report(results):
+    lines = ["🛠 <b>Jonli sinov natijasi</b>"]
+    lines.extend(f"{'✅' if ok else '❌'} {SELFTEST_LABELS[key]}" for key, ok in results)
+    if any(not ok for _, ok in results):
+        lines.append(
+            "Huquqlar va bot jurnalini tekshiring. Qolgan sinov xabarlarini admin tozalasin."
+        )
+    return "\n".join(lines)
 
 
 def level_label(level):
@@ -60,7 +120,10 @@ def game_progress(game):
 
 def board_layout(game, body):
     title = game_title(game.game)
-    if body.startswith(title + "\nHolat:"):
+    prefix = title + "\n"
+    if game.state.get("timer_multiplier", 1) != 1:
+        prefix += FAST_BOARD + "\n"
+    if body.startswith(prefix + "Holat:"):
         return body
     if body.startswith(title):
         body = body[len(title) :].lstrip(" \n")
@@ -102,6 +165,8 @@ def board_layout(game, body):
     } and game.status not in {"finished", "cancelled"}:
         timing = "⏳ Bosqich tayyor bo‘lishini kutamiz"
     lines = [title, f"Holat: {status}", progress_bar(*game_progress(game)), timing]
+    if state.get("timer_multiplier", 1) != 1:
+        lines.insert(1, FAST_BOARD)
     known = state.get("players", state.get("names", {}))
     if not isinstance(known, dict):
         known = {str(user): state.get("names", {}).get(str(user), "Davradosh") for user in known}
@@ -464,6 +529,8 @@ PENALTY_NAMES = {
     "kick": "Guruhdan chiqarish",
 }
 GROUP_COMMANDS = {
+    "selftest": "Jonli tekshiruv (faqat bot egasi)",
+    "tezrejim": "Sinov vaqtlari on/off (faqat bot egasi)",
     "maxfiylik": "Ma’lumotlar maxfiyligi",
     "yutuqlar": "Mening yutuqlarim",
     "help": HELP_DESCRIPTION,
