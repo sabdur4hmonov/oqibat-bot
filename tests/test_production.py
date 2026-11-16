@@ -62,7 +62,7 @@ async def test_alert_sanitization_aggregation_boundary_and_delivery_delay():
     clock.value = 600
     assert await notice.flush()
     body = notice.bot.send_message.call_args.args[1]
-    assert "Hodisalar: 7" in body and "qo‘shimcha xatolar: 6" in body
+    assert "Hodisalar: 7" in body and "qo’shimcha xatolar: 6" in body
     assert notice.bot.send_message.await_count == 2
     # An alert queued late must reserve its cooldown at the actual attempt.
     entered, release = asyncio.Event(), asyncio.Event()

@@ -41,6 +41,43 @@ def test_every_card_type_dimensions_and_no_missing_glyph_text(kind, story):
     assert any("Oʻtkir" in value for value in drawn)
 
 
+@pytest.mark.parametrize("story", [False, True])
+def test_card_rows_are_compact_and_visually_centered_with_a_close_title(story):
+    original_text = ImageDraw.ImageDraw.text
+    original_rectangle = ImageDraw.ImageDraw.rounded_rectangle
+    drawn, rectangles = [], []
+
+    def record_text(draw, xy, value, *args, **kwargs):
+        bounds = draw.textbbox(xy, value, font=kwargs["font"], anchor=kwargs.get("anchor"))
+        drawn.append((value, bounds))
+        return original_text(draw, xy, value, *args, **kwargs)
+
+    def record_rectangle(draw, xy, *args, **kwargs):
+        if kwargs.get("fill") == "#173443":
+            rectangles.append(xy)
+        return original_rectangle(draw, xy, *args, **kwargs)
+
+    rows = [("G’ani poygachi", 120), ("Ali", -12), ("Sardorbek", 7)]
+    labels = ["Oqibat ustasi", "Faol", "Yangi a’zo"]
+    with (
+        patch.object(ImageDraw.ImageDraw, "text", record_text),
+        patch.object(ImageDraw.ImageDraw, "rounded_rectangle", record_rectangle),
+    ):
+        render_card("Natijalar", rows, "oqibat.test", story=story, levels=labels)
+
+    assert next(bounds[1] for value, bounds in drawn if value == "Natijalar") < 230
+    assert len(rectangles) == len(rows)
+    for (name, score), label, (_, top, _, bottom) in zip(rows, labels, rectangles, strict=True):
+        assert bottom - top <= 120
+        center = (top + bottom) / 2
+        name_box = next(bounds for value, bounds in drawn if value == name)
+        label_box = next(bounds for value, bounds in drawn if value == label)
+        score_box = next(bounds for value, bounds in drawn if value == texts.card_points(score))
+        assert abs((name_box[1] + label_box[3]) / 2 - center) <= 1
+        assert abs((score_box[1] + score_box[3]) / 2 - center) <= 1
+        assert top < name_box[1] < name_box[3] < label_box[1] < label_box[3] < bottom
+
+
 def png():
     data = BytesIO()
     Image.new("RGB", (64, 64), "red").save(data, "PNG")

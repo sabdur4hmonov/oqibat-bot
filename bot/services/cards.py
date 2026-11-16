@@ -166,7 +166,7 @@ def render_card(
     draw.rounded_rectangle((54, 54, 1026, size[1] - 54), radius=40, outline="#294652", width=2)
     draw.text((92, 87), texts.CARD_BRAND, font=font(28), fill=accent)
     draw_icon(draw, kind, 870, 91, 108, accent)
-    top, heading_y, spacing = (520, 320, 185) if story else (280, 155, 128)
+    top, heading_y, spacing = 280, 155, 128
     draw.text((90, heading_y), fit_text(title, font(48), 760), font=font(48), fill="#f7f1e8")
     draw.text(
         (92, heading_y + 72),
@@ -176,21 +176,35 @@ def render_card(
     )
     for index, (name, score) in enumerate(rows[:5]):
         y = top + index * spacing
+        center = y + (spacing - 14) // 2
         rank_color = RANK_COLORS[index] if index < 3 else accent
         draw.rounded_rectangle((78, y, 1002, y + spacing - 14), radius=24, fill="#173443")
-        draw.ellipse((96, y + 29, 148, y + 81), fill=rank_color)
-        draw.text((122, y + 55), str(index + 1), font=font(27), fill="#112836", anchor="mm")
+        draw.ellipse((96, center - 26, 148, center + 26), fill=rank_color)
+        draw.text((122, center), str(index + 1), font=font(27), fill="#112836", anchor="mm")
         photo = avatars[index] if avatars and index < len(avatars) else None
-        avatar(image, draw, name, photo, 168, y + 17, 80, rank_color)
-        draw.text((270, y + 19), fit_text(name, font(32), 450), font=font(32), fill="#f7f1e8")
+        avatar(image, draw, name, photo, 168, center - 40, 80, rank_color)
         label = levels[index] if levels and index < len(levels) else texts.CARD_RANK
-        draw.text((271, y + 67), fit_text(label, font(20), 450), font=font(20), fill="#abc7cd")
+        name = fit_text(name, font(32), 450)
+        label = fit_text(label, font(20), 450)
+        name_box, label_box = font(32).getbbox(name), font(20).getbbox(label)
+        name_height, label_height = name_box[3] - name_box[1], label_box[3] - label_box[1]
+        text_top = center - (name_height + 10 + label_height) / 2
+        draw.text((270, text_top), name, font=font(32), fill="#f7f1e8", anchor="lt")
         draw.text(
-            (972, y + 39),
-            fit_text(texts.card_points(score), font(30), 245),
+            (271, text_top + name_height + 10),
+            label,
+            font=font(20),
+            fill="#abc7cd",
+            anchor="lt",
+        )
+        points = fit_text(texts.card_points(score), font(30), 245)
+        points_box = font(30).getbbox(points)
+        draw.text(
+            (972, center - (points_box[3] - points_box[1]) / 2),
+            points,
             font=font(30),
             fill=rank_color,
-            anchor="ra",
+            anchor="rt",
         )
     if not rows:
         draw.text(
@@ -198,9 +212,7 @@ def render_card(
         )
     footer = size[1] - (210 if story else 119)
     draw.line((90, footer - 25, 990, footer - 25), fill="#294652", width=2)
-    draw.ellipse((91, footer + 8, 117, footer + 34), outline=accent, width=5)
-    draw.line((111, footer + 28, 126, footer + 43), fill=accent, width=5)
-    draw.text((142, footer), texts.CARD_BRAND, font=font(28), fill="#abc7cd")
+    draw.text((92, footer), texts.CARD_BRAND, font=font(28), fill="#abc7cd")
     face = font(42 if story else 28)
     draw.text(
         (990, footer + (65 if story else 0)),

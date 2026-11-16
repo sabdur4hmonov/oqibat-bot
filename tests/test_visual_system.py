@@ -102,6 +102,17 @@ def test_existing_template_placeholder_contracts_preserved():
         assert actual == expected, path
 
 
+def test_static_copy_uses_only_the_canonical_apostrophe():
+    import ast
+
+    source = Path(texts.__file__).read_text("utf-8")
+    forbidden = {"'", "\u2018", "\u02bb", "\u02bc", "`"}
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            assert not forbidden.intersection(node.value), (node.lineno, node.value)
+    assert "a’zo" in texts.LEVEL_TITLES[0]
+
+
 @pytest.mark.parametrize("role", texts.MAFIA_ROLE_CARDS)
 def test_every_mafia_role_has_private_card_goal(role):
     card = texts.mafia_role_card(role)

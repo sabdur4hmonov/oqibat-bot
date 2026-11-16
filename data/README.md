@@ -1,13 +1,15 @@
 # Content schema (version 1)
 
-Each UTF-8 JSON file contains an array of objects. The committed files contain exactly
-three examples each, not a production content bank. An empty array `[]` is valid;
-future loaders must handle empty banks and any number of items without fixed-size assumptions.
-The runtime content loader is Phase 2; no scheduled posts or games run in Phase 0.
+Each UTF-8 JSON file contains an array of objects. The nine committed banks now
+contain owner-supplied production content from `oqibat-content.zip`, imported
+unchanged in Phase 27. Their sizes can change; there is no fixed item count.
+An empty array `[]` is valid and is handled safely by the runtime loader.
+Small test banks live separately in `tests/fixtures/content/` and are copied to
+temporary directories for tests; they are not used by the running bot.
 
 Every item has a nonempty `key` string, unique across all banks, at most 128 characters.
 Keep keys stable: `content_usage.content_key` and `challenges.prompt_key` reference them.
-Text is plain Uzbek Latin, never trusted HTML. Future senders must HTML-escape it
+Text is plain Uzbek Latin, never trusted HTML. Senders must HTML-escape it
 and escape any substituted user/chat text. Only daily text supports `{group}`.
 
 | File | Required fields in addition to `key` |
@@ -18,6 +20,9 @@ and escape any substituted user/chat text. Only daily text supports `{group}`.
 | `krokodil_words.json` | `word`: nonempty string, one word or phrase |
 | `would_you_rather.json` | `question`: 1–300 chars; `options`: exactly two distinct strings, 1–100 chars each |
 | `truth_questions.json` | `text`: nonempty question |
+| `secret_words.json` | `word`: one alphabetic token after normalization, at most 32 chars; a game needs at least players + 1 distinct words |
+| `kim_aytdi_questions.json` | `text`: nonempty question, at most 300 chars |
+| `telephone_phrases.json` | `text`: nonempty phrase, at most 300 chars |
 
 Adding production content does not require a database migration. Changing the schema
 requires updating this document and the corresponding loader in the relevant phase.

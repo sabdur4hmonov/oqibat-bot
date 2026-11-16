@@ -6,7 +6,6 @@ import pytest
 from sqlalchemy import func, select
 
 from bot.db.models import Chat, Membership, PointEvent, ScheduledPost, User
-from bot.services.content import ContentLibrary
 from bot.services.daily import DailyService
 from bot.services.participation import Participants
 from bot.services.points import CheckinBuffer
@@ -16,7 +15,7 @@ from bot.utils.time import utc_now
 
 
 @pytest.fixture
-async def daily_app(sessions):
+async def daily_app(sessions, fixture_content):
     async with sessions.begin() as session:
         session.add(
             Chat(
@@ -36,7 +35,7 @@ async def daily_app(sessions):
     checkins = CheckinBuffer(sessions)
     bot = SimpleNamespace(send_message=AsyncMock(return_value=SimpleNamespace(message_id=100)))
     sender = Sender(sessions)
-    daily = DailyService(sessions, bot, sender, ContentLibrary(), participants, checkins)
+    daily = DailyService(sessions, bot, sender, fixture_content, participants, checkins)
     try:
         yield daily, bot, checkins
     finally:

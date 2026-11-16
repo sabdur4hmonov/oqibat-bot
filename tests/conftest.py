@@ -10,9 +10,25 @@ import pytest_asyncio
 
 from bot.config import Settings
 from bot.db.session import create_engine, create_session_factory
+from bot.services.content import ContentLibrary
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST_TOKEN = "123456789:local_test_token_never_used_on_telegram"
+
+
+@pytest.fixture
+def content_directory(tmp_path):
+    """Independent, editable banks for each test, never the production content."""
+    directory = tmp_path / "content"
+    shutil.copytree(ROOT / "tests/fixtures/content", directory)
+    return directory
+
+
+@pytest.fixture
+def fixture_content(content_directory, monkeypatch):
+    library = ContentLibrary(content_directory)
+    monkeypatch.setattr("bot.services.runtime.ContentLibrary", lambda: library)
+    return library
 
 
 class FakeClock:

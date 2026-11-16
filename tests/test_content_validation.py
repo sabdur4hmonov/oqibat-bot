@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from bot import texts
-from bot.services.content import FIELDS, TEXT_LIMITS, validate_bank
+from bot.services.content import FIELDS, TEXT_LIMITS, ContentLibrary, validate_bank
 from bot.services.content_validation import audit_bank, validate_directory
 from scripts.validate_content import main
 
@@ -16,8 +16,12 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 
 
-def samples(kind):
-    return json.loads((DATA / f"{kind}.json").read_text("utf-8"))
+@pytest.fixture
+def samples(content_directory):
+    def load(kind):
+        return json.loads((content_directory / f"{kind}.json").read_text("utf-8"))
+
+    return load
 
 
 def banks(directory):
@@ -29,10 +33,16 @@ def write(directory, kind, items):
     (directory / f"{kind}.json").write_text(json.dumps(items, ensure_ascii=False), "utf-8")
 
 
-def test_every_committed_sample_valid_and_counted():
+def test_real_production_banks_pass_runtime_schema_and_offline_validator():
+    before = {path.name: path.read_bytes() for path in DATA.glob("*.json")}
     report = validate_directory(DATA)
     assert report.issues == []
-    assert report.counts == {f"{kind}.json": 3 for kind in FIELDS}
+    library = ContentLibrary(DATA)
+    assert report.counts == {
+        f"{kind}.json": len(items) for kind, items in library.banks.items()
+    }
+    assert main(["--directory", str(DATA)], lambda _: None) == 0
+    assert {path.name: path.read_bytes() for path in DATA.glob("*.json")} == before
 
 
 def test_empty_banks_valid_and_do_not_modify_files(tmp_path):
@@ -44,7 +54,7 @@ def test_empty_banks_valid_and_do_not_modify_files(tmp_path):
 
 
 @pytest.mark.parametrize("kind", FIELDS)
-def test_primary_text_length_boundaries_in_shared_runtime_schema(kind):
+def test_primary_text_length_boundaries_in_shared_runtime_schema(kind, samples):
     item = samples(kind)[0]
     field, limit = TEXT_LIMITS[kind]
     item[field] = "a" * limit
@@ -56,7 +66,7 @@ def test_primary_text_length_boundaries_in_shared_runtime_schema(kind):
 
 
 @pytest.mark.parametrize("kind", FIELDS)
-def test_normalized_primary_duplicates_apostrophe_cyrillic_punctuation(kind):
+def test_normalized_primary_duplicates_apostrophe_cyrillic_punctuation(kind, samples):
     first = samples(kind)[0]
     primary = TEXT_LIMITS[kind][0]
     first[primary] = "O‘zbekiston"
@@ -68,7 +78,7 @@ def test_normalized_primary_duplicates_apostrophe_cyrillic_punctuation(kind):
 
 
 @pytest.mark.parametrize("kind", ["quiz_questions", "would_you_rather"])
-def test_normalized_option_duplicates_and_exact_limits(kind):
+def test_normalized_option_duplicates_and_exact_limits(kind, samples):
     item = samples(kind)[0]
     item["options"] = ["Oʻzbekiston", "Ўзбекистон"]
     assert audit_bank(kind, [item]) == [("duplicate_options", 1)]
@@ -100,12 +110,12 @@ def test_malformed_bank_shapes(bad):
         {"key": "k" * 129},
     ],
 )
-def test_quiz_schema_answer_options_fields_key_limits(change):
+def test_quiz_schema_answer_options_fields_key_limits(change, samples):
     item = samples("quiz_questions")[0] | change
     assert audit_bank("quiz_questions", [item]) == [("schema", None)]
 
 
-def test_local_and_cross_bank_duplicate_keys(tmp_path):
+def test_local_and_cross_bank_duplicate_keys(tmp_path, samples):
     banks(tmp_path)
     first = samples("daily_messages")[0]
     write(tmp_path, "daily_messages", [first, first])
@@ -129,7 +139,7 @@ def test_local_and_cross_bank_duplicate_keys(tmp_path):
         ("truth_questions", "{group}", False),
     ],
 )
-def test_placeholders(kind, text, valid):
+def test_placeholders(kind, text, valid, samples):
     item = samples(kind)[0] | {"text": text}
     assert (not audit_bank(kind, [item])) is valid
 

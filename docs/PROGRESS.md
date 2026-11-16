@@ -1,7 +1,7 @@
 # Progress log
 
 ## Current status
-- Current phase: Phases 22–26 complete for implementation/local verification. Stop after Phase 26 commit/push; real Telegram acceptance remains manual. No deployment, further phase or review ZIP.
+- Current phase: Phase 27 complete for implementation/local verification. Stop after its commit/push. Real Telegram acceptance remains manual; no deployment, further phase or review ZIP.
 - Last updated: 2026-11-16 (Asia/Tashkent)
 
 ## Review notes from Claude
@@ -731,3 +731,31 @@
 - Final local evidence: 727 passed/1 opt-in skip, Ruff clean; skipped PostgreSQL test separately passed on fresh PostgreSQL 16; populated SQLite migrations/downgrade preserve ledger/foreign keys. Runtime-only non-root Docker build, network-disabled migration/startup/pip check, absence of secrets/dev tools and all 30 Linux card renders verified. Temporary verification containers/preview server/tab were cleaned up; no other project changed.
 - Remaining before real users: complete LIVE_TEST with a separate bot and sufficient human players; verify actual permissions, media/DM/pin behavior and real Telegram themes/haptics; verify target-domain TLS/webhook and backup restore on the intended server; turn test mode off in every real group; measure real queue/tick behavior before claiming 10,000-group throughput. In-memory crash losses, restart cancellation and ambiguous announcement delivery remain as Claude approved. Already delivered Telegram media and external backups remain outside self-deletion.
 - Stop: publish Phase 26 and wait for Sardorbek/Claude review. No Phase 27, new games, live deployment or review archive.
+
+
+### Phase 27 — Real content and small polish — 2026-11-16
+- Status: done for implementation/local verification; actual Telegram acceptance remains manual.
+- Commit(s): this phase commit, `phase-27: production content isolated fixtures and Story polish`; push origin/main after passing checks.
+- What was built:
+  - Added Phase 27 to PLAN before implementation and re-read Claude review notes; none unresolved. The archive was initially absent, then supplied by the owner as the newest `C:\Users\user\Downloads\oqibat-content.zip`. Extracted its nine expected JSON files through a temporary directory; copied/verified byte-for-byte, without editing content text.
+  - Imported 1,059 production items: challenges 64, daily 60, Kim aytdi 60, Krokodil 362, quiz 117, secret words 191, telephone 60, truth 69, would-you-rather 76. Offline validator passes all nine; data/README describes production banks, all nine schemas and separate test fixtures.
+  - Preserved small examples under tests/fixtures/content only. Each content-dependent unit/integration fixture copies them to its own temporary directory; runtime, daily, schema and validator edge cases use these copies. The insufficient-secret-bank test explicitly sets a three-word test bank. One real-data regression runs both runtime schema loading and offline validation/CLI, compares counts to actual loaded items (no fixed counts), and confirms no file bytes changed.
+  - Story rows are compact, name/level stacks and scores are vertically centered by actual font bounds, title uses the smaller header gap, and the footer is plain OQIBAT without the misleading magnifier. All 30 square/Story previews regenerated; all fifteen styles inspected in a gallery plus representative full Story/square. Instagram attribution, top-three colors, avatars, dimensions and optional Story delivery remain.
+  - Canonical U+2019 apostrophes throughout texts.py static copy, including the former straight-apostrophe a’zo/ma’lumot instances; Python syntax, HTML and interpolation preserved. AST comparison confirms only apostrophe changes outside the validator success notice, which now omits its obsolete sample disclaimer. Archive text and user-provided names remain unchanged.
+- Files added/changed: docs/PLAN.md, docs/PROGRESS.md, data/README.md and nine production JSONs; bot/texts.py, bot/services/cards.py; shared and content/daily/private-game/card/text tests, Mafia/owner-alert text expectations; nine test-only JSON banks with a README; docs/design guide and all 30 PNGs.
+- Tests: final full pytest **733 passed, 1 skipped** (507.08 s), with all three opt-in Docker backup tests enabled; optional PostgreSQL integration skipped because no fresh dedicated test DB was configured for this phase (no schema/database changes). **ruff check . passes**. Targeted content/daily/private/card/voice regressions **148 passed** before extending fixture-schema coverage to all nine banks. The initial full run had four old-U+2018 copy expectations failing (729 passed); those expectations were updated to U+2019, their four cases passed separately, then the full run above passed. New layout regressions check actual text bounds/centering, compact rows and title position in both formats; static-copy test rejects noncanonical apostrophes. Existing all-card glyph/dimension, placeholder-contract, game/lifecycle/ledger and offline startup coverage retained. All nine staged JSON blobs were independently compared with the original archive bytes; no .env staged.
+- Acceptance criteria:
+  - ✅ Newest owner content archive imported unchanged; all nine banks validate.
+  - ✅ Content-specific tests use temporary fixture banks; real-data check has no fixed item-count assumptions.
+  - ✅ Story row/header/footer polish and regenerated previews.
+  - ✅ Canonical static-copy apostrophes; placeholders preserved.
+  - ✅ Production-content README, including all nine bank formats.
+  - ✅ Full pytest/Ruff, offline startup regression and clean content/secret staging checks; publish this phase commit to origin/main and stop.
+- Deviations/open questions: no game-rule/scoring, schema, dependency or architecture change. Removed the footer icon using the explicitly allowed plain-brand option; shared row centering also improves square cards. No blocking questions.
+- Known issues / not verified: no real Telegram sends or deployment; actual phone/Story upload appearance remains a manual acceptance check. Existing production-capacity and in-memory crash limits still apply. The content validator checks structure/duplicates/lengths, not editorial accuracy of owner-authored questions.
+- Manual test steps (Uzbek):
+  1. `python scripts/validate_content.py` qiling: to’qqiz fayl soni va oxirida [OK] chiqsin. `data/`dagi kontent matnlarini bu sinov uchun o’zgartirmang.
+  2. Alohida sinov guruhida botni yoqing. Kunlik post, /vazifa, /viktorina, /krokodil, /tanla va /hyj orqali yangi matnlar kelishini tekshiring. Kunlik postdagi guruh nomi to’g’ri chiqsin; ball qoidalari o’zgarmasin.
+  3. Uch kishi /yashirin ga shaxsiy havola bilan qo’shilsin: so’zlar yetishmasligi sabab bekor bo’lmasin. Kim aytdi va Telefonni to’rt kishi bilan tekshiring; savol/ibora yangi bankdan kelsin. Sinovda /tezrejim dan foydalanish mumkin.
+  4. Natija kartasidagi Story uchun tugmasini bosing. 1080×1920 rasm shaxsiy chatga kelsin: sarlavha yuqoriroq, qatorlar ixcham, ism/daraja va ball markazda, pastda lupa yo’q, OQIBAT hamda Instagram nomi aniq bo’lsin. docs/design PNGlarini ham ochib ko’ring.
+  5. /help, /men, /sozlamalar va xato/ruxsat matnlarida a’zo, ma’lumot, o’yin kabi so’zlar bir xil ’ bilan chiqsin. O’zingiz yozgan ism yoki arxivdagi matn avtomatik qayta yozilmasligini biling.

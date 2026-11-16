@@ -236,7 +236,7 @@ async def test_extended_setting_snapshot_private_block_and_deferred_check(game_a
         for item in transport.methods
         if isinstance(item, EditMessageText) and item.chat_id == int(cop)
     ]
-    assert "to‘sildi" in updates[-1].text
+    assert "to’sildi" in updates[-1].text
     await feed(action(game, cop, "c", mafia, round_number=0))
     alerts = [item for item in transport.methods if isinstance(item, AnswerCallbackQuery)]
     assert alerts[-1].text == texts.MAFIA_STALE

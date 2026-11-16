@@ -688,6 +688,24 @@ timer isolation/caps/windows/cooldowns/linked dare/migration tests, smoke mocks,
 full pytest/Ruff/startup and isolated PG if available, final honest summary,
 commit/push, stop after Phase 26. No ZIP or further phase.
 
+### Phase 27 — Real content and small polish
+Import the newest `oqibat-content*.zip` from the owner's Downloads: replace all nine
+JSON banks in data/ with the supplied files without editing their content text.
+The offline content validator must pass. Tests needing particular examples/counts
+use their own small banks in temporary directories; retain a real-data schema and
+validator regression without fixed item counts. Update data/README.md to describe
+production content once imported. No invented replacement content if the archive
+is unavailable; record the missing input honestly.
+Polish Story cards (1080×1920): compact rows with vertically centered text, reduce
+the space above the title, remove the misleading footer magnifier (plain OQIBAT
+branding is acceptable). Regenerate and inspect docs/design previews. Standardize
+bot/texts.py static Uzbek copy on U+2019 (’), preserving interpolation fields,
+HTML and Python syntax. No game-rule, scoring, schema or dependency changes.
+**Accept:** archive bytes preserved, all nine production banks validate, isolated
+fixture-bank tests and count-independent real-data validation pass, Story layout
+regressions/previews and apostrophe checks pass, full pytest/Ruff/offline startup,
+honest PROGRESS entry, commit/push, then stop. No review ZIP.
+
 ### Later (not now)
 Additional Mini App interactions beyond the read-only scope and further game features.
 

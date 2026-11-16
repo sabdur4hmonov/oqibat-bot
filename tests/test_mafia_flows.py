@@ -207,7 +207,7 @@ async def test_forbidden_role_dm_prunes_before_assignment_and_rebalances_or_canc
         else:
             assert saved.status == "cancelled" and "roles" not in saved.state
     assert any(
-        isinstance(m, EditMessageText) and m.chat_id == -1 and "ro‘yxatdan olindi" in m.text
+        isinstance(m, EditMessageText) and m.chat_id == -1 and "ro’yxatdan olindi" in m.text
         for m in transport.methods
     )
 

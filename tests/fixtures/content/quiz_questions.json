@@ -1,0 +1,5 @@
+[
+  {"key": "quiz_001", "question": "O‘zbekiston poytaxti qaysi shahar?", "options": ["Toshkent", "Buxoro", "Nukus"], "correct_option_id": 0},
+  {"key": "quiz_002", "question": "Bir haftada necha kun bor?", "options": ["Olti", "Yetti", "Sakkiz"], "correct_option_id": 1},
+  {"key": "quiz_003", "question": "Bahordan keyin qaysi fasl keladi?", "options": ["Qish", "Kuz", "Yoz"], "correct_option_id": 2}
+]

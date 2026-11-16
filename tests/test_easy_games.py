@@ -68,7 +68,7 @@ class GameTelegram(GroupTelegram):
 
 
 @pytest.fixture
-async def game_app(sessions, settings, fake_clock):
+async def game_app(sessions, settings, fake_clock, fixture_content):
     transport = GameTelegram()
     async with Bot(TOKEN, session=transport) as bot:
         async with ScaleRuntime(sessions, bot, settings) as runtime:

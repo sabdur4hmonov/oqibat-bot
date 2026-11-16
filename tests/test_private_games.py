@@ -227,6 +227,11 @@ async def test_background_main_consent_context_rule_including_mafia(game_app, se
 
 async def test_secret_duration_stale_foreign_bot_and_insufficient_bank(game_app):
     feed, transport, runtime = game_app
+    # Make the insufficiency intentional, independent of any committed content bank.
+    runtime.content.banks["secret_words"] = [
+        {"key": str(index), "word": word}
+        for index, word in enumerate(("palov", "choy", "kitob"))
+    ]
     game = await lobby(game_app)
     await feed(callback(f"pg:{game.id}:0:h:2", 1))
     await runtime.effects.drain()

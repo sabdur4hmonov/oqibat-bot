@@ -12,7 +12,7 @@ GAME_STYLE = {
     "krokodil": ("🐊", "Krokodil", "#3ac99b"),
     "hyj": ("🎯", "Haqiqat yoki jasorat", "#ed9474"),
     "mafia": ("🎭", "Mafia", "#af91e8"),
-    "rps": ("🪨", "Tosh–qaychi–qog‘oz", "#82b7e8"),
+    "rps": ("🪨", "Tosh–qaychi–qog’oz", "#82b7e8"),
     "number": ("🔢", "Son topish", "#61c5dc"),
     "math": ("🧮", "Tezkor matematika", "#e9c566"),
     "secret": ("🕵️", "Yashirin topshiriq", "#64b7a8"),
@@ -25,17 +25,17 @@ GAME_NAMES = {key: value[1] for key, value in GAME_STYLE.items()}
 MEDALS = ("🥇", "🥈", "🥉")
 LEVEL_TITLES = ("Yangi a’zo", "Faol", "Davra yulduzi", "Oqibat ustasi")
 FAST_BOARD = "⚡ TEZREJIM · vaqtlar ×0.1"
-SMOKE_CONFIG = "[X] .env sozlamalari noto‘g‘ri. Avval scripts/check_env.py bilan tekshiring."
-SMOKE_OK = "[OK] Jonli ulanish tekshiruvlari o‘tdi. Bu to‘liq o‘yin sinovi emas."
-SMOKE_BAD = "[X] Ayrim tekshiruvlar o‘tmadi. .env, bot jurnali, domen va serverni tekshiring."
+SMOKE_CONFIG = "[X] .env sozlamalari noto’g’ri. Avval scripts/check_env.py bilan tekshiring."
+SMOKE_OK = "[OK] Jonli ulanish tekshiruvlari o’tdi. Bu to’liq o’yin sinovi emas."
+SMOKE_BAD = "[X] Ayrim tekshiruvlar o’tmadi. .env, bot jurnali, domen va serverni tekshiring."
 SMOKE_LABELS = {
-    "get_me": ("getMe va BOT_USERNAME mos", "getMe/token/username tekshiruvi o‘tmadi"),
+    "get_me": ("getMe va BOT_USERNAME mos", "getMe/token/username tekshiruvi o’tmadi"),
     "webhook": (
         "getWebhookInfo tanlangan rejimga mos",
-        "Webhook rejimi yoki so‘nggi xatoni tekshiring",
+        "Webhook rejimi yoki so’nggi xatoni tekshiring",
     ),
-    "webapp": ("WEBAPP_URL ochildi", "WEBAPP_URL yo‘q yoki ochilmadi; HTTPS/domenni tekshiring"),
-    "health": ("/healthz sog‘lom", "/healthz ochilmadi yoki tick 2 daqiqadan eski"),
+    "webapp": ("WEBAPP_URL ochildi", "WEBAPP_URL yo’q yoki ochilmadi; HTTPS/domenni tekshiring"),
+    "health": ("/healthz sog’lom", "/healthz ochilmadi yoki tick 2 daqiqadan eski"),
 }
 
 
@@ -44,12 +44,12 @@ def smoke_result(key, ok):
 
 
 FAST_ON = (
-    "⚡ Tezrejim yoqildi: yangi o‘yin vaqtlari 10 baravar qisqa.\n"
-    "Bu sinov guruhi rejimi. Ball va odam soni o‘zgarmaydi; yuborish chegarasi qoladi."
+    "⚡ Tezrejim yoqildi: yangi o’yin vaqtlari 10 baravar qisqa.\n"
+    "Bu sinov guruhi rejimi. Ball va odam soni o’zgarmaydi; yuborish chegarasi qoladi."
 )
-FAST_OFF = "Tezrejim o‘chirildi. Yangi o‘yinlar odatdagi vaqt bilan yuradi."
+FAST_OFF = "Tezrejim o’chirildi. Yangi o’yinlar odatdagi vaqt bilan yuradi."
 FAST_USAGE = "Faqat bot egasi: /tezrejim on yoki /tezrejim off — guruhda."
-FAST_BUSY = "Avval guruhdagi barcha o‘yinlarni /stop bilan tugating, keyin rejimni almashtiring."
+FAST_BUSY = "Avval guruhdagi barcha o’yinlarni /stop bilan tugating, keyin rejimni almashtiring."
 SELFTEST_BUSY = "Bu guruhda tekshiruv ketmoqda. Hisobotni kutamiz."
 SELFTEST_START = "🛠 Jonli sinov boshlandi. Bu vaqtinchalik xabar keyin tozalanadi."
 SELFTEST_EDIT = "🛠 Tahrirlash ishladi. Sinov davom etyapti."
@@ -59,19 +59,19 @@ SELFTEST_QUIZ = "Sinov: 2 + 2 nechchi?"
 SELFTEST_OPTIONS = ("3", "4")
 SELFTEST_LABELS = {
     "admin": "Bot admin",
-    "delete_right": "O‘chirish huquqi",
+    "delete_right": "O’chirish huquqi",
     "pin_right": "Pin huquqi",
     "send": "Xabar yuborish",
     "edit": "Xabarni tahrirlash",
-    "delete": "Xabarni o‘chirish",
-    "poll": "Oddiy so‘rov",
-    "stop_poll": "So‘rovni yopish",
-    "quiz": "Viktorina so‘rovi",
+    "delete": "Xabarni o’chirish",
+    "poll": "Oddiy so’rov",
+    "stop_poll": "So’rovni yopish",
+    "quiz": "Viktorina so’rovi",
     "dice": "Zar",
     "spoiler": "Spoiler surat",
     "card": "Karta yuklash",
-    "pin": "O‘z xabarini pin qilish",
-    "unpin": "O‘z pinini olish",
+    "pin": "O’z xabarini pin qilish",
+    "unpin": "O’z pinini olish",
     "cleanup": "Sinovni tozalash",
 }
 
@@ -129,11 +129,11 @@ def board_layout(game, body):
         body = body[len(title) :].lstrip(" \n")
     state, phase = (game.state, game.state.get("phase", "lobby"))
     status = {
-        "lobby": "Davra yig‘ilyapti",
+        "lobby": "Davra yig’ilyapti",
         "preparing": "Tayyorgarlik",
         "sending": "Tayyorgarlik",
         "collect": "Shaxsiy javoblarni kutamiz",
-        "prompting": "Shaxsiy topshiriqlar yo‘lda",
+        "prompting": "Shaxsiy topshiriqlar yo’lda",
         "done": "Davra yakunlandi",
         "hunt": "Ov davom etyapti",
         "guess": "Taxmin vaqti",
@@ -141,9 +141,9 @@ def board_layout(game, body):
         "night": "🌙 Tun",
         "discussion": "☀️ Kunduzi · suhbat",
         "vote": "☀️ Kunduzi · ovoz berish",
-    }.get(phase, "O‘yin davom etyapti")
+    }.get(phase, "O’yin davom etyapti")
     if game.status == "cancelled":
-        status = "Davra to‘xtadi"
+        status = "Davra to’xtadi"
     elif game.status == "finished":
         status = "Davra yakunlandi"
     deadline = game.phase_deadline_at
@@ -163,7 +163,7 @@ def board_layout(game, body):
         "reveal_sending",
         "prompting",
     } and game.status not in {"finished", "cancelled"}:
-        timing = "⏳ Bosqich tayyor bo‘lishini kutamiz"
+        timing = "⏳ Bosqich tayyor bo’lishini kutamiz"
     lines = [title, f"Holat: {status}", progress_bar(*game_progress(game)), timing]
     if state.get("timer_multiplier", 1) != 1:
         lines.insert(1, FAST_BOARD)
@@ -225,18 +225,18 @@ MAFIA_ROLE_CARDS = {
     ),
     "don": (
         "🕴",
-        "Mafia teng ovozida tanlovingiz hal qiladi; komissarga tinch " + "ko‘rinasiz.",
+        "Mafia teng ovozida tanlovingiz hal qiladi; komissarga tinch " + "ko’rinasiz.",
         "Mafia jamoasi bilan yuting; manyak qolmasin.",
     ),
     "doctor": (
         "💊",
         "Har tun bir odamni himoya qilasiz.",
-        "Mafia va manyakni yo‘qotishda tinch jamoaga yordam bering.",
+        "Mafia va manyakni yo’qotishda tinch jamoaga yordam bering.",
     ),
     "commissioner": (
         "🔍",
         "Tunda bir odamni tekshirasiz.",
-        "Mafia va manyakni yo‘qotishda tinch jamoaga yordam bering.",
+        "Mafia va manyakni yo’qotishda tinch jamoaga yordam bering.",
     ),
     "town": (
         "🏘",
@@ -245,13 +245,13 @@ MAFIA_ROLE_CARDS = {
     ),
     "mistress": (
         "🌹",
-        "Tunda bir odamning harakatini to‘sasiz.",
+        "Tunda bir odamning harakatini to’sasiz.",
         "Tinch jamoa bilan yuting; mafia va manyak qolmasin.",
     ),
     "manyak": (
         "🗡",
-        "Yakka o‘ynab, tunda bir nishonni tanlaysiz.",
-        "Tirik qoling: yoningizda ko‘pi bilan bir odam qolsin.",
+        "Yakka o’ynab, tunda bir nishonni tanlaysiz.",
+        "Tirik qoling: yoningizda ko’pi bilan bir odam qolsin.",
     ),
 }
 
@@ -261,41 +261,41 @@ def mafia_role_card(role):
     return f"{icon} <b>{MAFIA_ROLE_NAMES[role]}</b>\n{description}\nMaqsad: {goal}\n"
 
 
-SLOGAN = "Guruhda oqibat bo‘lsin"
+SLOGAN = "Guruhda oqibat bo’lsin"
 CARD_BRAND = "OQIBAT"
 CARD_RANK = "Davra natijasi"
-CARD_PREVIEW_NAMES = ("Oʻtkir Gʻulomov", "G‘ani", "Davra yulduzi", "Ali", "Vali")
+CARD_PREVIEW_NAMES = ("O’tkir G’ulomov", "G’ani", "Davra yulduzi", "Ali", "Vali")
 STORY_BUTTON = "📲 Story uchun"
 STORY_WAIT = "Story shaxsiy chatga keladi. Botni avval /start bilan oching."
 STORY_FAILED = "Story tayyorlanmadi yoki manba eskirgan. Guruhdagi yangi kartani oching."
 CARD_WEEKLY_TITLE = "Haftalik top 5"
 CARD_GAME_TITLES = {
     "quiz": "Viktorina natijalari",
-    "duel": "Duel g‘olibi",
-    "rps": "Tosh–qaychi–qog‘oz g‘olibi",
-    "number": "Son topish g‘olibi",
+    "duel": "Duel g’olibi",
+    "rps": "Tosh–qaychi–qog’oz g’olibi",
+    "number": "Son topish g’olibi",
     "math": "Tezkor matematika natijalari",
     "krokodil": "Krokodil natijalari",
     "hyj": "Haqiqat yoki jasorat",
-    "mafia": "Mafia g‘oliblari",
+    "mafia": "Mafia g’oliblari",
 }
-ADD_TO_GROUP = "Botni guruhingizga qo‘shing"
+ADD_TO_GROUP = "Botni guruhingizga qo’shing"
 OPEN_WEBAPP = "Ilovani ochish"
 CONTENT_DESCRIPTION = "Oqibat matn banklarini tekshirish (internet va .env kerak emas)."
 CONTENT_DIRECTORY = "Tekshiriladigan data papkasi"
-CONTENT_OK = "[OK] Barcha matn banklari to‘g‘ri. Namunalar jonli kontent " + "o‘rnini bosmaydi."
-CONTENT_BAD = "[X] Xatolar bor. CONTENT_GUIDE.md bo‘yicha tuzating va qayta " + "tekshiring."
+CONTENT_OK = "[OK] Barcha matn banklari tekshiruvdan o’tdi."
+CONTENT_BAD = "[X] Xatolar bor. CONTENT_GUIDE.md bo’yicha tuzating va qayta " + "tekshiring."
 CONTENT_ERRORS = {
-    "schema": "Tuzilma, maydon, noyob key, tur yoki uzunlik noto‘g‘ri. "
-    + "Qo‘llanmadagi shaklni tekshiring.",
-    "json": "JSON yoki UTF-8 noto‘g‘ri, yoxud bir obyekt maydoni "
+    "schema": "Tuzilma, maydon, noyob key, tur yoki uzunlik noto’g’ri. "
+    + "Qo’llanmadagi shaklni tekshiring.",
+    "json": "JSON yoki UTF-8 noto’g’ri, yoxud bir obyekt maydoni "
     + "takrorlangan. UTF-8 BOMsiz saqlang.",
-    "unreadable": "Fayl yoki papka o‘qilmadi. Manzil va ruxsatni tekshiring.",
-    "missing": "Kerakli bank fayli topilmadi. Bo‘sh bank uchun [] yozing.",
-    "unknown": "Bu nomdagi bank tanilmagan. Faqat qo‘llanmadagi JSON bank " + "fayllari kerak.",
+    "unreadable": "Fayl yoki papka o’qilmadi. Manzil va ruxsatni tekshiring.",
+    "missing": "Kerakli bank fayli topilmadi. Bo’sh bank uchun [] yozing.",
+    "unknown": "Bu nomdagi bank tanilmagan. Faqat qo’llanmadagi JSON bank " + "fayllari kerak.",
     "duplicate_text": "Matn boshqa elementni takrorlaydi (harf/apostrof farqi ham "
     + "hisobga olinadi).",
-    "duplicate_options": "Variantlar takrorlangan yoki faqat bo‘sh joydan iborat.",
+    "duplicate_options": "Variantlar takrorlangan yoki faqat bo’sh joydan iborat.",
     "placeholder": "Faqat kunlik matnda bir marta {group} ishlatish mumkin.",
     "duplicate_key": "Bu key boshqa bankda ham bor. Barcha banklarda noyob key yozing.",
 }
@@ -314,80 +314,80 @@ def content_issue(file, code, item):
 WEB_COPY = {
     "title": "Oqibat",
     "tagline": "Guruhingiz bilan birga",
-    "read_only": "Bu ilova faqat ko‘rish uchun. O‘zgartirishlar bot orqali qilinadi.",
+    "read_only": "Bu ilova faqat ko’rish uchun. O’zgartirishlar bot orqali qilinadi.",
     "group": "Guruh",
     "group_hint": "Faqat bot biladigan guruhlar chiqadi. Boshqa guruh uchun undagi "
     + "/help tugmasini oching.",
     "refresh": "Yangilash",
-    "privacy": "Ma’lumot va o‘chirish haqida botdagi /maxfiylik buyrug‘ini o‘qing.",
+    "privacy": "Ma’lumot va o’chirish haqida botdagi /maxfiylik buyrug’ini o’qing.",
     "profile": "Profilim",
     "leaderboard": "Reyting",
     "achievements": "Yutuqlarim",
     "rules_title": "Qoidalar",
-    "rules": "Ishtirok etish ixtiyoriy: /qoshilish bilan qo‘shiling, /chiqish "
+    "rules": "Ishtirok etish ixtiyoriy: /qoshilish bilan qo’shiling, /chiqish "
     + "bilan chiqing.\n\nKunlik xabardan keyingi ilk qatnashuv +1 ball. "
     + "Ketma-ket 7 kun +3, 30 kun +10 bonus. Video vazifasi +15, ovoz "
-    + "yoki rasm +10, matn +5. O‘tkazilgan vazifa odatda −5; admin "
-    + "tanlagan boshqa jazo ham bo‘lishi mumkin. /sozlamalar ni "
-    + "tekshiring.\n\nViktorinada to‘g‘ri javob +3, birinchi javobga yana"
-    + " +2. Duel g‘olibiga +2. Tosh–qaychi–qog‘oz (/tqq) ikki kishi "
+    + "yoki rasm +10, matn +5. O’tkazilgan vazifa odatda −5; admin "
+    + "tanlagan boshqa jazo ham bo’lishi mumkin. /sozlamalar ni "
+    + "tekshiring.\n\nViktorinada to’g’ri javob +3, birinchi javobga yana"
+    + " +2. Duel g’olibiga +2. Tosh–qaychi–qog’oz (/tqq) ikki kishi "
     + "bilan: har kim yashirin tanlaydi, ikkala tanlovdan keyin natija "
-    + "ochiladi. Tosh qaychini, qaychi qog‘ozni, qog‘oz toshni yutadi. "
-    + "G‘olibga +2, durangda ball yo‘q. Son topish (/sontop): 1–100, 15"
+    + "ochiladi. Tosh qaychini, qaychi qog’ozni, qog’oz toshni yutadi. "
+    + "G’olibga +2, durangda ball yo’q. Son topish (/sontop): 1–100, 15"
     + " urinish, 3 daqiqa; topuvchiga +3. Tezkor matematika "
-    + "(/matematika): 5 savol, har biri 20 soniya, birinchi to‘g‘ri "
-    + "javobga +2; har savolda bir urinish. /oyinlar da ro‘yxat bor. "
-    + "Krokodilda topuvchiga +5, boshlovchiga +3; boshlovchi so‘zni "
-    + "yozsa −3. Haqiqat javobiga +5, jasoratga vazifa bo‘yicha ball, "
+    + "(/matematika): 5 savol, har biri 20 soniya, birinchi to’g’ri "
+    + "javobga +2; har savolda bir urinish. /oyinlar da ro’yxat bor. "
+    + "Krokodilda topuvchiga +5, boshlovchiga +3; boshlovchi so’zni "
+    + "yozsa −3. Haqiqat javobiga +5, jasoratga vazifa bo’yicha ball, "
     + "rad etishga −2.\n\nMafia 5–15 kishi bilan: rollar shaxsiy chatda, "
-    + "tunda harakat, kunduzi muhokama va ovoz. O‘lganlar ovoz "
-    + "bermaydi. G‘olibga +10, tirik qolishga +3. Kengaytirilgan "
+    + "tunda harakat, kunduzi muhokama va ovoz. O’lganlar ovoz "
+    + "bermaydi. G’olibga +10, tirik qolishga +3. Kengaytirilgan "
     + "rejimda 8 kishidan Don teng mafia ovozini hal qiladi va "
-    + "komissarga tinch ko‘rinadi; 9 kishidan Ma’shuqa bir harakatni "
-    + "to‘sadi, bir odamni ketma-ket tanlamaydi; 11 kishidan Manyak "
-    + "alohida o‘ynaydi va o‘zi bilan ko‘pi bilan ikki kishi qolsa "
+    + "komissarga tinch ko’rinadi; 9 kishidan Ma’shuqa bir harakatni "
+    + "to’sadi, bir odamni ketma-ket tanlamaydi; 11 kishidan Manyak "
+    + "alohida o’ynaydi va o’zi bilan ko’pi bilan ikki kishi qolsa "
     + "yutadi. 20 tur yoki 60 daqiqada durang. /stop ni boshlovchi yoki"
     + " admin ishlatadi.\n\nYashirin topshiriq (/yashirin): 3–20 kishi, "
-    + "2/6/24 soatlik fon o‘yini. Nishon maxfiy so‘zni guruhda aytsa "
-    + "ovchiga +10 (ko‘pi bilan 3 marta); /fosh javob bilan: to‘g‘ri "
+    + "2/6/24 soatlik fon o’yini. Nishon maxfiy so’zni guruhda aytsa "
+    + "ovchiga +10 (ko’pi bilan 3 marta); /fosh javob bilan: to’g’ri "
     + "+5, xato −2 va 1 soat kutish, jami 3 gumon.\nKim aytdi? "
     + "(/kimaytdi): 4–12 kishi, shaxsiy javob <=300 belgi, 5 daqiqa. "
-    + "Anonim javobga 30 soniya taxmin; to‘g‘ri +3, hech kim topmasa "
+    + "Anonim javobga 30 soniya taxmin; to’g’ri +3, hech kim topmasa "
     + "muallifga +3.\nTelefon (/telefon): 4–10 kishi; navbatda 2 daqiqa,"
     + " ovoz <=30 soniya. Keyingi odamga faqat oldingi ovoz, oxirgi "
     + "odamdan matn; yakunda zanjir ochiladi. Topshirgan, materiali "
     + "yashirilmagan odamga +3.\nEslaysizmi? (/eslaysizmi): 3–10 kishi, "
     + "5 daqiqada bitta shaxsiy surat. Guruhda spoiler, 30 soniya "
-    + "taxmin, keyin yuboruvchi va izoh ochiladi. To‘g‘ri topuvchiga "
-    + "+3; kamida bir kishi topsa yuboruvchiga +2.\nBu o‘yinlarga "
+    + "taxmin, keyin yuboruvchi va izoh ochiladi. To’g’ri topuvchiga "
+    + "+3; kamida bir kishi topsa yuboruvchiga +2.\nBu o’yinlarga "
     + "lobbydagi shaxsiy havola bilan rozilik berib kirasiz. Mafia "
-    + "bilan birga faqat bitta faol shaxsiy o‘yinda bo‘lish mumkin. "
+    + "bilan birga faqat bitta faol shaxsiy o’yinda bo’lish mumkin. "
     + "Admin materialni yashirsa muallifning shu material bali bekor "
-    + "qilinadi. Media o‘chirish huquqi yo‘qolsa admin uni qo‘lda "
-    + "o‘chirishi kerak. Asosiy o‘yin bilan Yashirin birga yuradi; fon "
-    + "o‘yinini to‘xtatish uchun uning doskasiga /stop bilan javob "
-    + "bering.\n\nMavsum guruhning mahalliy kalendar oyi bo‘yicha. Eski "
-    + "ballar o‘chmaydi. Ilovani ochish ball bermaydi va rozilikni "
-    + "o‘zgartirmaydi.",
+    + "qilinadi. Media o’chirish huquqi yo’qolsa admin uni qo’lda "
+    + "o’chirishi kerak. Asosiy o’yin bilan Yashirin birga yuradi; fon "
+    + "o’yinini to’xtatish uchun uning doskasiga /stop bilan javob "
+    + "bering.\n\nMavsum guruhning mahalliy kalendar oyi bo’yicha. Eski "
+    + "ballar o’chmaydi. Ilovani ochish ball bermaydi va rozilikni "
+    + "o’zgartirmaydi.",
     "period": "Davr",
     "season": "Joriy mavsum",
     "all_time": "Barcha vaqt",
     "total_points": "Jami ball",
     "achievement_count": "Ochilgan yutuqlar",
     "loading": "Yuklanmoqda…",
-    "no_scores": "Hozircha ball yo‘q.",
+    "no_scores": "Hozircha ball yo’q.",
     "points": "ball",
     "choose_group": "Avval guruhni tanlang.",
     "link_group": "Havoladagi guruh",
     "telegram_only": "Ilovani Telegram ichida botdagi tugma orqali oching.",
-    "auth_error": "Telegram tasdiqlovi noto‘g‘ri. Ilovani botdan qayta oching.",
+    "auth_error": "Telegram tasdiqlovi noto’g’ri. Ilovani botdan qayta oching.",
     "expired": "Tasdiqlov eskirgan. Ilovani botdan qayta oching.",
-    "bad_request": "So‘rov noto‘g‘ri. Guruh va davrni qayta tanlang.",
-    "forbidden": "Bu guruhga ruxsat yo‘q. Guruh a’zosi ekaningizni va bot "
+    "bad_request": "So’rov noto’g’ri. Guruh va davrni qayta tanlang.",
+    "forbidden": "Bu guruhga ruxsat yo’q. Guruh a’zosi ekaningizni va bot "
     + "adminligini tekshiring.",
     "not_found": "Sahifa topilmadi.",
-    "busy": "Hozir band. Birpasdan so‘ng yana urinib ko‘ring.",
-    "error": "Ma’lumot yuklanmadi. Birpasdan so‘ng yana urinib ko‘ring.",
+    "busy": "Hozir band. Birpasdan so’ng yana urinib ko’ring.",
+    "error": "Ma’lumot yuklanmadi. Birpasdan so’ng yana urinib ko’ring.",
 }
 START_DESCRIPTION = "Davrani boshlaymiz"
 WEB_COPY.update(
@@ -407,33 +407,33 @@ WEB_COPY.update(
     }
 )
 HELP_DESCRIPTION = "Davra uchun yordam"
-CONFIG_ERROR = "Sozlamalarda xato bor. .env faylini README bo‘yicha tekshiring."
+CONFIG_ERROR = "Sozlamalarda xato bor. .env faylini README bo’yicha tekshiring."
 STARTUP_ERROR = "Bot ishga tushmadi. Sozlamalar, baza va internet aloqasini " + "tekshiring."
 CHECK_OK = "Sozlamalar va baza tayyor. Telegram aloqasi tekshirilmadi."
 ENV_FILE_MISSING = (
     "[X] .env topilmadi. Avval: Copy-Item .env.example .env, keyin " + "notepad .env."
 )
 ENV_FILE_UNREADABLE = (
-    "[X] .env o‘qilmadi. Faylga ruxsatni va UTF-8 shaklida " + "saqlanganini tekshiring."
+    "[X] .env o’qilmadi. Faylga ruxsatni va UTF-8 shaklida " + "saqlanganini tekshiring."
 )
-ENV_SETTINGS_OK = "[OK] .env va PowerShell muhitidagi sozlamalar to‘g‘ri o‘qildi."
-ENV_INVALID_HEADER = "[X] Sozlamalarni tuzating (maxfiy qiymatlar ko‘rsatilmaydi):"
+ENV_SETTINGS_OK = "[OK] .env va PowerShell muhitidagi sozlamalar to’g’ri o’qildi."
+ENV_INVALID_HEADER = "[X] Sozlamalarni tuzating (maxfiy qiymatlar ko’rsatilmaydi):"
 ENV_FIELD_HINTS = {
-    "webapp_url": "WEBAPP_URL: o‘z domeningizdagi https://domen.uz/webapp yoki "
-    + "bo‘sh qiymat kerak.",
-    "bot_token": "BOT_TOKEN: BotFather bergan tokenni raqam:kalit shaklida to‘liq " + "nusxalang.",
+    "webapp_url": "WEBAPP_URL: o’z domeningizdagi https://domen.uz/webapp yoki "
+    + "bo’sh qiymat kerak.",
+    "bot_token": "BOT_TOKEN: BotFather bergan tokenni raqam:kalit shaklida to’liq " + "nusxalang.",
     "bot_username": "BOT_USERNAME: botning Username qiymati kerak, havola emas; oxiri"
-    + " bot bo‘lsin.",
+    + " bot bo’lsin.",
     "instagram_handle": "INSTAGRAM_HANDLE: Instagram nomini yozing, havola emas.",
-    "owner_id": "OWNER_ID: o‘zingizning noldan katta raqamli Telegram ID "
+    "owner_id": "OWNER_ID: o’zingizning noldan katta raqamli Telegram ID "
     + "qiymatingizni yozing.",
     "database_url": "DATABASE_URL: sqlite+aiosqlite yoki postgresql+asyncpg ulanish "
     + "manzili kerak.",
-    "log_level": "LOG_LEVEL: DEBUG, INFO, WARNING, ERROR yoki CRITICAL bo‘lsin.",
+    "log_level": "LOG_LEVEL: DEBUG, INFO, WARNING, ERROR yoki CRITICAL bo’lsin.",
     "environment": "ENVIRONMENT: mahalliy sinov uchun development, server uchun " + "production.",
     "db_pool_size": "DB_POOL_SIZE: 10 dan 20 gacha butun son yozing.",
     "use_webhook": "USE_WEBHOOK: mahalliy sinov uchun false yozing.",
-    "webhook_url": "WEBHOOK_URL: webhook uchun to‘liq HTTPS manzil va yo‘l kerak.",
+    "webhook_url": "WEBHOOK_URL: webhook uchun to’liq HTTPS manzil va yo’l kerak.",
     "webhook_secret": "WEBHOOK_SECRET: webhook uchun maxfiy harf, raqam, _ yoki - "
     + "qiymat kerak.",
     "webhook_host": "WEBHOOK_HOST: serverning mahalliy manzilini yozing, masalan " + "127.0.0.1.",
@@ -443,30 +443,30 @@ ENV_FIELD_HINTS = {
 ENV_RUNTIME_HINT = (
     "ENVIRONMENT/DATABASE_URL/USE_WEBHOOK/WEBHOOK_URL/WEBHOOK_SECRET "
     + "ni tekshiring. production uchun PostgreSQL kerak. Webhook uchun "
-    + "HTTPS yo‘l va 1–256 ta harf, raqam, _ yoki - dan tuzilgan maxfiy"
+    + "HTTPS yo’l va 1–256 ta harf, raqam, _ yoki - dan tuzilgan maxfiy"
     + " kalit kerak. Mahalliy sinovda ENVIRONMENT=development va "
     + "USE_WEBHOOK=false qoldiring."
 )
 ENV_TOKEN_BAD = (
-    "[X] BOT_TOKEN shakli noto‘g‘ri yoki namuna token qolgan. " + "BotFather tokenini yozing."
+    "[X] BOT_TOKEN shakli noto’g’ri yoki namuna token qolgan. " + "BotFather tokenini yozing."
 )
-ENV_TOKEN_OK = "[OK] BOT_TOKEN shakli to‘g‘ri. Tokenning haqiqiyligi Telegramda " + "tekshiriladi."
+ENV_TOKEN_OK = "[OK] BOT_TOKEN shakli to’g’ri. Tokenning haqiqiyligi Telegramda " + "tekshiriladi."
 ENV_TELEGRAM_SKIPPED = "[!] Token tuzatilmaguncha Telegram tekshiruvi bajarilmaydi."
 ENV_GETME_OK = "[OK] Telegram getMe javob berdi: token qabul qilindi."
 ENV_USERNAME_OK = "[OK] Telegramdagi bot nomi BOT_USERNAME bilan mos."
 ENV_USERNAME_BAD = (
     "[X] BOT_USERNAME token egasining Username qiymatiga mos emas. "
-    + "BotFatherdagi bot nomini .env ga yozing; oddiy ko‘rinadigan "
+    + "BotFatherdagi bot nomini .env ga yozing; oddiy ko’rinadigan "
     + "ismni yozmang."
 )
 ENV_TOKEN_REJECTED = (
     "[X] Telegram tokenni qabul qilmadi. BotFatherdagi joriy tokenni " + "qayta nusxalang."
 )
 ENV_TELEGRAM_NETWORK = (
-    "[X] Telegramga ulanib bo‘lmadi. Internet va Telegramga kirishni " + "tekshiring."
+    "[X] Telegramga ulanib bo’lmadi. Internet va Telegramga kirishni " + "tekshiring."
 )
 ENV_TELEGRAM_TIMEOUT = (
-    "[X] Telegram javobi kechikdi. Internetni tekshirib, yana urinib " + "ko‘ring."
+    "[X] Telegram javobi kechikdi. Internetni tekshirib, yana urinib " + "ko’ring."
 )
 ENV_TELEGRAM_FAILED = (
     "[X] Telegram tekshiruvi bajarilmadi. Tokenni tekshirib, keyinroq" + " qayta urining."
@@ -476,54 +476,54 @@ ENV_SCHEMA_OK = "[OK] Botga kerakli jadval va ustunlar mavjud."
 ENV_SCHEMA_BAD = "[X] Bazada jadval yoki ustunlar yetishmaydi. Avval: alembic " + "upgrade head."
 ENV_DB_MISSING = "[X] SQLite baza fayli topilmadi. Loyiha papkasida: alembic " + "upgrade head."
 ENV_DB_FAILED = (
-    "[X] Bazaga ulanib bo‘lmadi. DATABASE_URL, faylga ruxsat yoki "
-    + "PostgreSQL serveri, baza nomi va kirish ma'lumotlarini "
+    "[X] Bazaga ulanib bo’lmadi. DATABASE_URL, faylga ruxsat yoki "
+    + "PostgreSQL serveri, baza nomi va kirish ma’lumotlarini "
     + "tekshiring."
 )
 ENV_DB_TIMEOUT = "[X] Baza javobi kechikdi. Server, tarmoq va DATABASE_URL ni " + "tekshiring."
-ENV_CHECK_OK = "[OK] Barcha tekshiruvlar o‘tdi. Botni ishga tushirish: python -m bot."
+ENV_CHECK_OK = "[OK] Barcha tekshiruvlar o’tdi. Botni ishga tushirish: python -m bot."
 ENV_CHECK_FAILED = (
     "[X] Tekshiruv tugadi. Yuqoridagi xatolarni tuzatib, buyruqni " + "qayta bajaring."
 )
-ENV_CHECK_CANCELLED = "Tekshiruv to‘xtatildi."
+ENV_CHECK_CANCELLED = "Tekshiruv to’xtatildi."
 
 
 def env_retry_after(seconds):
-    return f"[X] Telegram vaqtincha kutishni so‘radi. {seconds} soniyadan keyin qayta tekshiring."
+    return f"[X] Telegram vaqtincha kutishni so’radi. {seconds} soniyadan keyin qayta tekshiring."
 
 
-JOIN_BUTTON = "O‘yinga qo‘shilish"
+JOIN_BUTTON = "O’yinga qo’shilish"
 WELCOME_GROUP = (
-    "<b>Guruhda oqibat bo‘lsin!</b> 👋\nO‘yinlar va vazifalarda "
+    "<b>Guruhda oqibat bo’lsin!</b> 👋\nO’yinlar va vazifalarda "
     + "qatnashish uchun quyidagi tugmani bosing. Istalgan vaqtda "
     + "/chiqish bilan chiqishingiz mumkin."
 )
 NEED_ADMIN = (
     "Ishlashim uchun meni guruh admini qiling: guruh nomi → "
-    + "Tahrirlash → Administratorlar → Administrator qo‘shish. "
-    + "Xabarlarni o‘chirish, a'zolarni cheklash va xabarlarni qadash "
+    + "Tahrirlash → Administratorlar → Administrator qo’shish. "
+    + "Xabarlarni o’chirish, a’zolarni cheklash va xabarlarni qadash "
     + "huquqlarini bering."
 )
 MEMBER_CHECK_FAILED = (
-    "Guruhdagi a'zoligingizni tekshirib bo‘lmadi. Guruh a'zosi "
-    + "ekaningizni tekshirib, keyinroq yana urinib ko‘ring."
+    "Guruhdagi a’zoligingizni tekshirib bo’lmadi. Guruh a’zosi "
+    + "ekaningizni tekshirib, keyinroq yana urinib ko’ring."
 )
-JOINED = "Davraga xush kelibsiz! Vazifa va o‘yinlarga tayyorsiz. ✅"
+JOINED = "Davraga xush kelibsiz! Vazifa va o’yinlarga tayyorsiz. ✅"
 OPTED_OUT = (
-    "O‘yindan chiqdingiz. Endi sizga yangi vazifa berilmaydi. "
-    + "/qoshilish bilan qayta qo‘shiling."
+    "O’yindan chiqdingiz. Endi sizga yangi vazifa berilmaydi. "
+    + "/qoshilish bilan qayta qo’shiling."
 )
-ADMINS_ONLY = "Bu sozlamalarni faqat guruh admini o‘zgartiradi."
-ADMIN_CHECK_FAILED = "Adminlarni tekshira olmadim. Birpasdan so‘ng yana urinib ko‘ring."
+ADMINS_ONLY = "Bu sozlamalarni faqat guruh admini o’zgartiradi."
+ADMIN_CHECK_FAILED = "Adminlarni tekshira olmadim. Birpasdan so’ng yana urinib ko’ring."
 SETTINGS_TITLE = "⚙️ Guruh sozlamalari"
 SETTINGS_SAVED = "Tayyor, saqlandi! ✅"
-SETTINGS_INVALID = "Qiymat noto‘g‘ri. Ko‘rsatilgan shaklda qayta yuboring."
+SETTINGS_INVALID = "Qiymat noto’g’ri. Ko’rsatilgan shaklda qayta yuboring."
 SETTINGS_EXPIRED = "Sozlash vaqti tugadi. /sozlamalar bilan qayta boshlang."
 BACK_BUTTON = "← Orqaga"
 CUSTOM_BUTTON = "Qiymat kiritish"
-YES_NO = {True: "Yoqilgan", False: "O‘chirilgan"}
+YES_NO = {True: "Yoqilgan", False: "O’chirilgan"}
 PENALTY_NAMES = {
-    "off": "Jazo yo‘q",
+    "off": "Jazo yo’q",
     "points": "Ball ayirish",
     "mute": "Ovozini cheklash",
     "kick": "Guruhdan chiqarish",
@@ -534,47 +534,47 @@ GROUP_COMMANDS = {
     "maxfiylik": "Ma’lumotlar maxfiyligi",
     "yutuqlar": "Mening yutuqlarim",
     "help": HELP_DESCRIPTION,
-    "qoshilish": "O‘yinga qo‘shilish",
-    "chiqish": "O‘yindan chiqish",
+    "qoshilish": "O’yinga qo’shilish",
+    "chiqish": "O’yindan chiqish",
     "sozlamalar": "Guruh sozlamalari (admin)",
     "vazifa": "Hozir vazifa berish (admin)",
     "men": "Mening ballarim",
     "top": "Guruh reytingi",
     "duel": "Bot tashlaydigan zar dueli",
-    "tqq": "Tosh–qaychi–qog‘oz dueli",
+    "tqq": "Tosh–qaychi–qog’oz dueli",
     "sontop": "Yashirin sonni birga topish",
     "matematika": "Tezkor matematik savollar",
-    "oyinlar": "Barcha o‘yinlar ro‘yxati",
+    "oyinlar": "Barcha o’yinlar ro’yxati",
     "viktorina": "Besh savolli viktorina",
     "tanla": "Ikki variantdan birini tanlash",
-    "krokodil": "So‘z topish o‘yini",
+    "krokodil": "So’z topish o’yini",
     "hyj": "Haqiqat yoki jasorat",
-    "mafia": "Mafia: 5–15 kishilik o‘yin",
-    "yashirin": "Yashirin topshiriq: fon o‘yini",
+    "mafia": "Mafia: 5–15 kishilik o’yin",
+    "yashirin": "Yashirin topshiriq: fon o’yini",
     "fosh": "Gumondagi ovchiga javoban fosh qilish",
     "kimaytdi": "Anonim javob muallifini topish",
     "telefon": "Ovozli buzilgan telefon",
     "eslaysizmi": "Suratni kim yuborganini topish",
-    "stop": "O‘yinni to‘xtatish",
+    "stop": "O’yinni to’xtatish",
 }
 GROUP_MENU = ("oyinlar", "qoshilish", "men", "top", "yutuqlar", "sozlamalar", "stop", "help")
 HUB_CATEGORIES = {
-    "fast": "Tez o‘yinlar",
-    "word": "So‘z o‘yinlari",
-    "large": "Katta o‘yinlar",
-    "background": "Fon o‘yini",
+    "fast": "Tez o’yinlar",
+    "word": "So’z o’yinlari",
+    "large": "Katta o’yinlar",
+    "background": "Fon o’yini",
 }
 HUB_BACK = "← Barcha toifalar"
 HUB_INTRO = (
-    "🎲 <b>Davra qizisinmi?</b>\nToifani tanlang, keyin o‘yinni bosing.\n"
+    "🎲 <b>Davra qizisinmi?</b>\nToifani tanlang, keyin o’yinni bosing.\n"
     "Guruhda avval /qoshilish. /help da barcha buyruq va qoidalar bor."
 )
 HUB_GROUP_ONLY = "Davrani guruhda ochamiz! Guruhda /oyinlar yuboring."
-DAILY_GAME = "🎲 Bugungi o‘yin"
+DAILY_GAME = "🎲 Bugungi o’yin"
 SETUP_STEPS = (
     "⚙️ 1/3 · Kunlik post qachon kelsin?\nGuruhning mahalliy vaqtini tanlang.",
     "⚙️ 2/3 · Kuniga nechta vazifa beray?\n0 — vazifalarsiz davra.",
-    "⚙️ 3/3 · Bajarilmagan vazifaga qanday yo‘l tutamiz?\n"
+    "⚙️ 3/3 · Bajarilmagan vazifaga qanday yo’l tutamiz?\n"
     "Jazosiz yoki ball; mute/kick uchun botga cheklash huquqi kerak.",
 )
 SETUP_VALUES = {
@@ -584,48 +584,48 @@ SETUP_VALUES = {
     "kick": "Chiqarish",
 }
 SETUP_FULL = "Barcha sozlamalar"
-SETUP_DONE = "Tayyor! Davra sizniki. ✅\nIstalgan payt /sozlamalar bilan o‘zgartiring."
+SETUP_DONE = "Tayyor! Davra sizniki. ✅\nIstalgan payt /sozlamalar bilan o’zgartiring."
 WELCOME_GROUP += "\n\n" + SETUP_STEPS[0]
 
 GAME_JOIN_FIRST = (
-    "O‘yin uchun bot admin bo‘lishi va siz /qoshilish bilan " + "qo‘shilishingiz kerak."
+    "O’yin uchun bot admin bo’lishi va siz /qoshilish bilan " + "qo’shilishingiz kerak."
 )
-GAME_BUSY = "Bu o‘yin bilan davra qizib turibdi! Yakunini kuting yoki /stop " + "yuboring."
-GAME_CANCELLED = "Davra to‘xtadi. 🛑"
-GAME_TIMEOUT = "O‘yin kutish muddati tugadi. Yana bir davra boshlash mumkin!"
-GAME_RESTARTED = "Bot qayta ishga tushdi. Kechirasiz, bu o‘yinni qayta boshlang."
+GAME_BUSY = "Bu o’yin bilan davra qizib turibdi! Yakunini kuting yoki /stop " + "yuboring."
+GAME_CANCELLED = "Davra to’xtadi. 🛑"
+GAME_TIMEOUT = "O’yin kutish muddati tugadi. Yana bir davra boshlash mumkin!"
+GAME_RESTARTED = "Bot qayta ishga tushdi. Kechirasiz, bu o’yinni qayta boshlang."
 GAME_BUTTON_EXPIRED = "Bu tugma sizga mos emas yoki eskirgan. Yangi doskani oching."
-GAME_NO_CONTENT = "Bu o‘yin uchun savollar hali kiritilmagan."
+GAME_NO_CONTENT = "Bu o’yin uchun savollar hali kiritilmagan."
 NO_ACTIVE_GAME = "Davra hali ochilmagan. /oyinlar dan tanlaymizmi?"
-STOP_DENIED = "O‘yinni faqat uni boshlagan a'zo yoki administrator to‘xtata oladi."
-DUEL_INVALID_TARGET = "O‘zingizdan boshqa, /qoshilish bilan qo‘shilgan a'zoni tanlang."
+STOP_DENIED = "O’yinni faqat uni boshlagan a’zo yoki administrator to’xtata oladi."
+DUEL_INVALID_TARGET = "O’zingizdan boshqa, /qoshilish bilan qo’shilgan a’zoni tanlang."
 DUEL_ACCEPT = "Duelni qabul qilish"
-RPS_ACCEPT = "O‘yinni qabul qilish"
-GAME_CATALOG_DESCRIPTION = "O‘yinlar ro‘yxati"
+RPS_ACCEPT = "O’yinni qabul qilish"
+GAME_CATALOG_DESCRIPTION = "O’yinlar ro’yxati"
 GAME_CATALOG = (
-    "🎮 <b>Oqibat o‘yinlari</b>\n\n"
+    "🎮 <b>Oqibat o’yinlari</b>\n\n"
     + GAME_EMOJIS["number"]
-    + (" /sontop — 1–100 orasidagi son. O‘yin xabariga javob bering; " + "topuvchiga +3.\n")
+    + (" /sontop — 1–100 orasidagi son. O’yin xabariga javob bering; " + "topuvchiga +3.\n")
     + GAME_EMOJIS["math"]
-    + (" /matematika — 5 tezkor savol, tugmalar orqali javob, har bir " + "g‘olibga +2.\n")
+    + (" /matematika — 5 tezkor savol, tugmalar orqali javob, har bir " + "g’olibga +2.\n")
     + GAME_EMOJIS["rps"]
-    + " /tqq — ikki kishilik yashirin tosh–qaychi–qog‘oz, g‘olibga +2.\n"
+    + " /tqq — ikki kishilik yashirin tosh–qaychi–qog’oz, g’olibga +2.\n"
     + GAME_EMOJIS["duel"]
-    + " /duel — zarni bot tashlaydi; g‘olibga +2.\n"
+    + " /duel — zarni bot tashlaydi; g’olibga +2.\n"
     + GAME_EMOJIS["quiz"]
     + " /viktorina — 5 bilim savoli.\n"
     + GAME_EMOJIS["wyr"]
     + " /tanla — ikki variantli umumiy tanlov.\n"
     + GAME_EMOJIS["krokodil"]
-    + " /krokodil — yashirin so‘zni toping.\n"
+    + " /krokodil — yashirin so’zni toping.\n"
     + GAME_EMOJIS["hyj"]
     + " /hyj — haqiqat yoki jasorat.\n"
     + GAME_EMOJIS["mafia"]
     + " /mafia — 5–15 kishi, rollar shaxsiy chatda.\n"
     + GAME_EMOJIS["secret"]
     + (
-        " /yashirin — 3–20 kishi, 2/6/24 soatlik fon o‘yini; topish +10. "
-        + "/fosh ni gumondagi ovchiga javoban: to‘g‘ri +5, xato −2.\n"
+        " /yashirin — 3–20 kishi, 2/6/24 soatlik fon o’yini; topish +10. "
+        + "/fosh ni gumondagi ovchiga javoban: to’g’ri +5, xato −2.\n"
     )
     + GAME_EMOJIS["kim"]
     + " /kimaytdi — 4–12 kishi, shaxsiy matn va anonim muallif taxmini.\n"
@@ -634,24 +634,24 @@ GAME_CATALOG = (
     + GAME_EMOJIS["memory"]
     + (
         " /eslaysizmi — 3–10 kishi, shaxsiy suratlar, spoiler va "
-        + "yuboruvchi taxmini.\n\nGuruhda bot admin bo‘lsin, avval /qoshilish"
-        + " bilan qo‘shiling. Bitta asosiy o‘yin, alohida Yashirin fon "
-        + "o‘yini va zar duellari yurishi mumkin. Yangi o‘yinlarga faqat "
+        + "yuboruvchi taxmini.\n\nGuruhda bot admin bo’lsin, avval /qoshilish"
+        + " bilan qo’shiling. Bitta asosiy o’yin, alohida Yashirin fon "
+        + "o’yini va zar duellari yurishi mumkin. Yangi o’yinlarga faqat "
         + "lobbydagi shaxsiy havoladan rozilik bilan kiring. Mafia bilan "
         + "birga bir odamga bitta faol shaxsiy kontekst. Materiallar "
-        + "guruhga chiqadi; media uchun botning o‘chirish huquqi kerak. "
-        + "Boshlovchi yoki admin /stop bilan to‘xtatadi. /help da batafsil "
+        + "guruhga chiqadi; media uchun botning o’chirish huquqi kerak. "
+        + "Boshlovchi yoki admin /stop bilan to’xtatadi. /help da batafsil "
         + "yordam."
     )
 )
 QUICK_RESET = (
-    "O‘yin bekor qilindi. Bot/guruh holati yoki yetkazish muddati "
-    + "o‘zgardi. Yangi davrani boshlang."
+    "O’yin bekor qilindi. Bot/guruh holati yoki yetkazish muddati "
+    + "o’zgardi. Yangi davrani boshlang."
 )
 QUICK_STARTER_LEFT = (
-    "Boshlovchi o‘yindan chiqdi. O‘yin bekor qilindi; oldin olingan " + "ballar saqlanadi."
+    "Boshlovchi o’yindan chiqdi. O’yin bekor qilindi; oldin olingan " + "ballar saqlanadi."
 )
-MATH_ALREADY_TRIED = "Bu savolda urinib bo‘ldingiz. Keyingisida ko‘rishamiz!"
+MATH_ALREADY_TRIED = "Bu savolda urinib bo’ldingiz. Keyingisida ko’rishamiz!"
 MATH_CORRECT = "Topdingiz! +2 ball. ✅"
 MATH_WRONG = "Bu safar mos kelmadi. Shu savolda bitta urinish bor; keyingisini" + " kutamiz."
 
@@ -730,26 +730,26 @@ def quick_board(game):
         + "\n\n"
         + format(math_expression(item), "")
         + (
-            " = ?\n\nTugmani tanlang. Ko‘rsatilgach 20 soniya; har odamga bir "
-            + "urinish. Birinchi to‘g‘ri javobga +2 ball."
+            " = ?\n\nTugmani tanlang. Ko’rsatilgach 20 soniya; har odamga bir "
+            + "urinish. Birinchi to’g’ri javobga +2 ball."
         )
     )
 
 
-RPS_ACCEPTED = "O‘yin boshlandi. Yashirin tanlovingizni bosing."
-RPS_CHOICE_LOCKED = "Tanlovingiz saqlandi. Uni almashtirib bo‘lmaydi."
-RPS_MOVES = {"r": "🪨 Tosh", "s": "✂️ Qaychi", "p": "📄 Qog‘oz"}
-RPS_TIMEOUT = "Tosh–qaychi–qog‘oz muddati tugadi. Ball berilmadi. /tqq bilan " + "qayta boshlang."
-RPS_LEFT = "Davradosh o‘yindan chiqdi. Tosh–qaychi–qog‘oz bekor qilindi, " + "ball berilmadi."
+RPS_ACCEPTED = "O’yin boshlandi. Yashirin tanlovingizni bosing."
+RPS_CHOICE_LOCKED = "Tanlovingiz saqlandi. Uni almashtirib bo’lmaydi."
+RPS_MOVES = {"r": "🪨 Tosh", "s": "✂️ Qaychi", "p": "📄 Qog’oz"}
+RPS_TIMEOUT = "Tosh–qaychi–qog’oz muddati tugadi. Ball berilmadi. /tqq bilan " + "qayta boshlang."
+RPS_LEFT = "Davradosh o’yindan chiqdi. Tosh–qaychi–qog’oz bekor qilindi, " + "ball berilmadi."
 RPS_RESET = (
-    "Bot yoki guruh holati o‘zgardi. Tosh–qaychi–qog‘oz bekor "
+    "Bot yoki guruh holati o’zgardi. Tosh–qaychi–qog’oz bekor "
     + "qilindi, ball berilmadi. /tqq bilan qayta boshlang."
 )
 
 
 def rps_board(game):
     state = game.state
-    title = GAME_EMOJIS["rps"] + " <b>Tosh–qaychi–qog‘oz</b>"
+    title = GAME_EMOJIS["rps"] + " <b>Tosh–qaychi–qog’oz</b>"
 
     def name(user):
         return mention(user, state["names"][str(user)])
@@ -760,11 +760,11 @@ def rps_board(game):
             format(title, "")
             + "\n"
             + format(name(game.started_by), "")
-            + " o‘yinga chaqirdi.\n"
+            + " o’yinga chaqirdi.\n"
             + format(target, "")
             + (
-                " qabul qilsin.\nKutish: 90 soniya. Bir raund, g‘olibga +2 ball, "
-                + "durangda ball yo‘q."
+                " qabul qilsin.\nKutish: 90 soniya. Bir raund, g’olibga +2 ball, "
+                + "durangda ball yo’q."
             )
         )
     if game.status == "finished":
@@ -787,40 +787,40 @@ def rps_board(game):
         + format(ready, "")
         + (
             "\n\nQabul qilingandan boshlab 60 soniya. Har kim bir marta "
-            + "tanlaydi. Ikkala tanlov tayyor bo‘lgach ochiladi."
+            + "tanlaydi. Ikkala tanlov tayyor bo’lgach ochiladi."
         )
     )
 
 
 QUIZ_START = GAME_EMOJIS["quiz"] + (
-    " Viktorina boshlanmoqda! 5 savol, har biriga 30 soniya. To‘g‘ri " + "javob +3, birinchi +2."
+    " Viktorina boshlanmoqda! 5 savol, har biriga 30 soniya. To’g’ri " + "javob +3, birinchi +2."
 )
 WYR_START = GAME_EMOJIS["wyr"] + " Qaysi birini tanlaysiz? Ovoz berish uchun 60 soniya."
-WYR_FINISHED = "Tanlov yakunlandi. Natijalar so‘rovnomada! ✅"
+WYR_FINISHED = "Tanlov yakunlandi. Natijalar so’rovnomada! ✅"
 KROK_START = GAME_EMOJIS["krokodil"] + (
-    " Krokodil boshlanmoqda! Boshlovchi so‘zni tugma orqali yashirin " + "ko‘radi."
+    " Krokodil boshlanmoqda! Boshlovchi so’zni tugma orqali yashirin " + "ko’radi."
 )
-KROK_NEED_PLAYERS = "Krokodil uchun kamida ikki a'zo /qoshilish bilan qo‘shilsin."
-KROK_SEE = "So‘zni ko‘rish"
-KROK_SKIP = "So‘zni almashtirish"
-KROK_HOST_ONLY = "So‘zni faqat hozirgi boshlovchi ko‘ra oladi."
-KROK_NO_SKIPS = "Bir turda faqat ikki marta so‘z almashtirish mumkin."
-KROK_SKIPPED = "So‘z almashtirilmoqda. So‘zni ko‘rish tugmasini yana bosing."
+KROK_NEED_PLAYERS = "Krokodil uchun kamida ikki a’zo /qoshilish bilan qo’shilsin."
+KROK_SEE = "So’zni ko’rish"
+KROK_SKIP = "So’zni almashtirish"
+KROK_HOST_ONLY = "So’zni faqat hozirgi boshlovchi ko’ra oladi."
+KROK_NO_SKIPS = "Bir turda faqat ikki marta so’z almashtirish mumkin."
+KROK_SKIPPED = "So’z almashtirilmoqda. So’zni ko’rish tugmasini yana bosing."
 HYJ_TRUTH = "Haqiqat"
 HYJ_DARE = "Jasorat"
 HYJ_REFUSE = "Rad etish (−2)"
 HYJ_TARGET_ONLY = "Bu tugmani faqat tanlangan davradosh bosa oladi."
-HYJ_INVALID_TARGET = "Javob berilgan a'zo /qoshilish bilan o‘yinga qo‘shilgan bo‘lsin."
-MAFIA_JOIN = "Mafiaga qo‘shilish (shaxsiy chat)"
-MAFIA_JOINED = "Mafiaga qo‘shildingiz! O‘yin boshlanishini guruhda kuting."
-MAFIA_LOBBY_CLOSED = "Mafia kutish muddati yopiq, to‘lgan yoki bu havola eskirgan."
+HYJ_INVALID_TARGET = "Javob berilgan a’zo /qoshilish bilan o’yinga qo’shilgan bo’lsin."
+MAFIA_JOIN = "Mafiaga qo’shilish (shaxsiy chat)"
+MAFIA_JOINED = "Mafiaga qo’shildingiz! O’yin boshlanishini guruhda kuting."
+MAFIA_LOBBY_CLOSED = "Mafia kutish muddati yopiq, to’lgan yoki bu havola eskirgan."
 MAFIA_ALREADY_PLAYING = (
-    "Siz boshqa Mafia o‘yinidasiz. Bir paytda faqat bitta o‘yinda " + "qatnashing."
+    "Siz boshqa Mafia o’yinidasiz. Bir paytda faqat bitta o’yinda " + "qatnashing."
 )
-MAFIA_OPT_IN = "Avval o‘sha guruhda /qoshilish yuboring, keyin havolani yana bosing."
+MAFIA_OPT_IN = "Avval o’sha guruhda /qoshilish yuboring, keyin havolani yana bosing."
 MAFIA_TOO_FEW = "Mafia bekor qilindi: kamida 5 ta tayyor davradosh kerak."
 MAFIA_DELIVERY_FAILED = (
-    "Mafia bekor qilindi: rollarni yetkazib bo‘lmadi. Keyinroq qayta " + "boshlang."
+    "Mafia bekor qilindi: rollarni yetkazib bo’lmadi. Keyinroq qayta " + "boshlang."
 )
 MAFIA_RESTART = (
     "Bot qayta ishga tushdi. Kechirasiz, Mafia bekor qilindi. /mafia " + "bilan qayta boshlang."
@@ -828,8 +828,8 @@ MAFIA_RESTART = (
 MAFIA_STALE = "Bu Mafia tugmasi eskirgan, siz uchun emas yoki bu bosqichda " + "ishlamaydi."
 MAFIA_CHOICE_SAVED = "Tanlovingiz joyida. ✅"
 MAFIA_CHECK_AT_DAWN = "Tanlovingiz joyida. ✅ Tekshiruv javobi tongda shaxsiy doskada " + "chiqadi."
-MAFIA_IS_MAFIA = "Tekshiruv: bu o‘yinchi — mafia."
-MAFIA_NOT_MAFIA = "Tekshiruv: bu o‘yinchi mafia emas."
+MAFIA_IS_MAFIA = "Tekshiruv: bu o’yinchi — mafia."
+MAFIA_NOT_MAFIA = "Tekshiruv: bu o’yinchi mafia emas."
 MAFIA_ROLE_NAMES = {
     "mafia": "Mafia",
     "doctor": "Doktor",
@@ -840,9 +840,9 @@ MAFIA_ROLE_NAMES = {
     "manyak": "Manyak",
 }
 MAFIA_OUTCOMES = {
-    "town": "Tinch aholi g‘alaba qozondi!",
-    "mafia": "Mafia g‘alaba qozondi!",
-    "manyak": "Manyak yakka g‘alaba qozondi!",
+    "town": "Tinch aholi g’alaba qozondi!",
+    "mafia": "Mafia g’alaba qozondi!",
+    "manyak": "Manyak yakka g’alaba qozondi!",
     "draw": "Durang: vaqt yoki 20 tur chegarasi tugadi.",
 }
 
@@ -852,7 +852,7 @@ def mafia_event(state):
     if len(event.get("victims", [])) > 1:
         return "\n".join(
             format(mention(int(user), state["players"][user]), "")
-            + " o‘yindan chiqdi. Roli: <b>"
+            + " o’yindan chiqdi. Roli: <b>"
             + format(MAFIA_ROLE_NAMES[state["roles"][user]], "")
             + "</b>."
             for user in event["victims"]
@@ -862,13 +862,13 @@ def mafia_event(state):
         who = mention(int(victim), state["players"][victim])
         role = MAFIA_ROLE_NAMES[event["role"]]
         saved = " Doktor boshqa nishonni saqlab qoldi." if event.get("saved") else ""
-        return f"{who} o‘yindan chiqdi. Roli: <b>{role}</b>.{saved}"
+        return f"{who} o’yindan chiqdi. Roli: <b>{role}</b>.{saved}"
     if event.get("saved"):
-        return "Tong otdi: doktor nishondagi o‘yinchini saqlab qoldi. 🩺"
+        return "Tong otdi: doktor nishondagi o’yinchini saqlab qoldi. 🩺"
     if event.get("kind") == "night":
-        return "Tong otdi: bu kecha hech kim o‘yindan chiqmadi."
+        return "Tong otdi: bu kecha hech kim o’yindan chiqmadi."
     if event.get("kind") == "vote":
-        return "Ovozlar teng yoki ovoz yo‘q: hech kim chiqarilmadi."
+        return "Ovozlar teng yoki ovoz yo’q: hech kim chiqarilmadi."
     return ""
 
 
@@ -876,7 +876,7 @@ def mafia_group(game):
     state = game.state
     removed = state.get("removed", [])
     notice = (
-        "Shaxsiy aloqasi yo‘q yoki chiqib ketganlar ro‘yxatdan olindi: "
+        "Shaxsiy aloqasi yo’q yoki chiqib ketganlar ro’yxatdan olindi: "
         + ", ".join(escape(name[:24]) for name in removed)
         + ".\n"
         if removed
@@ -892,7 +892,7 @@ def mafia_group(game):
         )
         status = (
             "Kutish: 90 soniya. 5–15 kishi. Guruhda /qoshilish yuboring, "
-            + "so‘ng havoladan shaxsiy chatga o‘ting."
+            + "so’ng havoladan shaxsiy chatga o’ting."
             if phase == "lobby"
             else "Shaxsiy aloqa va rollar tayyorlanmoqda. Hali tun boshlanmadi."
         )
@@ -901,7 +901,7 @@ def mafia_group(game):
             if state.get("extended_roles")
             else ""
         )
-        consent = "\nIsmingiz, ovozingiz va o‘yin oxirida rolingiz guruhda ko‘rsatiladi."
+        consent = "\nIsmingiz, ovozingiz va o’yin oxirida rolingiz guruhda ko’rsatiladi."
         return (
             format(GAME_EMOJIS["mafia"], "")
             + " <b>Mafia</b> — "
@@ -915,7 +915,7 @@ def mafia_group(game):
             + format(players, "")
         )
     if phase == "done":
-        outcome = MAFIA_OUTCOMES.get(state.get("winner"), "Mafia to‘xtatildi. Ball berilmaydi.")
+        outcome = MAFIA_OUTCOMES.get(state.get("winner"), "Mafia to’xtatildi. Ball berilmaydi.")
         roles = "\n".join(
             (
                 f"{mention(int(user), state['players'][user])} — {MAFIA_ROLE_NAMES[role]}"
@@ -926,7 +926,7 @@ def mafia_group(game):
     status = {
         "night": "🌙 Tun: 60 soniya. Harakatlar shaxsiy chatdagi tugmalarda.",
         "discussion": "☀️ Muhokama: 90 soniya. Guruhda gaplashing.",
-        "vote": "🗳 Ovoz berish: 60 soniya. Faqat tirik o‘yinchilar; ovozni "
+        "vote": "🗳 Ovoz berish: 60 soniya. Faqat tirik o’yinchilar; ovozni "
         + "almashtirish mumkin.",
     }[phase]
     text = (
@@ -973,7 +973,7 @@ def mafia_proposal(game, user, proposed):
         + mafia_role_card(role)
         + (f"Mafia jamoasi: {team}.\n" if role in {"mafia", "don"} else "")
         + (
-            "Hali harakat qilmang. Hamma tayyor bo‘lgach rol tasdiqlanadi; "
+            "Hali harakat qilmang. Hamma tayyor bo’lgach rol tasdiqlanadi; "
             + "yangilansa oldingisi bekor."
         )
     )
@@ -996,7 +996,7 @@ def mafia_private(game, user):
         + mafia_role_card(role)
     )
     if user not in state["alive"]:
-        return text + "Siz o‘yindan chiqdingiz. Harakat yoki ovoz bera olmaysiz."
+        return text + "Siz o’yindan chiqdingiz. Harakat yoki ovoz bera olmaysiz."
     text += f"{state['round']}-tur. "
     if state["phase"] == "night":
         if role in {"mafia", "don"}:
@@ -1008,12 +1008,12 @@ def mafia_private(game, user):
             text += (
                 "Mafia jamoasi: "
                 + ", ".join(team)
-                + ".\nNishonni tanlang. Ovoz yo‘q bo‘lsa hujum yo‘q.\n"
+                + ".\nNishonni tanlang. Ovoz yo’q bo’lsa hujum yo’q.\n"
             )
             if role == "don":
                 text += (
                     "Teng ovozda sizning tanlovingiz hal qiladi. Komissarga mafia "
-                    + "bo‘lib ko‘rinmaysiz.\n"
+                    + "bo’lib ko’rinmaysiz.\n"
                 )
             counts = tally(state, mafia=True)
             text += "\n".join(
@@ -1023,7 +1023,7 @@ def mafia_private(game, user):
                 )
             )
         elif role == "doctor":
-            text += "Kimni saqlaysiz? O‘zingizni ketma-ket ikki kecha saqlay olmaysiz."
+            text += "Kimni saqlaysiz? O’zingizni ketma-ket ikki kecha saqlay olmaysiz."
         elif role == "commissioner":
             if "mistress" in state["roles"].values():
                 text += (
@@ -1034,22 +1034,22 @@ def mafia_private(game, user):
                 text += "Bir kishini tekshiring. Javob faqat sizga oynachada chiqadi."
         elif role == "mistress":
             text += (
-                "Siz tinch jamoada: bir kishining tungi harakatini to‘sing. "
+                "Siz tinch jamoada: bir kishining tungi harakatini to’sing. "
                 + "Ketma-ket bir nishon mumkin emas."
             )
         elif role == "manyak":
             text += (
-                "Siz yakka o‘ynaysiz. Tunda bir nishonni tanlang; tirik qolib, "
-                + "ko‘pi bilan yana bir kishi qolsa yutasiz."
+                "Siz yakka o’ynaysiz. Tunda bir nishonni tanlang; tirik qolib, "
+                + "ko’pi bilan yana bir kishi qolsa yutasiz."
             )
         else:
-            text += "Tongni kuting. Sizda tungi harakat yo‘q."
+            text += "Tongni kuting. Sizda tungi harakat yo’q."
     else:
         text += "Muhokama va kunduzgi ovoz berish guruhda."
     checked = state.get("last_check")
     if role == "commissioner" and checked and (checked["actor"] == user):
         result = (
-            "Harakatingiz to‘sildi."
+            "Harakatingiz to’sildi."
             if checked["is_mafia"] is None
             else MAFIA_IS_MAFIA
             if checked["is_mafia"]
@@ -1064,11 +1064,11 @@ def mafia_end_dm(game, user):
     points_note = (
         "\nTirik qolganlarga +3 ball."
         if game.state.get("winner") == "draw"
-        else "\nG‘olib tomonga +10, oxirigacha tirik qolganlarga +3."
+        else "\nG’olib tomonga +10, oxirigacha tirik qolganlarga +3."
     )
     return (
         f"{GAME_EMOJIS['mafia']} Mafia #{game.id} yakunlandi. "
-        + MAFIA_OUTCOMES.get(game.state.get("winner"), "O‘yin bekor qilindi. Ball berilmaydi.")
+        + MAFIA_OUTCOMES.get(game.state.get("winner"), "O’yin bekor qilindi. Ball berilmaydi.")
         + (points_note if game.state.get("winner") else "")
     )
 
@@ -1108,7 +1108,7 @@ def hyj_dare(game):
         + format(escape(state["prompt"]), "")
         + "\n\nMuddati: "
         + format(end, "%d.%m %H:%M")
-        + ". Rad etish: faqat −2, cheklash yoki chiqarish yo‘q."
+        + ". Rad etish: faqat −2, cheklash yoki chiqarish yo’q."
     )
 
 
@@ -1118,17 +1118,17 @@ def hyj_result(game):
     ending = {
         "truth_done": "haqiqatga javob berdi. +5 ball! ✅",
         "dare_done": "jasoratni bajardi! Vazifa ballari berildi. ✅",
-        "refused": "rad etdi. Faqat −2 ball; cheklash yoki chiqarish yo‘q.",
-        "dare_missed": "jasorat muddati tugadi. Guruhning vazifa jazosi qo‘llanadi.",
-        "dare_cancelled": "jasorat bekor qilindi. Ball jazosi yo‘q.",
-        "timeout": "uchun o‘yin muddati tugadi. Qo‘shimcha jazo yo‘q.",
-        "opted_out": "o‘yindan chiqdi. Vazifa bekor qilindi, ball jazosi yo‘q.",
+        "refused": "rad etdi. Faqat −2 ball; cheklash yoki chiqarish yo’q.",
+        "dare_missed": "jasorat muddati tugadi. Guruhning vazifa jazosi qo’llanadi.",
+        "dare_cancelled": "jasorat bekor qilindi. Ball jazosi yo’q.",
+        "timeout": "uchun o’yin muddati tugadi. Qo’shimcha jazo yo’q.",
+        "opted_out": "o’yindan chiqdi. Vazifa bekor qilindi, ball jazosi yo’q.",
     }
-    return f"{GAME_EMOJIS['hyj']} {who} {ending.get(result, 'uchun o‘yin yakunlandi.')}"
+    return f"{GAME_EMOJIS['hyj']} {who} {ending.get(result, 'uchun o’yin yakunlandi.')}"
 
 
 def krok_word(word):
-    return f"Sizga atalgan so‘z: {word}"
+    return f"Sizga atalgan so’z: {word}"
 
 
 def krok_board(game, final=False):
@@ -1141,11 +1141,11 @@ def krok_board(game, final=False):
             f"✅ {guesser} topdi: <b>{escape(last['word'])}</b>. Topganga +5, boshlovchiga +3."
         )
     elif last.get("kind") == "reveal":
-        lines.append(f"Boshlovchi so‘zni yozdi: {escape(last['word'])}. −3 ball; yangi so‘z! 🙈")
+        lines.append(f"Boshlovchi so’zni yozdi: {escape(last['word'])}. −3 ball; yangi so’z! 🙈")
     elif last.get("kind") == "timeout":
-        lines.append(f"⏰ Vaqt tugadi. So‘z: <b>{escape(last['word'])}</b>.")
+        lines.append(f"⏰ Vaqt tugadi. So’z: <b>{escape(last['word'])}</b>.")
     if final:
-        lines.append("🏆 Krokodil yakunlandi! 10 tur o‘ynaldi.")
+        lines.append("🏆 Krokodil yakunlandi! 10 tur o’ynaldi.")
         scores = sorted(state.get("scores", {}).items(), key=lambda pair: (-pair[1], int(pair[0])))
         lines.extend(
             (
@@ -1163,7 +1163,7 @@ def krok_board(game, final=False):
             + format(host, "")
             + ".\nTopish uchun 3 daqiqa. Almashtirish qoldi: "
             + format(2 - state["skips"], "")
-            + (".\nBoshlovchi so‘zni yozmasdan tushuntirsin, boshqalar guruhga " + "taxmin yozsin.")
+            + (".\nBoshlovchi so’zni yozmasdan tushuntirsin, boshqalar guruhga " + "taxmin yozsin.")
         )
     return "\n\n".join(lines)
 
@@ -1194,7 +1194,7 @@ def duel_rolling(game):
         format(state["emoji"], "")
         + " Duel, "
         + format(state["round"], "")
-        + "-urinish. Teng bo‘lsa qayta tashlayman.\nBirinchi zar: "
+        + "-urinish. Teng bo’lsa qayta tashlayman.\nBirinchi zar: "
         + format(first, "")
         + "\nIkkinchi zar: "
         + format(second, "")
@@ -1212,7 +1212,7 @@ def duel_result(game):
         + format(state["values"][1], "")
         + "\n"
         + format(winner, "")
-        + " g‘olib! +2 ball. 🏆"
+        + " g’olib! +2 ball. 🏆"
     )
 
 
@@ -1228,13 +1228,13 @@ def quiz_board(game, final=False):
         f"{i}. {mention(int(user), state['names'].get(user, 'Davradosh'))} — {score} ball"
         for i, (user, score) in enumerate(scores[:15], 1)
     ]
-    return heading + "\n" + ("\n".join(rows) if rows else "Hali to‘g‘ri javob yo‘q.")
+    return heading + "\n" + ("\n".join(rows) if rows else "Hali to’g’ri javob yo’q.")
 
 
 QUIET_ASSIGN = "Hozir tinch vaqt. Vazifani tinch vaqt tugagach bering."
 PENDING_CHALLENGE = "Bu guruhda hali bajarilmagan vazifa bor. Avval u yakunlansin."
-NO_CHALLENGE_CANDIDATE = "Mos davradosh yoki vazifa topilmadi. /qoshilish bilan qo‘shiling."
-CHALLENGE_SEND_FAILED = "Vazifani yuborib bo‘lmadi. Birpasdan so‘ng yana urinib ko‘ring."
+NO_CHALLENGE_CANDIDATE = "Mos davradosh yoki vazifa topilmadi. /qoshilish bilan qo’shiling."
+CHALLENGE_SEND_FAILED = "Vazifani yuborib bo’lmadi. Birpasdan so’ng yana urinib ko’ring."
 CHALLENGE_ARGUMENTS = "Masalan: /vazifa video, /vazifa ovoz, /vazifa surat yoki /vazifa" + " matn."
 NO_SCORES = "Ilk ball hali oldinda. Davrani boshlaymizmi?"
 
@@ -1253,9 +1253,9 @@ def challenge_done(user_id: int, name: str, delta: int) -> str:
 
 
 def challenge_missed(user_id: int, mode: str) -> str:
-    penalty = "Ball jazosi yo‘q." if mode == "off" else "−5 ball."
+    penalty = "Ball jazosi yo’q." if mode == "off" else "−5 ball."
     return (
-        format(mention(user_id, "Do‘stimiz"), "")
+        format(mention(user_id, "Do’stimiz"), "")
         + ", vazifa muddati tugadi. "
         + format(penalty, "")
         + " Keyingi safar albatta!"
@@ -1266,7 +1266,7 @@ def debtors_suffix(debtors) -> str:
     if not debtors:
         return ""
     names = ", ".join((mention(user_id, name) for user_id, name in debtors))
-    return f"\n\n🙂 Vazifasi qolgan do‘stlarimiz: {names}. Keyingi safar birga bajaramiz!"
+    return f"\n\n🙂 Vazifasi qolgan do’stlarimiz: {names}. Keyingi safar birga bajaramiz!"
 
 
 def my_stats(name: str, total: int, done: int, missed: int) -> str:
@@ -1278,7 +1278,7 @@ def my_stats(name: str, total: int, done: int, missed: int) -> str:
         + format(total, "")
         + " ball\n✅ Bajarilgan vazifalar: "
         + format(done, "")
-        + "\n⌛ O‘tkazilgan: "
+        + "\n⌛ O’tkazilgan: "
         + format(missed, "")
         + "\n"
         + level_label(level_for(total))
@@ -1309,11 +1309,11 @@ SETTING_LABELS = {
     "challenge_hours": "Vazifa muddati (soat)",
     "penalty_mode": "Bajarilmagan vazifa jazosi",
     "mute_days": "Cheklash muddati (kun)",
-    "kick_after_misses": "Nechta o‘tkazishdan keyin chiqarish",
+    "kick_after_misses": "Nechta o’tkazishdan keyin chiqarish",
     "quiet_start": "Tinch vaqt boshlanishi",
     "quiet_end": "Tinch vaqt tugashi",
-    "mafia_delete_dead_messages": "Mafia: o‘yindan chiqqanlarning xabarini o‘chirish",
-    "extended_roles": "Mafia: kengaytirilgan rollar (keyingi o‘yin)",
+    "mafia_delete_dead_messages": "Mafia: o’yindan chiqqanlarning xabarini o’chirish",
+    "extended_roles": "Mafia: kengaytirilgan rollar (keyingi o’yin)",
 }
 SETTING_PROMPTS = {
     "tz": "Vaqt mintaqasini kiriting, masalan: Asia/Tashkent. Shu xabarga " + "javob yozing.",
@@ -1357,27 +1357,27 @@ def group_help(instagram_handle=None) -> str:
         + GAME_EMOJIS["duel"]
         + " /duel ni javob tarzida yoki ochiq yuboring; zarni bot tashlaydi.\n"
         + GAME_EMOJIS["rps"]
-        + " /tqq — tosh–qaychi–qog‘oz; yashirin tanlov, g‘olibga +2 ball.\n"
+        + " /tqq — tosh–qaychi–qog’oz; yashirin tanlov, g’olibga +2 ball.\n"
         + GAME_EMOJIS["number"]
         + " /sontop — yashirin son; "
         + GAME_EMOJIS["math"]
-        + " /matematika — 5 tezkor savol. /oyinlar — ro‘yxat.\n"
+        + " /matematika — 5 tezkor savol. /oyinlar — ro’yxat.\n"
         + GAME_EMOJIS["quiz"]
         + " /viktorina: 5 savol, har biriga 30 soniya.\n"
         + GAME_EMOJIS["wyr"]
         + " /tanla: bir daqiqalik ochiq tanlov.\n"
         + GAME_EMOJIS["krokodil"]
-        + " /krokodil: yashirin so‘z, 10 tur, har biri 3 daqiqa.\n"
+        + " /krokodil: yashirin so’z, 10 tur, har biri 3 daqiqa.\n"
         + GAME_EMOJIS["hyj"]
         + " /hyj: haqiqatga 30 daqiqa, jasoratga 1 soat; rad etish −2.\n"
         + GAME_EMOJIS["mafia"]
         + (
-            " /mafia: 5–15 kishi, 90 soniyalik havola orqali qo‘shilish. "
+            " /mafia: 5–15 kishi, 90 soniyalik havola orqali qo’shilish. "
             + "Hamma botni shaxsiy chatda ochishi kerak.\n"
         )
         + GAME_EMOJIS["secret"]
         + (
-            " /yashirin: 3–20 kishi, 2/6/24 soatlik fon o‘yini; /fosh ni "
+            " /yashirin: 3–20 kishi, 2/6/24 soatlik fon o’yini; /fosh ni "
             + "javob bilan ishlating.\n"
         )
         + GAME_EMOJIS["kim"]
@@ -1388,10 +1388,10 @@ def group_help(instagram_handle=None) -> str:
         + (
             " /eslaysizmi: 3–10 kishi, bitta surat, izoh taxmindan keyin "
             + "ochiladi.\nShaxsiy havoladan rozilik bilan kiring; Mafia bilan "
-            + "birga bir odamga bitta faol shaxsiy o‘yin. Admin yashirgan "
+            + "birga bir odamga bitta faol shaxsiy o’yin. Admin yashirgan "
             + "material uchun muallif ball olmaydi. Media uchun botning "
-            + "o‘chirish huquqi kerak.\n🛑 /stop: boshlovchi yoki admin. Duel "
-            + "yoki fon o‘yinini tanlash uchun doskasiga javob bering.\n⏰ Kunlik"
+            + "o’chirish huquqi kerak.\n🛑 /stop: boshlovchi yoki admin. Duel "
+            + "yoki fon o’yinini tanlash uchun doskasiga javob bering.\n⏰ Kunlik"
             + " xabar 0–15 daqiqaga tarqatiladi; haftalik xulosa yakshanba "
             + "20:00–21:00. Tinch vaqtda avtomatik xabar/vazifalar kutiladi."
         )
@@ -1411,8 +1411,8 @@ def start_text(first_name: str, instagram_handle: str) -> str:
         + "! 👋\n\n<b>"
         + format(SLOGAN, "")
         + (
-            "</b>\nMen Oqibat — davrangizning boshlovchisiman. Do‘stlarni "
-            + "birga yig‘amiz!\nVazifa, viktorina, duel — birga sinab ko‘ramiz!"
+            "</b>\nMen Oqibat — davrangizning boshlovchisiman. Do’stlarni "
+            + "birga yig’amiz!\nVazifa, viktorina, duel — birga sinab ko’ramiz!"
             + "\n\nYordam: /help\n\nMuallif: @"
         )
         + format(escape(instagram_handle), "")
@@ -1423,8 +1423,8 @@ def help_text(instagram_handle: str) -> str:
     return (
         "/start — bot bilan tanishish\n/help — yordam\n\n/maxfiylik — "
         + "ma’lumotlar haqida\n/malumotlarimni_ochir — shaxsiy chatda "
-        + "o‘chirish\n/stats — faqat bot egasi uchun\n\nBotni guruhga admin "
-        + "qilib qo‘shing. Guruh buyruqlari:\n\n"
+        + "o’chirish\n/stats — faqat bot egasi uchun\n\nBotni guruhga admin "
+        + "qilib qo’shing. Guruh buyruqlari:\n\n"
         + group_help(instagram_handle)
     )
 
@@ -1452,7 +1452,7 @@ def weekly_summary(week, data, instagram_handle, *, compact=False):
         + format(active[2], "")
         + " ta muvaffaqiyatli ishtirok."
         if active
-        else "🔥 Bu haftada hali ball olgan ishtirok yo‘q."
+        else "🔥 Bu haftada hali ball olgan ishtirok yo’q."
     )
     return (
         format(title, "")
@@ -1462,7 +1462,7 @@ def weekly_summary(week, data, instagram_handle, *, compact=False):
         + format(activity, "")
         + "\n🎯 Hafta vazifalari: bajarildi "
         + format(data["done"], "")
-        + ", o‘tkazildi "
+        + ", o’tkazildi "
         + format(data["missed"], "")
         + ". Hozir kutilmoqda: "
         + format(data["pending"], "")
@@ -1477,7 +1477,7 @@ WEBHOOK_INFO_FAILED = "Webhook holati olinmadi. Token, internet va sozlamalarni 
 
 def webhook_info_status(matches, pending, last_error):
     match = "mos" if matches else "mos emas"
-    at = last_error.astimezone(ZoneInfo("UTC")).isoformat() if last_error else "yo‘q"
+    at = last_error.astimezone(ZoneInfo("UTC")).isoformat() if last_error else "yo’q"
     return (
         "getWebhookInfo: URL sozlangan rejimga "
         + format(match, "")
@@ -1503,44 +1503,44 @@ def owner_error_alert(summary, count):
         + format(at, "")
         + "\nHodisalar: "
         + format(count, "")
-        + "\nBirlashtirilgan qo‘shimcha xatolar: "
+        + "\nBirlashtirilgan qo’shimcha xatolar: "
         + format(count - 1, "")
         + ("\nTafsilot uchun server jurnalini tekshiring; xabar matni bu " + "yerga yuborilmaydi.")
     )
 
 
 PRIVACY_DESCRIPTION = "Ma’lumotlar maxfiyligi"
-ERASE_DESCRIPTION = "Ma’lumotlarimni o‘chirish"
+ERASE_DESCRIPTION = "Ma’lumotlarimni o’chirish"
 PRIVACY = (
     "🔐 <b>Maxfiylik</b>\nTelegram ID, ism va username; guruh "
-    + "sozlamalari, qo‘shilish roziligi, oxirgi faollik, vazifa/o‘yin "
-    + "natijalari va ballar saqlanadi. Ular o‘yinlar, reyting va "
+    + "sozlamalari, qo’shilish roziligi, oxirgi faollik, vazifa/o’yin "
+    + "natijalari va ballar saqlanadi. Ular o’yinlar, reyting va "
     + "vazifalar uchun kerak. Oddiy yozishmalar, surat, ovoz yoki video"
-    + " fayllari saqlanmaydi. O‘yin holati tanlangan javoblar va "
-    + "ismlarni, rozilik bilan yuborgan o‘yin javobingizni hamda "
+    + " fayllari saqlanmaydi. O’yin holati tanlangan javoblar va "
+    + "ismlarni, rozilik bilan yuborgan o’yin javobingizni hamda "
     + "ovoz/suratning Telegram file_id sini saqlashi mumkin; muallifni "
     + "ochish, ovozni qayta yuborish va admin yashirishi uchun kerak. "
-    + "O‘yin media faylini yuklab olib saqlamaymiz. Profil rasmi kartalar "
-    + "uchun kichik ko‘rinishda vaqtincha xotirada turadi; o‘chirishda bu kesh ham tozalanadi.\n"
+    + "O’yin media faylini yuklab olib saqlamaymiz. Profil rasmi kartalar "
+    + "uchun kichik ko’rinishda vaqtincha xotirada turadi; o’chirishda bu kesh ham tozalanadi.\n"
     + "Rozilikdan /chiqish bilan"
     + " chiqing. Shaxsiy chatda /malumotlarimni_ochir orqali "
-    + "ma’lumotlaringizni tasdiqlab o‘chiring. Avval yuborilgan "
+    + "ma’lumotlaringizni tasdiqlab o’chiring. Avval yuborilgan "
     + "Telegram xabarlari va operatorning tashqi zaxira nusxalari bu "
-    + "buyruq bilan o‘chmaydi."
+    + "buyruq bilan o’chmaydi."
 )
 OWNER_ONLY = "Bu buyruq faqat bot egasi uchun."
-ERASE_CONFIRM = "Ha, ma’lumotlarimni o‘chiring"
-ERASED_NAME = "O‘chirilgan davradosh"
+ERASE_CONFIRM = "Ha, ma’lumotlarimni o’chiring"
+ERASED_NAME = "O’chirilgan davradosh"
 ERASE_WARNING = (
-    "Ballar, vazifalar, guruhlardagi qatnashish va o‘yinlardagi "
-    + "shaxsiy izlaringiz o‘chadi. Bog‘liq faol o‘yinlar tugaydi; "
-    + "umumiy o‘yin yozuvlari shaxssizlanadi. Qaytarib bo‘lmaydi. Tugma"
+    "Ballar, vazifalar, guruhlardagi qatnashish va o’yinlardagi "
+    + "shaxsiy izlaringiz o’chadi. Bog’liq faol o’yinlar tugaydi; "
+    + "umumiy o’yin yozuvlari shaxssizlanadi. Qaytarib bo’lmaydi. Tugma"
     + " 5 daqiqa amal qiladi. Telegramdagi eski xabarlar va tashqi "
     + "zaxiralar alohida boshqariladi. Tasdiqlaysizmi?"
 )
-ERASE_WORKING = "So‘rov tekshirilmoqda."
+ERASE_WORKING = "So’rov tekshirilmoqda."
 ERASE_EXPIRED = "Tasdiq eskirgan yoki sizga tegishli emas. Buyruqni qayta yuboring."
-ERASE_DONE = "Ma’lumotlaringiz o‘chirildi. Qayta foydalanish uchun /start yuboring."
+ERASE_DONE = "Ma’lumotlaringiz o’chirildi. Qayta foydalanish uchun /start yuboring."
 
 
 def owner_stats(data):
@@ -1560,7 +1560,7 @@ def owner_stats(data):
         + format(data["opted"], "")
         + "\nOxirgi 24 soatda faol: "
         + format(data["active"], "")
-        + "\n7 kunda boshlangan o‘yinlar:\n"
+        + "\n7 kunda boshlangan o’yinlar:\n"
         + format(games, "")
         + "\nYuborish navbati: "
         + format(data["queue"], "")
@@ -1575,7 +1575,7 @@ ACHIEVEMENTS = {
     "first_task": "Ilk bajarilgan vazifa",
     "first_video": "Ilk davra videosi",
     "ten_krok": "10 ta Krokodil topish",
-    "first_mafia_win": "Ilk Mafia g‘alabasi",
+    "first_mafia_win": "Ilk Mafia g’alabasi",
     "streak7": "7 kunlik qatnashish",
     "streak30": "30 kunlik qatnashish",
 }
@@ -1672,25 +1672,25 @@ def game_card_caption(game):
 
 
 PRIVATE_GAME_BUSY = (
-    "Siz boshqa shaxsiy o‘yinda qatnashyapsiz. Avval o‘sha o‘yin " + "tugashini kuting."
+    "Siz boshqa shaxsiy o’yinda qatnashyapsiz. Avval o’sha o’yin " + "tugashini kuting."
 )
 PRIVATE_GAME_CLOSED = (
-    "Bu lobby yopilgan yoki o‘yin topilmadi. Guruhdagi yangi " + "havoladan qo‘shiling."
+    "Bu lobby yopilgan yoki o’yin topilmadi. Guruhdagi yangi " + "havoladan qo’shiling."
 )
 PRIVATE_GAME_JOINED = "Roziligingiz qabul qilindi. Lobby tugagach topshiriq shu yerga " + "keladi."
-PRIVATE_GAME_INPUT_WAIT = "Hozir shaxsiy javob qabul qilmayman. O‘yin ko‘rsatmasini kuting."
+PRIVATE_GAME_INPUT_WAIT = "Hozir shaxsiy javob qabul qilmayman. O’yin ko’rsatmasini kuting."
 PRIVATE_GAME_INVALID = (
     "Yangi javob yuboring: havolasiz, @eslatmasiz va forward qilmasdan. "
-    + "Ko‘rsatmadagi tur va uzunlikda yangi javob yuboring."
+    + "Ko’rsatmadagi tur va uzunlikda yangi javob yuboring."
 )
 PRIVATE_GAME_SAVED = "Javobingiz joyida! Yana yuborish shart emas. ✅"
 PRIVATE_GAME_ENDED = (
-    "Shaxsiy o‘yin tugadi yoki bekor qilindi. Endi boshqa o‘yinga " + "qo‘shilishingiz mumkin."
+    "Shaxsiy o’yin tugadi yoki bekor qilindi. Endi boshqa o’yinga " + "qo’shilishingiz mumkin."
 )
 PRIVATE_GAME_NOT_ENOUGH = (
-    "Davradoshlar yoki bankdagi turli so‘zlar yetarli emas. O‘yin " + "bekor qilindi."
+    "Davradoshlar yoki bankdagi turli so’zlar yetarli emas. O’yin " + "bekor qilindi."
 )
-PRIVATE_GAME_MAFIA_INPUT = "Mafia harakatini shu o‘yinning shaxsiy tugmalari orqali tanlang."
+PRIVATE_GAME_MAFIA_INPUT = "Mafia harakatini shu o’yinning shaxsiy tugmalari orqali tanlang."
 PRIVATE_GAME_HIDE = "🙈 Admin: yashirish"
 PRIVATE_GAME_HIDE_WAIT = (
     "Admin huquqi va material tekshirilmoqda. Natija shaxsiy xabarda " + "keladi."
@@ -1700,27 +1700,27 @@ PRIVATE_GAME_HIDE_DENIED = "Bu tugma faqat guruh adminlari uchun."
 PRIVATE_GAME_HIDE_DONE = "Yashirildi; muallifning shu material uchun bali bekor qilindi."
 PRIVATE_GAME_HIDE_FAILED = (
     "Material bali bekor qilindi, lekin Telegramda yashirish "
-    + "bajarilmadi. Admin xabarni qo‘lda o‘chirsin va bot logini "
+    + "bajarilmadi. Admin xabarni qo’lda o’chirsin va bot logini "
     + "tekshirsin."
 )
 PRIVATE_GAME_HIDE_MEDIA = (
-    "Bali bekor qilindi, izoh belgilandi. Media o‘chmadi: o‘chirish "
-    + "huquqini bering yoki admin o‘chirsin."
+    "Bali bekor qilindi, izoh belgilandi. Media o’chmadi: o’chirish "
+    + "huquqini bering yoki admin o’chirsin."
 )
 SECRET_DURATION = "Davomiylik: {hours} soat"
 SECRET_REVEAL = GAME_EMOJIS["secret"] + " {hunter} {target}ni topdi: <b>{word}</b>. +10 ball!"
-SECRET_EXPOSED = "🔎 {accuser} ovchini fosh qildi: {hunter}. So‘z: <b>{word}</b>. " + "+5 ball!"
-SECRET_WRONG = "Gumon noto‘g‘ri: −2 ball. Keyingi gumon bir soatdan keyin."
+SECRET_EXPOSED = "🔎 {accuser} ovchini fosh qildi: {hunter}. So’z: <b>{word}</b>. " + "+5 ball!"
+SECRET_WRONG = "Gumon noto’g’ri: −2 ball. Keyingi gumon bir soatdan keyin."
 SECRET_ACCUSE_LIMIT = (
     "Gumon uchun /fosh ni gumon qilgan odamingizning xabariga javoban"
-    + " yuboring. O‘zingiz o‘yinchi bo‘lishingiz kerak; jami 3 gumon va"
+    + " yuboring. O’zingiz o’yinchi bo’lishingiz kerak; jami 3 gumon va"
     + " xato gumondan keyin 1 soat kutish bor."
 )
 SECRET_WORD_DM = GAME_EMOJIS["secret"] + (
-    " Nishoningiz: {target}. Maxfiy so‘z: <b>{word}</b>. Uni o‘zingiz"
-    + " oshkor qilmang. Nishon guruhda aytsa +10 (ko‘pi bilan 3 marta)."
+    " Nishoningiz: {target}. Maxfiy so’z: <b>{word}</b>. Uni o’zingiz"
+    + " oshkor qilmang. Nishon guruhda aytsa +10 (ko’pi bilan 3 marta)."
 )
-SECRET_NO_MORE = "Uchta muvaffaqiyatga erishdingiz. Endi yangi so‘z berilmaydi."
+SECRET_NO_MORE = "Uchta muvaffaqiyatga erishdingiz. Endi yangi so’z berilmaydi."
 PRIVATE_GAME_NAMES = {
     "secret": "Yashirin topshiriq",
     "kim": "Kim aytdi?",
@@ -1730,27 +1730,27 @@ PRIVATE_GAME_NAMES = {
 MEMORY_PROMPT = GAME_EMOJIS["memory"] + (
     " Bitta yangi surat yuboring. Ixtiyoriy izoh: qachon/qayerda "
     + "(<=300 belgi). Havola, @eslatma, uzatilgan rasm yoki hujjat "
-    + "qabul qilmayman. Tayyorlashdan so‘ng 5 daqiqa bor. Surat guruhga"
+    + "qabul qilmayman. Tayyorlashdan so’ng 5 daqiqa bor. Surat guruhga"
     + " spoiler bilan chiqadi; taxmindan keyin ismingiz va izoh "
     + "ochiladi."
 )
 PRIVATE_GAME_NEED_DELETE = (
-    "Bu media o‘yini uchun botga xabarlarni o‘chirish huquqini "
-    + "bering. Huquq keyin yo‘qolsa, yashirish belgisi media faylini "
-    + "olib tashlamaydi; admin o‘chirsin."
+    "Bu media o’yini uchun botga xabarlarni o’chirish huquqini "
+    + "bering. Huquq keyin yo’qolsa, yashirish belgisi media faylini "
+    + "olib tashlamaydi; admin o’chirsin."
 )
 PRIVATE_GAME_DELIVERY_FAILED = (
-    "O‘yin xabarini yetkazib bo‘lmadi. Bot huquqlari, tarmoq va logni"
-    + " tekshiring. O‘yin bekor qilindi."
+    "O’yin xabarini yetkazib bo’lmadi. Bot huquqlari, tarmoq va logni"
+    + " tekshiring. O’yin bekor qilindi."
 )
 TELEPHONE_FIRST = GAME_EMOJIS["telephone"] + (
     " Asl jumla: <b>{phrase}</b>\nIkki daqiqada uni ovozli xabar qilib"
-    + " ayting (ko‘pi bilan 30 soniya). Ovozlar o‘yin oxirida guruhda "
+    + " ayting (ko’pi bilan 30 soniya). Ovozlar o’yin oxirida guruhda "
     + "ochiladi."
 )
 TELEPHONE_REPEAT = GAME_EMOJIS["telephone"] + (
-    " Faqat shu ovozni eshitib, ikki daqiqada o‘z ovozingizda "
-    + "takrorlang (ko‘pi bilan 30 soniya)."
+    " Faqat shu ovozni eshitib, ikki daqiqada o’z ovozingizda "
+    + "takrorlang (ko’pi bilan 30 soniya)."
 )
 TELEPHONE_LAST = GAME_EMOJIS["telephone"] + (
     " Siz oxirgi odamsiz. Faqat shu ovozni eshitib, ikki daqiqada "
@@ -1762,12 +1762,12 @@ TELEPHONE_MISSING = "Yakuniy matn kelmadi. Kelgan ovozlar ketma-ket ochiladi."
 KIM_QUESTION = GAME_EMOJIS["kim"] + (
     " Kim aytdi? Savol: <b>{question}</b>\nBir yangi matnli javob "
     + "yuboring (1–300 belgi, havola va @eslatmasiz). Tayyorlashdan "
-    + "so‘ng 5 daqiqa bor. Javob anonim guruhga chiqadi, taxmindan "
+    + "so’ng 5 daqiqa bor. Javob anonim guruhga chiqadi, taxmindan "
     + "keyin muallif ochiladi."
 )
 PRIVATE_GAME_NO_ANSWERS = "Javoblar kelmadi, bu davrani yopdik. Yana boshlash mumkin!"
 PRIVATE_GUESS_DENIED = (
-    "Faqat o‘yinchi taxmin qiladi; yuboruvchi o‘z materialiga ovoz " + "bera olmaydi."
+    "Faqat o’yinchi taxmin qiladi; yuboruvchi o’z materialiga ovoz " + "bera olmaydi."
 )
 PRIVATE_GUESS_SAVED = "Taxmin saqlandi. Natija raund oxirida ochiladi."
 
@@ -1784,7 +1784,7 @@ def private_game_board(game):
                     " <b>Eslaysizmi?</b> · lobby 5 daqiqa, 3–10 kishi\nBitta suratni "
                     + "shaxsiy yuborasiz. Guruhga spoiler bilan chiqadi; 30 soniya "
                     + "taxmindan keyin ismingiz va ixtiyoriy izohingiz ochiladi. Faqat "
-                    + "shaxsiy havoladan rozilik bilan qo‘shiling.\n"
+                    + "shaxsiy havoladan rozilik bilan qo’shiling.\n"
                 )
                 + names
             )
@@ -1795,7 +1795,7 @@ def private_game_board(game):
                     " <b>Ovozli buzilgan telefon</b> · lobby 3 daqiqa, 4–10 kishi\n"
                     + "Navbatda shaxsiy ovozni takrorlaysiz; oxirgi odam matn yozadi. "
                     + "Asl jumla, yakuniy matn va ovozlar ismlar bilan guruhga "
-                    + "chiqariladi. Faqat shaxsiy havoladan rozilik bilan qo‘shiling.\n"
+                    + "chiqariladi. Faqat shaxsiy havoladan rozilik bilan qo’shiling.\n"
                 )
                 + names
             )
@@ -1806,13 +1806,13 @@ def private_game_board(game):
                     " <b>Kim aytdi?</b> · lobby 3 daqiqa, 4–12 kishi\nSavol shaxsiy "
                     + "keladi. Matnli javobingiz guruhga avval anonim, 30 soniyalik "
                     + "taxmindan keyin ismingiz bilan chiqadi.\nFaqat shaxsiy havolani "
-                    + "bosib rozilik bilan qo‘shiling.\n"
+                    + "bosib rozilik bilan qo’shiling.\n"
                 )
                 + names
             )
         consent = (
-            "Nishon va so‘z shaxsiy keladi. Yutuq yoki fosh bo‘lsa, ismingiz "
-            + "va so‘z guruhga chiqariladi."
+            "Nishon va so’z shaxsiy keladi. Yutuq yoki fosh bo’lsa, ismingiz "
+            + "va so’z guruhga chiqariladi."
         )
         return (
             format(GAME_EMOJIS["secret"], "")
@@ -1821,7 +1821,7 @@ def private_game_board(game):
             + "</b> · lobby 5 daqiqa, 3–20 kishi\n"
             + format(consent, "")
             + (
-                "\nFaqat pastdagi shaxsiy havola orqali rozilik bilan qo‘shiling.\n"
+                "\nFaqat pastdagi shaxsiy havola orqali rozilik bilan qo’shiling.\n"
                 + "Davomiylik: "
             )
             + format(state["hours"], "")

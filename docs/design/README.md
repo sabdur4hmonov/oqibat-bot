@@ -11,6 +11,8 @@ matndan olib tashlanadi, qo‘llanmaydigan ism harfi `?` bilan almashtiriladi: m
 katakchasi chizilmaydi. Oʻ/gʻ qo‘llanadi. Oltin/kumush/bronza kuchli uchlikni ajratadi.
 
 Story faqat kartadagi “📲 Story uchun” bosilganda tayyorlanadi va shaxsiy chatga keladi.
+27-bosqichda Story sarlavhasi yuqoriga olindi, qatorlar ixchamlashtirildi va
+ism/daraja hamda ball qator o’rtasiga tekislandi. Pastda lupa o’rniga oddiy OQIBAT yozuvi.
 Avval botda /start qilish kerak. Guruh a’zoligi va asl karta tekshiriladi; eski yoki
 o‘chirilgan manba qayta yuborilmaydi. Profil rasmlari kichik vaqtinchalik xotira keshida,
 file_id bo‘yicha; yo‘q/xato bo‘lsa bosh harflar. Haqiqiy Telegram/telefon ko‘rinishi
